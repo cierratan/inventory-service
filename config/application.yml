@@ -1,0 +1,9 @@
+
+spring:
+  datasource:
+    url: jdbc:oracle:thin:@192.168.1.230:1521:sunright
+    username: sys as sysdba
+    password: Weblogic1
+  flyway:
+    enabled: false
+
