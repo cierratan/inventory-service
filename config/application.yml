@@ -1,9 +1,8 @@
 
 spring:
   datasource:
-    url: jdbc:oracle:thin:@192.168.1.230:1521:sunright
-    username: sys as sysdba
+    url: jdbc:oracle:thin:@//192.168.1.230:1521/inventory_pdb.example.com
+    username: inventoryuser
     password: Weblogic1
   flyway:
-    enabled: false
-
+    enabled: true
