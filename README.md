@@ -1,6 +1,9 @@
 **Inventory Service**
 
-Some docker command examples:
+Build jar command:
+> ./gradlew clean build
+
+Some docker command:
 
 ***Docker build***
 > docker build -t sunright/inventory-service .
