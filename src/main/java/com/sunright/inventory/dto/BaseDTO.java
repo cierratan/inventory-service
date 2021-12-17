@@ -10,4 +10,5 @@ import lombok.Setter;
 public class BaseDTO {
     private String companyCode;
     private Integer plantNo;
+    private Long version;
 }
