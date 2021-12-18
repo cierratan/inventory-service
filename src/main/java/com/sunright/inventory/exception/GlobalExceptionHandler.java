@@ -1,6 +1,7 @@
 package com.sunright.inventory.exception;
 
 import org.hibernate.StaleObjectStateException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -16,8 +17,14 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(StaleObjectStateException.class)
     @ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
-    public ErrorMessage staleObjectException(StaleObjectStateException ex) {
+    public ErrorMessage staleObjectException() {
         return ErrorMessage.builder().message("Record has been updated by another user. Please retry.").build();
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    @ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorMessage uniqueRecordException() {
+        return ErrorMessage.builder().message("Duplicate record is detected. Please retry.").build();
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
