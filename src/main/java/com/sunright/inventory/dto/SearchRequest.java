@@ -13,6 +13,6 @@ import java.util.List;
 public class SearchRequest {
     private List<Filter> filters;
 
-    private int offset;
+    private int page;
     private int limit = 20;
 }

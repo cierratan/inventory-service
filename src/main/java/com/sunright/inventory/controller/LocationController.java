@@ -1,5 +1,7 @@
 package com.sunright.inventory.controller;
 
+import com.sunright.inventory.dto.SearchRequest;
+import com.sunright.inventory.dto.SearchResult;
 import com.sunright.inventory.dto.lov.LocationDTO;
 import com.sunright.inventory.service.LocationService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,5 +43,10 @@ public class LocationController {
     public ResponseEntity<LocationDTO> get(@PathVariable String companyCode, @PathVariable int plantNo,
                                             @PathVariable String loc) {
         return new ResponseEntity<>(locationService.findBy(companyCode, plantNo, loc), HttpStatus.OK);
+    }
+
+    @PostMapping("search")
+    public ResponseEntity<SearchResult<LocationDTO>> search(@RequestBody SearchRequest searchRequest) {
+        return new ResponseEntity<>(locationService.searchBy(searchRequest), HttpStatus.OK);
     }
 }

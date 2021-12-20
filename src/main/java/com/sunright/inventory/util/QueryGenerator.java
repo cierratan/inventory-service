@@ -28,6 +28,8 @@ public class QueryGenerator {
             return Integer.valueOf(value);
         } else if(Enum.class.isAssignableFrom(fieldType)) {
             return Enum.valueOf(fieldType, value);
+        } else if(fieldType.isAssignableFrom(String.class)) {
+            return value;
         }
 
         return null;
