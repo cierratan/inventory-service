@@ -15,6 +15,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import java.util.stream.Collectors;
 
@@ -58,12 +59,17 @@ public class LocationServiceImpl implements LocationService {
     public SearchResult<LocationDTO> searchBy(SearchRequest searchRequest) {
         Pageable pageable = PageRequest.of(searchRequest.getPage(), searchRequest.getLimit());
 
-        Specification<Location> specs = where(queryGenerator.createSpecification(searchRequest.getFilters().remove(0)));
-        for (Filter filter : searchRequest.getFilters()) {
-            specs = specs.and(queryGenerator.createSpecification(filter));
-        }
+        Page<Location> pgLocations;
 
-        Page<Location> pgLocations = locationRepository.findAll(specs, pageable);
+        if(!CollectionUtils.isEmpty(searchRequest.getFilters())) {
+            Specification<Location> specs = where(queryGenerator.createSpecification(searchRequest.getFilters().remove(0)));
+            for (Filter filter : searchRequest.getFilters()) {
+                specs = specs.and(queryGenerator.createSpecification(filter));
+            }
+            pgLocations = locationRepository.findAll(specs, pageable);
+        } else {
+            pgLocations = locationRepository.findAll(pageable);
+        }
 
         SearchResult<LocationDTO> locations = new SearchResult<>();
         locations.setTotalRows(pgLocations.getTotalElements());
