@@ -11,4 +11,5 @@ import lombok.Setter;
 @Builder
 public class ErrorMessage {
     private String message;
+    private String exception;
 }

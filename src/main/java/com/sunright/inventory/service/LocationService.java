@@ -5,7 +5,9 @@ import com.sunright.inventory.dto.SearchResult;
 import com.sunright.inventory.dto.lov.LocationDTO;
 
 public interface LocationService {
-    LocationDTO saveLocation(LocationDTO input);
-    LocationDTO findBy(String companyCode, int plantNo, String loc);
+    LocationDTO createLocation(LocationDTO input);
+    LocationDTO editLocation(LocationDTO input);
+    LocationDTO findBy(String loc);
+    void deleteLocation(String loc);
     SearchResult<LocationDTO> searchBy(SearchRequest searchRequest);
 }

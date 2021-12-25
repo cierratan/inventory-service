@@ -3,9 +3,13 @@ package com.sunright.inventory.service;
 import com.sunright.inventory.dto.Filter;
 import com.sunright.inventory.dto.SearchRequest;
 import com.sunright.inventory.dto.SearchResult;
+import com.sunright.inventory.dto.UserProfile;
 import com.sunright.inventory.dto.lov.LocationDTO;
+import com.sunright.inventory.entity.Status;
 import com.sunright.inventory.entity.lov.Location;
 import com.sunright.inventory.entity.lov.LocationId;
+import com.sunright.inventory.exception.NotFoundException;
+import com.sunright.inventory.interceptor.UserProfileContext;
 import com.sunright.inventory.repository.lov.LocationRepository;
 import com.sunright.inventory.util.QueryGenerator;
 import org.springframework.beans.BeanUtils;
@@ -17,6 +21,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
+import java.time.ZonedDateTime;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static org.springframework.data.jpa.domain.Specification.where;
@@ -31,10 +37,17 @@ public class LocationServiceImpl implements LocationService {
     private LocationRepository locationRepository;
 
     @Override
-    public LocationDTO saveLocation(LocationDTO input) {
+    public LocationDTO createLocation(LocationDTO input) {
+        UserProfile userProfile = UserProfileContext.getUserProfile();
+
         Location location = new Location();
         BeanUtils.copyProperties(input, location);
-        location.setLocationId(populateLocationId(input.getCompanyCode(), input.getPlantNo(), input.getLoc()));
+        location.setId(populateLocationId(input.getLoc()));
+        location.setStatus(Status.ACTIVE);
+        location.setCreatedBy(userProfile.getUsername());
+        location.setCreatedAt(ZonedDateTime.now());
+        location.setUpdatedBy(userProfile.getUsername());
+        location.setUpdatedAt(ZonedDateTime.now());
 
         Location saved = locationRepository.save(location);
 
@@ -43,16 +56,48 @@ public class LocationServiceImpl implements LocationService {
     }
 
     @Override
-    public LocationDTO findBy(String companyCode, int plantNo, String loc) {
-        LocationId locationId = populateLocationId(companyCode, plantNo, loc);
+    public LocationDTO editLocation(LocationDTO input) {
+        LocationId locationId = populateLocationId(input.getLoc());
 
-        Location location = locationRepository.findById(locationId).get();
+        Location found = checkIfRecordExist(locationId);
+
+        Location location = new Location();
+        BeanUtils.copyProperties(input, location, "status");
+        location.setId(populateLocationId(input.getLoc()));
+        location.setStatus(found.getStatus());
+        location.setUpdatedBy(UserProfileContext.getUserProfile().getUsername());
+        location.setUpdatedAt(ZonedDateTime.now());
+
+        Location saved = locationRepository.save(location);
+
+        input.setVersion(saved.getVersion());
+        return input;
+    }
+
+    @Override
+    public LocationDTO findBy(String loc) {
+        LocationId locationId = populateLocationId(loc);
+
+        Location location = checkIfRecordExist(locationId);
 
         LocationDTO locationDTO = new LocationDTO();
         BeanUtils.copyProperties(location, locationDTO);
-        BeanUtils.copyProperties(location.getLocationId(), locationDTO);
+        BeanUtils.copyProperties(location.getId(), locationDTO);
 
         return locationDTO;
+    }
+
+    @Override
+    public void deleteLocation(String loc) {
+        LocationId locationId = populateLocationId(loc);
+
+        Location location = checkIfRecordExist(locationId);
+
+        location.setStatus(Status.DELETED);
+        location.setUpdatedBy(UserProfileContext.getUserProfile().getUsername());
+        location.setUpdatedAt(ZonedDateTime.now());
+
+        locationRepository.save(location);
     }
 
     @Override
@@ -62,9 +107,11 @@ public class LocationServiceImpl implements LocationService {
         Page<Location> pgLocations;
 
         if(!CollectionUtils.isEmpty(searchRequest.getFilters())) {
-            Specification<Location> specs = where(queryGenerator.createSpecification(searchRequest.getFilters().remove(0)));
+            Specification<Location> specs = where(queryGenerator.createDefaultSpecification());
             for (Filter filter : searchRequest.getFilters()) {
                 specs = specs.and(queryGenerator.createSpecification(filter));
+
+
             }
             pgLocations = locationRepository.findAll(specs, pageable);
         } else {
@@ -78,7 +125,7 @@ public class LocationServiceImpl implements LocationService {
         locations.setCurrentPageSize(pgLocations.getNumberOfElements());
         locations.setRows(pgLocations.getContent().stream().map(location -> {
             LocationDTO locationDTO = new LocationDTO();
-            BeanUtils.copyProperties(location.getLocationId(), locationDTO);
+            BeanUtils.copyProperties(location.getId(), locationDTO);
             BeanUtils.copyProperties(location, locationDTO);
             return locationDTO;
         }).collect(Collectors.toList()));
@@ -86,11 +133,22 @@ public class LocationServiceImpl implements LocationService {
         return locations;
     }
 
-    private LocationId populateLocationId(String companyCode, Integer plantNo, String loc) {
+    private LocationId populateLocationId(String loc) {
+        UserProfile userProfile = UserProfileContext.getUserProfile();
+
         LocationId locationId = new LocationId();
-        locationId.setCompanyCode(companyCode);
-        locationId.setPlantNo(plantNo);
+        locationId.setCompanyCode(userProfile.getCompanyCode());
+        locationId.setPlantNo(userProfile.getPlantNo());
         locationId.setLoc(loc);
         return locationId;
+    }
+
+    private Location checkIfRecordExist(LocationId locationId) {
+        Optional<Location> optionalLocation = locationRepository.findById(locationId);
+
+        if (optionalLocation.isEmpty()) {
+            throw new NotFoundException("Record is not found");
+        }
+        return optionalLocation.get();
     }
 }

@@ -12,6 +12,6 @@ import javax.persistence.Embeddable;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class ItemId extends BaseEntity {
+public class ItemId extends BaseIdEntity {
     private String itemNo;
 }
