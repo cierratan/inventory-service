@@ -20,7 +20,7 @@ public class GrnDTO extends BaseDTO {
     private String currencyCode;
     private BigDecimal currencyRate;
     private Date recdDate;
-    private String status;
+//    private String status;
     private String entryUser;
     private Date entryDate;
     private Date closedDate;

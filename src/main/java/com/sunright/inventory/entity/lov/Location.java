@@ -1,5 +1,6 @@
 package com.sunright.inventory.entity.lov;
 
+import com.sunright.inventory.entity.BaseEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -10,9 +11,9 @@ import javax.persistence.Version;
 @Entity(name = "LOC")
 @Data
 @NoArgsConstructor
-public class Location {
+public class Location extends BaseEntity {
     @EmbeddedId
-    private LocationId locationId;
+    private LocationId id;
 
     @Version
     private Long version;

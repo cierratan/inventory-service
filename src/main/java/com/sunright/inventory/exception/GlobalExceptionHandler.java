@@ -23,8 +23,16 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     @ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
-    public ErrorMessage uniqueRecordException() {
-        return ErrorMessage.builder().message("Duplicate record is detected. Please retry.").build();
+    public ErrorMessage dataIntegrityViolation(DataIntegrityViolationException ex) {
+        return ErrorMessage.builder().message("Data exception has occured. Please rectify and rety.")
+                .exception(ex.getMessage())
+                .build();
+    }
+
+    @ExceptionHandler(NotFoundException.class)
+    @ResponseStatus(value = HttpStatus.NOT_FOUND)
+    public ErrorMessage notFoundException(NotFoundException ex) {
+        return ErrorMessage.builder().message(ex.getMessage()).build();
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

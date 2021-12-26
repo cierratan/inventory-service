@@ -12,37 +12,33 @@ import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
 
 @RestController
-@RequestMapping("companies/{companyCode}/plants/{plantNo}/locations")
+@RequestMapping("locations")
 public class LocationController {
 
     @Autowired
     private LocationService locationService;
 
     @PostMapping
-    public ResponseEntity<LocationDTO> create(@Valid @RequestBody LocationDTO location,
-                                              @PathVariable String companyCode, @PathVariable int plantNo) {
-
-        location.setCompanyCode(companyCode);
-        location.setPlantNo(plantNo);
-
-        return new ResponseEntity<>(locationService.saveLocation(location), HttpStatus.OK);
+    public ResponseEntity<LocationDTO> create(@Valid @RequestBody LocationDTO location) {
+        return new ResponseEntity<>(locationService.createLocation(location), HttpStatus.OK);
     }
 
     @PutMapping("{loc}")
     public ResponseEntity<LocationDTO> edit(@RequestBody LocationDTO location,
-                                            @PathVariable String companyCode, @PathVariable int plantNo,
                                             @PathVariable String loc) {
-        location.setCompanyCode(companyCode);
-        location.setPlantNo(plantNo);
         location.setLoc(loc);
-
-        return new ResponseEntity<>(locationService.saveLocation(location), HttpStatus.OK);
+        return new ResponseEntity<>(locationService.editLocation(location), HttpStatus.OK);
     }
 
     @GetMapping("{loc}")
-    public ResponseEntity<LocationDTO> get(@PathVariable String companyCode, @PathVariable int plantNo,
-                                            @PathVariable String loc) {
-        return new ResponseEntity<>(locationService.findBy(companyCode, plantNo, loc), HttpStatus.OK);
+    public ResponseEntity<LocationDTO> get(@PathVariable String loc) {
+        return new ResponseEntity<>(locationService.findBy(loc), HttpStatus.OK);
+    }
+
+    @DeleteMapping("{loc}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable String loc) {
+        locationService.deleteLocation(loc);
     }
 
     @PostMapping("search")

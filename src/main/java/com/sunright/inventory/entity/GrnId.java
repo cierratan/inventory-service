@@ -13,7 +13,7 @@ import javax.persistence.Embeddable;
 @AllArgsConstructor
 @NoArgsConstructor
 //@EqualsAndHashCode(callSuper = true)
-public class GrnId extends BaseEntity {
+public class GrnId extends BaseIdEntity {
 
     private String grnNo;
     private String subType;
