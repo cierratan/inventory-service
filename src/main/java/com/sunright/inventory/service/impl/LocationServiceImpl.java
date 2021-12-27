@@ -1,4 +1,4 @@
-package com.sunright.inventory.service;
+package com.sunright.inventory.service.impl;
 
 import com.sunright.inventory.dto.Filter;
 import com.sunright.inventory.dto.SearchRequest;
@@ -11,6 +11,7 @@ import com.sunright.inventory.entity.lov.LocationId;
 import com.sunright.inventory.exception.NotFoundException;
 import com.sunright.inventory.interceptor.UserProfileContext;
 import com.sunright.inventory.repository.lov.LocationRepository;
+import com.sunright.inventory.service.LocationService;
 import com.sunright.inventory.util.QueryGenerator;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -110,8 +111,6 @@ public class LocationServiceImpl implements LocationService {
             Specification<Location> specs = where(queryGenerator.createDefaultSpecification());
             for (Filter filter : searchRequest.getFilters()) {
                 specs = specs.and(queryGenerator.createSpecification(filter));
-
-
             }
             pgLocations = locationRepository.findAll(specs, pageable);
         } else {
