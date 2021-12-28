@@ -3,18 +3,19 @@ package com.sunright.inventory.entity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.Column;
-import javax.persistence.EmbeddedId;
-import javax.persistence.Entity;
+import javax.persistence.*;
 import java.math.BigDecimal;
 import java.util.Date;
 
-@Entity
+@Entity(name = "ITEM")
 @Data
 @NoArgsConstructor
-public class Item {
+public class Item extends BaseEntity {
     @EmbeddedId
-    private ItemId itemId;
+    private ItemId id;
+
+    @Version
+    private Long version;
 
     private String loc;
     private String partNo;
@@ -87,8 +88,6 @@ public class Item {
     @Column(name = "YTD_RECEIPT", precision = 16, scale = 4)
     private BigDecimal ytdReceipt;
 
-    private String obsoleteCode;
-
     @Column(name = "OBSOLETE_QTY", precision = 16, scale = 4)
     private BigDecimal obsoleteQty;
 
@@ -158,7 +157,9 @@ public class Item {
     private String countTag;
     private String countUpdInd;
     private String dimension;
-    private String rohsStatus;
+
+    @Column(name = "ROHS_STATUS")
+    private String strRohsStatus;
 
     @Column(name = "RPC_RESV", precision = 16, scale = 4)
     private BigDecimal rpcResv;
@@ -167,14 +168,17 @@ public class Item {
     private BigDecimal mrvResv;
 
     private String mslCode;
-    private String openClose;
+
+    @Enumerated(EnumType.STRING)
+    private Closure openClose;
     private Date closeDate;
+
+    @Enumerated(EnumType.STRING)
+    private Obsolete obsoleteCode;
     private String obsoleteItem;
     private Date obsoleteDate;
+
     private String refUrl;
     private String requestor;
     private String storageShelf;
-    private Date lastModifiedDate;
-    private String entryUser;
-    private Date entryDate;
 }
