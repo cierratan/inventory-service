@@ -1,9 +1,10 @@
-package com.sunright.inventory.service;
+package com.sunright.inventory.service.impl;
 
 import com.sunright.inventory.dto.ItemDTO;
 import com.sunright.inventory.entity.Item;
 import com.sunright.inventory.entity.ItemId;
 import com.sunright.inventory.repository.ItemRepository;
+import com.sunright.inventory.service.ItemService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
