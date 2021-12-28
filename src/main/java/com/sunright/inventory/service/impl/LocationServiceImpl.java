@@ -64,7 +64,7 @@ public class LocationServiceImpl implements LocationService {
 
         Location location = new Location();
         BeanUtils.copyProperties(input, location, "status");
-        location.setId(populateLocationId(input.getLoc()));
+        location.setId(locationId);
         location.setStatus(found.getStatus());
         location.setUpdatedBy(UserProfileContext.getUserProfile().getUsername());
         location.setUpdatedAt(ZonedDateTime.now());
