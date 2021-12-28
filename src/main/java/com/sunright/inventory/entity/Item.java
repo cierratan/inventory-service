@@ -1,6 +1,7 @@
 package com.sunright.inventory.entity;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
@@ -9,6 +10,7 @@ import java.util.Date;
 
 @Entity(name = "ITEM")
 @Data
+@EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 public class Item extends BaseEntity {
     @EmbeddedId

@@ -2,6 +2,7 @@ package com.sunright.inventory.entity.lov;
 
 import com.sunright.inventory.entity.BaseEntity;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.EmbeddedId;
@@ -11,6 +12,7 @@ import javax.persistence.Version;
 @Entity(name = "DEFAULT_CODE")
 @Data
 @NoArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 public class DefaultCode extends BaseEntity {
 
     @EmbeddedId

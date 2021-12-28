@@ -2,6 +2,7 @@ package com.sunright.inventory.entity.lov;
 
 import com.sunright.inventory.entity.BaseEntity;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.EmbeddedId;
@@ -10,6 +11,7 @@ import javax.persistence.Version;
 
 @Entity(name = "LOC")
 @Data
+@EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 public class Location extends BaseEntity {
     @EmbeddedId
