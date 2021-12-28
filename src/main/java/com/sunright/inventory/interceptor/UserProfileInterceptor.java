@@ -17,6 +17,10 @@ public class UserProfileInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        if("OPTIONS".equals(request.getMethod())) {
+            return true;
+        }
+
         String username = request.getHeader(USERNAME_HEADER);
         String companyCode = request.getHeader(COMPANY_CODE_HEADER);
         String plantNo = request.getHeader(PLANT_NO_HEADER);
