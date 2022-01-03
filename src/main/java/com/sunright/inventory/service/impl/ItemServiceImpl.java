@@ -1,11 +1,10 @@
 package com.sunright.inventory.service.impl;
 
 import com.sunright.inventory.dto.*;
-import com.sunright.inventory.entity.Item;
-import com.sunright.inventory.entity.ItemId;
-import com.sunright.inventory.entity.Status;
+import com.sunright.inventory.entity.*;
 import com.sunright.inventory.exception.NotFoundException;
 import com.sunright.inventory.interceptor.UserProfileContext;
+import com.sunright.inventory.repository.ItemLocRepository;
 import com.sunright.inventory.repository.ItemRepository;
 import com.sunright.inventory.service.ItemService;
 import com.sunright.inventory.util.QueryGenerator;
@@ -36,6 +35,9 @@ public class ItemServiceImpl implements ItemService {
     private ItemRepository itemRepository;
 
     @Autowired
+    private ItemLocRepository itemLocRepository;
+
+    @Autowired
     private QueryGenerator queryGenerator;
 
     @Override
@@ -63,7 +65,27 @@ public class ItemServiceImpl implements ItemService {
         prePopulateBeforeSaving(item);
 
         Item saved = itemRepository.save(item);
-        postSaving(input, userProfile);
+        updateAlternate(input, userProfile);
+
+        // insert itemloc
+        ItemLocId itemLocId = new ItemLocId();
+        BeanUtils.copyProperties(saved.getId(), itemLocId);
+
+        ItemLoc itemLoc = new ItemLoc();
+        itemLoc.setId(itemLocId);
+        itemLoc.setCategoryCode(item.getCategoryCode());
+        itemLoc.setCategorySubCode(item.getCategorySubCode());
+        itemLoc.setQoh(item.getQoh());
+        itemLoc.setLoc(item.getLoc());
+        itemLoc.setPartNo(item.getPartNo());
+        itemLoc.setDescription(item.getDescription());
+        itemLoc.setStatus(Status.ACTIVE);
+        itemLoc.setCreatedBy(userProfile.getUsername());
+        itemLoc.setCreatedAt(ZonedDateTime.now());
+        itemLoc.setUpdatedBy(userProfile.getUsername());
+        itemLoc.setUpdatedAt(ZonedDateTime.now());
+
+        itemLocRepository.save(itemLoc);
 
         populateAfterSaving(input, item, saved);
 
@@ -71,6 +93,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
+    @Transactional
     public ItemDTO editItem(ItemDTO input) {
         ItemId itemId = populateItemId(input.getItemNo());
 
@@ -86,7 +109,19 @@ public class ItemServiceImpl implements ItemService {
         prePopulateBeforeSaving(item);
 
         Item saved = itemRepository.save(item);
-        postSaving(input, UserProfileContext.getUserProfile());
+        updateAlternate(input, UserProfileContext.getUserProfile());
+
+        // update item loc
+        ItemLocId itemLocId = new ItemLocId();
+        BeanUtils.copyProperties(saved.getId(), itemLocId);
+
+        ItemLoc itemLoc = itemLocRepository.getById(itemLocId);
+        itemLoc.setPartNo(item.getPartNo());
+        itemLoc.setDescription(item.getDescription());
+        itemLoc.setUpdatedBy(UserProfileContext.getUserProfile().getUsername());
+        itemLoc.setUpdatedAt(ZonedDateTime.now());
+
+        itemLocRepository.save(itemLoc);
 
         populateAfterSaving(input, item, saved);
 
@@ -172,7 +207,7 @@ public class ItemServiceImpl implements ItemService {
         return itemId;
     }
 
-    private void postSaving(ItemDTO input, UserProfile userProfile) {
+    private void updateAlternate(ItemDTO input, UserProfile userProfile) {
         if(StringUtils.isNotBlank(input.getObsoleteItem())) {
             itemRepository.updateAlternate(
                     input.getItemNo(),

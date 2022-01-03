@@ -2,14 +2,14 @@ package com.sunright.inventory.repository;
 
 import com.sunright.inventory.entity.Item;
 import com.sunright.inventory.entity.ItemId;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface ItemRepository extends PagingAndSortingRepository<Item, ItemId>, JpaSpecificationExecutor<Item> {
+public interface ItemRepository extends JpaRepository<Item, ItemId>, JpaSpecificationExecutor<Item> {
 
     @Modifying
     @Query("UPDATE ITEM i set i.alternate = :itemNo " +

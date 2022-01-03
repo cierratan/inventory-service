@@ -3,15 +3,15 @@ package com.sunright.inventory.repository.lov;
 import com.sunright.inventory.entity.lov.DefaultCodeDetail;
 import com.sunright.inventory.entity.lov.DefaultCodeDetailId;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
 @Repository
-public interface DefaultCodeDetailRepository extends PagingAndSortingRepository<DefaultCodeDetail, DefaultCodeDetailId>, JpaSpecificationExecutor<DefaultCodeDetail> {
+public interface DefaultCodeDetailRepository extends JpaRepository<DefaultCodeDetail, DefaultCodeDetailId>, JpaSpecificationExecutor<DefaultCodeDetail> {
 
     @Query("SELECT dtl " +
             "FROM DEFAULT_CODE_DET dtl join DEFAULT_CODE header on header.id.companyCode = dtl.id.companyCode and" +
