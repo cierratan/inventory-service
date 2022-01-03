@@ -131,17 +131,15 @@ public class ItemServiceImpl implements ItemService {
     public SearchResult<ItemDTO> searchBy(SearchRequest searchRequest) {
         Pageable pageable = PageRequest.of(searchRequest.getPage(), searchRequest.getLimit());
 
-        Page<Item> pgItems;
+        Specification<Item> specs = where(queryGenerator.createDefaultSpecification());
 
         if(!CollectionUtils.isEmpty(searchRequest.getFilters())) {
-            Specification<Item> specs = where(queryGenerator.createDefaultSpecification());
             for (Filter filter : searchRequest.getFilters()) {
                 specs = specs.and(queryGenerator.createSpecification(filter));
             }
-            pgItems = itemRepository.findAll(specs, pageable);
-        } else {
-            pgItems = itemRepository.findAll(pageable);
         }
+
+        Page<Item> pgItems = itemRepository.findAll(specs, pageable);
 
         SearchResult<ItemDTO> items = new SearchResult<>();
         items.setTotalRows(pgItems.getTotalElements());

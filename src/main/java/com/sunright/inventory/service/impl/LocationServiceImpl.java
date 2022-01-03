@@ -105,17 +105,15 @@ public class LocationServiceImpl implements LocationService {
     public SearchResult<LocationDTO> searchBy(SearchRequest searchRequest) {
         Pageable pageable = PageRequest.of(searchRequest.getPage(), searchRequest.getLimit());
 
-        Page<Location> pgLocations;
+        Specification<Location> specs = where(queryGenerator.createDefaultSpecification());
 
         if(!CollectionUtils.isEmpty(searchRequest.getFilters())) {
-            Specification<Location> specs = where(queryGenerator.createDefaultSpecification());
             for (Filter filter : searchRequest.getFilters()) {
                 specs = specs.and(queryGenerator.createSpecification(filter));
             }
-            pgLocations = locationRepository.findAll(specs, pageable);
-        } else {
-            pgLocations = locationRepository.findAll(pageable);
         }
+
+        Page<Location> pgLocations = locationRepository.findAll(specs, pageable);
 
         SearchResult<LocationDTO> locations = new SearchResult<>();
         locations.setTotalRows(pgLocations.getTotalElements());
