@@ -1,4 +1,4 @@
-package com.sunright.inventory.entity;
+package com.sunright.inventory.entity.uom;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -6,12 +6,14 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.Embeddable;
+import java.io.Serializable;
 
 @Embeddable
 @Setter
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class ItemId extends BaseIdEntity {
-    private String itemNo;
+public class UOMId implements Serializable {
+    private String uomFrom;
+    private String uomTo;
 }

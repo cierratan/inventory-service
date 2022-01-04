@@ -5,7 +5,7 @@ import com.sunright.inventory.dto.SearchRequest;
 import com.sunright.inventory.dto.SearchResult;
 import com.sunright.inventory.dto.UserProfile;
 import com.sunright.inventory.dto.lov.LocationDTO;
-import com.sunright.inventory.entity.Status;
+import com.sunright.inventory.entity.enums.Status;
 import com.sunright.inventory.entity.lov.Location;
 import com.sunright.inventory.entity.lov.LocationId;
 import com.sunright.inventory.exception.NotFoundException;

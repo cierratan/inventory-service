@@ -3,13 +3,14 @@ package com.sunright.inventory.repository.lov;
 import com.sunright.inventory.entity.lov.*;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
 @Repository
-public interface ItemCatRepository extends JpaRepository<ItemCat, ItemCatId> {
+public interface ItemCatRepository extends JpaRepository<ItemCat, ItemCatId>, JpaSpecificationExecutor<ItemCat> {
     @Query("SELECT DISTINCT item.id.categoryCode as categoryCode, CONCAT(item.id.categoryCode, '-', item.description) as description " +
             "FROM ITEMCAT item join CODE_MAP map on map.id.companyCode = item.id.companyCode " +
             "and map.id.plantNo = item.id.plantNo and map.id.mapTo = item.id.categoryGroup " +

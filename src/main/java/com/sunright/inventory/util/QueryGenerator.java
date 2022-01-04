@@ -1,7 +1,7 @@
 package com.sunright.inventory.util;
 
 import com.sunright.inventory.dto.Filter;
-import com.sunright.inventory.entity.Status;
+import com.sunright.inventory.entity.enums.Status;
 import com.sunright.inventory.interceptor.UserProfileContext;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;

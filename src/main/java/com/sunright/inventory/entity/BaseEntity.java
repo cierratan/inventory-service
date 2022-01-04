@@ -1,5 +1,6 @@
 package com.sunright.inventory.entity;
 
+import com.sunright.inventory.entity.enums.Status;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 

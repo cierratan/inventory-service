@@ -1,7 +1,7 @@
 package com.sunright.inventory.repository;
 
-import com.sunright.inventory.entity.Item;
-import com.sunright.inventory.entity.ItemId;
+import com.sunright.inventory.entity.item.Item;
+import com.sunright.inventory.entity.item.ItemId;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;

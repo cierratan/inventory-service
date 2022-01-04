@@ -1,7 +1,7 @@
 package com.sunright.inventory.repository;
 
-import com.sunright.inventory.entity.GrnDet;
-import com.sunright.inventory.entity.GrnId;
+import com.sunright.inventory.entity.grn.GrnDet;
+import com.sunright.inventory.entity.grn.GrnId;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;

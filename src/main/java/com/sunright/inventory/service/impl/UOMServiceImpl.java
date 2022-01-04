@@ -1,9 +1,9 @@
 package com.sunright.inventory.service.impl;
 
 import com.sunright.inventory.dto.*;
-import com.sunright.inventory.entity.Status;
-import com.sunright.inventory.entity.UOM;
-import com.sunright.inventory.entity.UOMId;
+import com.sunright.inventory.entity.enums.Status;
+import com.sunright.inventory.entity.uom.UOM;
+import com.sunright.inventory.entity.uom.UOMId;
 import com.sunright.inventory.exception.NotFoundException;
 import com.sunright.inventory.interceptor.UserProfileContext;
 import com.sunright.inventory.repository.UOMRepository;

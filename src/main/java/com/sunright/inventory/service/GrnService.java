@@ -1,7 +1,7 @@
 package com.sunright.inventory.service;
 
 import com.sunright.inventory.dto.GrnDTO;
-import com.sunright.inventory.entity.Grn;
+import com.sunright.inventory.entity.grn.Grn;
 
 import java.util.List;
 

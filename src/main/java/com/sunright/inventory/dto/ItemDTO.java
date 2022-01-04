@@ -2,8 +2,8 @@ package com.sunright.inventory.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.sunright.inventory.entity.Closure;
-import com.sunright.inventory.entity.Obsolete;
+import com.sunright.inventory.entity.enums.Closure;
+import com.sunright.inventory.entity.enums.Obsolete;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;

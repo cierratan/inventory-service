@@ -1,5 +1,6 @@
-package com.sunright.inventory.entity;
+package com.sunright.inventory.entity.item;
 
+import com.sunright.inventory.entity.BaseIdEntity;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,6 +13,6 @@ import javax.persistence.Embeddable;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class ItemLocId extends BaseIdEntity {
+public class ItemId extends BaseIdEntity {
     private String itemNo;
 }
