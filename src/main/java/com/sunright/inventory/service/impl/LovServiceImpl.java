@@ -6,6 +6,7 @@ import com.sunright.inventory.entity.lov.CodeDesc;
 import com.sunright.inventory.entity.lov.DefaultCodeDetail;
 import com.sunright.inventory.entity.lov.ItemCatProjection;
 import com.sunright.inventory.interceptor.UserProfileContext;
+import com.sunright.inventory.repository.UOMRepository;
 import com.sunright.inventory.repository.lov.CountryRepository;
 import com.sunright.inventory.repository.lov.DefaultCodeDetailRepository;
 import com.sunright.inventory.repository.lov.ItemCatRepository;
@@ -33,6 +34,9 @@ public class LovServiceImpl implements LovService {
 
     @Autowired
     private ItemCatRepository itemCatRepository;
+
+    @Autowired
+    private UOMRepository uomRepository;
 
     @Autowired
     private QueryGenerator queryGenerator;
