@@ -1,6 +1,6 @@
 package com.sunright.inventory.entity.grn;
 
-import lombok.AllArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -11,10 +11,13 @@ import java.util.Date;
 @Entity(name = "GRNDET")
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 public class GrnDet {
 
-    @EmbeddedId
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Embedded
     private GrnId grnId;
 
     private Integer seqNo;
@@ -53,12 +56,8 @@ public class GrnDet {
 
     private String remarks;
 
-    //@JsonBackReference
+    @JsonBackReference(value = "grnDetId")
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinColumns({@JoinColumn(name = "companyCode", insertable = false, updatable = false),
-            @JoinColumn(name = "plantNo", insertable = false, updatable = false),
-            @JoinColumn(name = "grnNo", insertable = false, updatable = false),
-            @JoinColumn(name = "subType", insertable = false, updatable = false)
-    })
+    @JoinColumn(name = "GRN_ID")
     private Grn grn;
 }
