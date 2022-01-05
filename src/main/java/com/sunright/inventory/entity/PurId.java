@@ -1,6 +1,5 @@
-package com.sunright.inventory.entity.grn;
+package com.sunright.inventory.entity;
 
-import com.sunright.inventory.entity.BaseIdEntity;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,8 +12,7 @@ import javax.persistence.Embeddable;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class GrnId extends BaseIdEntity {
+public class PurId extends BaseIdEntity {
 
-    private String grnNo;
-    private String subType;
+    private String poNo;
 }

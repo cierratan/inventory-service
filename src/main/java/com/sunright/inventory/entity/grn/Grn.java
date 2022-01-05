@@ -1,7 +1,9 @@
 package com.sunright.inventory.entity.grn;
 
-import lombok.AllArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.sunright.inventory.entity.BaseEntity;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
@@ -11,12 +13,19 @@ import java.util.List;
 
 @Entity(name = "GRN")
 @Data
+@EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
-@AllArgsConstructor
-public class Grn {
+public class Grn extends BaseEntity {
 
-    @EmbeddedId
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Embedded
     private GrnId grnId;
+
+    @Version
+    private Long version;
 
     private String poNo;
     private String doNo;
@@ -27,7 +36,10 @@ public class Grn {
     private BigDecimal currencyRate;
 
     private Date recdDate;
-    private String status;
+
+    @Column(name = "STATUS_1", insertable = false, updatable = false)
+    private String statuz;
+
     private String entryUser;
     private Date entryDate;
     private Date closedDate;
@@ -38,7 +50,7 @@ public class Grn {
     private String reqSubmitNo;
     private Date reqSubmitDate;
 
-    //@JsonManagedReference
+    @JsonManagedReference(value = "grnDetId")
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "grn", cascade = CascadeType.ALL)
     private List<GrnDet> grnDetList;
 }

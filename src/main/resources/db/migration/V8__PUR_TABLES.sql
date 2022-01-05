@@ -1,0 +1,270 @@
+------------------ PUR TABLE ------------------
+
+CREATE TABLE PUR
+(
+    "COMPANY_CODE"         VARCHAR2(3 BYTE),
+    "PLANT_NO"             NUMBER(3, 0),
+    "PO_NO"                VARCHAR2(15 BYTE),
+    "DOCM_TYPE"            VARCHAR2(10 BYTE),
+    "PO_TYPE"              VARCHAR2(1 BYTE),
+    "PO_CLASS"             VARCHAR2(1 BYTE),
+    "SUPPLIER_CODE"        VARCHAR2(10 BYTE),
+    "ORI_SUPPLIER_CODE"    VARCHAR2(10 BYTE),
+    "ORDER_DATE"           DATE,
+    "RLSE_DATE"            DATE,
+    "QUOTATION_NO"         VARCHAR2(30 BYTE),
+    "PR_NO"                VARCHAR2(15 BYTE),
+    "SO_NO"                VARCHAR2(15 BYTE),
+    "DO_NO"                VARCHAR2(15 BYTE),
+    "OI_NO"                VARCHAR2(15 BYTE),
+    "COO_NO"               VARCHAR2(15 BYTE),
+    "BUYER"                VARCHAR2(20 BYTE),
+    "SHIPTO_CUSTOMER_CODE" VARCHAR2(15 BYTE),
+    "SHIPTO_NAME"          VARCHAR2(45 BYTE),
+    "SHIPTO_ADDRESS1"      VARCHAR2(60 BYTE),
+    "SHIPTO_ADDRESS2"      VARCHAR2(60 BYTE),
+    "SHIPTO_ADDRESS3"      VARCHAR2(60 BYTE),
+    "SHIPTO_ADDRESS4"      VARCHAR2(60 BYTE),
+    "SHIPTO_PCODE"         VARCHAR2(15 BYTE),
+    "SHIPTO_CONTACT"       VARCHAR2(30 BYTE),
+    "SHIPTO_TEL_NO"        VARCHAR2(30 BYTE),
+    "SHIPTO_FAX_NO"        VARCHAR2(30 BYTE),
+    "BILLTO_COMP_CODE"     VARCHAR2(3 BYTE),
+    "BILLTO_PLANT_NO"      NUMBER(3, 0),
+    "BILLTO_CONTACT"       VARCHAR2(30 BYTE),
+    "BILLTO_TEL_NO"        VARCHAR2(30 BYTE),
+    "BILLTO_FAX_NO"        VARCHAR2(30 BYTE),
+    "CONTACT"              VARCHAR2(30 BYTE),
+    "DIV_CODE"             VARCHAR2(2 BYTE),
+    "DEPT_CODE"            VARCHAR2(3 BYTE),
+    "PAYMENT_IND"          VARCHAR2(1 BYTE),
+    "PAYMENT_TERM"         NUMBER(3, 0),
+    "PAYMENT_DESC"         VARCHAR2(30 BYTE),
+    "SHIPPING_TERM"        VARCHAR2(30 BYTE),
+    "PO_IND"               VARCHAR2(3 BYTE),
+    "PRINT_IND"            VARCHAR2(1 BYTE),
+    "OPEN_CLOSE"           VARCHAR2(1 BYTE),
+    "CLOSE_TYPE"           VARCHAR2(1 BYTE),
+    "CLOSE_DATE"           DATE,
+    "FORWARDER"            VARCHAR2(30 BYTE),
+    "DELIVERY_MODE"        VARCHAR2(30 BYTE),
+    "CURRENCY_CODE"        VARCHAR2(3 BYTE),
+    "CURRENCY_RATE"        NUMBER(10, 6),
+    "CARRIAGE"             NUMBER(16, 4),
+    "SERVICE"              NUMBER(16, 4),
+    "INSURANCE"            NUMBER(16, 4),
+    "MISC_CHARGES"         NUMBER(16, 4),
+    "DISCOUNT_AMOUNT"      NUMBER(16, 4),
+    "DISCOUNT_PERCENT"     NUMBER(8, 4),
+    "DISCOUNT_DESC"        VARCHAR2(60 BYTE),
+    "GST_PCT"              NUMBER(8, 4),
+    "GST_AMT"              NUMBER(16, 4),
+    "PRINT_REV"            VARCHAR2(5 BYTE),
+    "APPROVER"             VARCHAR2(30 BYTE),
+    "APPROVAL_DATE"        DATE,
+    "FINAL_APPROVER"       VARCHAR2(30 BYTE),
+    "FINAL_APPROVAL_DATE"  DATE,
+    "REV_NO"               VARCHAR2(5 BYTE),
+    "REV_DATE"             DATE,
+    "LAST_MODIFIED_USER"   VARCHAR2(30 BYTE),
+    "LAST_MODIFIED_DATE"   DATE,
+    "ENTRY_USER"           VARCHAR2(30 BYTE),
+    "ENTRY_DATE"           DATE,
+    "PO_AMOUNT"            NUMBER(16, 4),
+    "PO_SUB_TYPE"          VARCHAR2(10 BYTE),
+    "SPECIAL_DISC_PCT"     NUMBER(8, 4),
+    "SPECIAL_DISC_AMT"     NUMBER(16, 4),
+    "REMARKS"              VARCHAR2(2000 BYTE)
+);
+
+CREATE UNIQUE INDEX PUR_PK ON PUR ("COMPANY_CODE", "PLANT_NO", "PO_NO");
+
+ALTER TABLE PUR
+    ADD CONSTRAINT PUR_PK PRIMARY KEY ("COMPANY_CODE", "PLANT_NO", "PO_NO")
+        USING INDEX PUR_PK ENABLE;
+
+
+------------------ PURDET TABLE ------------------
+
+CREATE TABLE PURDET
+(
+    "COMPANY_CODE"     VARCHAR2(3 BYTE),
+    "PLANT_NO"         NUMBER(3, 0),
+    "PO_NO"            VARCHAR2(15 BYTE),
+    "REC_SEQ"          NUMBER(3, 0),
+    "SEQ_NO"           NUMBER(3, 0),
+    "PROJECT_NO"       VARCHAR2(15 BYTE),
+    "ITEM_NO"          VARCHAR2(15 BYTE),
+    "ITEM_TYPE"        NUMBER(2, 0),
+    "PART_NO"          VARCHAR2(60 BYTE),
+    "LOC"              VARCHAR2(5 BYTE),
+    "UOM"              VARCHAR2(3 BYTE),
+    "STOCK_STATUS"     VARCHAR2(1 BYTE),
+    "ORDER_NO"         VARCHAR2(15 BYTE),
+    "DUE_DATE"         DATE,
+    "ORDER_QTY"        NUMBER(16, 4),
+    "UNIT_PRICE"       NUMBER(16, 4),
+    "RLSE_DATE"        DATE,
+    "RLSE_QTY"         NUMBER(16, 4),
+    "RECD_DATE"        DATE,
+    "RECD_QTY"         NUMBER(16, 4),
+    "RECD_PRICE"       NUMBER(16, 4),
+    "RESV_QTY"         NUMBER(16, 4),
+    "INV_UOM"          VARCHAR2(3 BYTE),
+    "STD_PACK_QTY"     NUMBER(12, 6),
+    "STD_MATERIAL"     NUMBER(16, 4),
+    "FREIGHT"          NUMBER(16, 4),
+    "HANDLING"         NUMBER(16, 4),
+    "CUSTOM_DUTY"      NUMBER(16, 4),
+    "ANY_DISCOUNT"     VARCHAR2(1 BYTE),
+    "DISCOUNT_AMOUNT"  NUMBER(16, 4),
+    "DISCOUNT_PERCENT" NUMBER(8, 4),
+    "MBI_DATE"         DATE,
+    "BUY_FLAG"         VARCHAR2(1 BYTE),
+    "ADV_STATUS"       VARCHAR2(1 BYTE),
+    "REMARKS"          VARCHAR2(2000 BYTE),
+    "AP_RECD_QTY"      NUMBER(16, 4),
+    CONSTRAINT PURDET_FK FOREIGN KEY ("COMPANY_CODE", "PLANT_NO", "PO_NO")
+        REFERENCES PUR ("COMPANY_CODE", "PLANT_NO", "PO_NO") ENABLE
+);
+
+CREATE UNIQUE INDEX PURDET_PK ON PURDET ("COMPANY_CODE", "PLANT_NO", "PO_NO", "REC_SEQ");
+
+ALTER TABLE PURDET
+    ADD CONSTRAINT PURDET_PK PRIMARY KEY ("COMPANY_CODE", "PLANT_NO", "PO_NO", "REC_SEQ")
+        USING INDEX PURDET_PK ENABLE;
+
+------------------ DRAFT_PUR TABLE ------------------
+
+CREATE TABLE DRAFT_PUR
+(
+    "COMPANY_CODE"         VARCHAR2(3 BYTE)  NOT NULL ENABLE,
+    "PLANT_NO"             NUMBER(3, 0)      NOT NULL ENABLE,
+    "PO_NO"                VARCHAR2(15 BYTE) NOT NULL ENABLE,
+    "DOCM_TYPE"            VARCHAR2(10 BYTE),
+    "PO_TYPE"              VARCHAR2(1 BYTE),
+    "PO_CLASS"             VARCHAR2(1 BYTE),
+    "SUPPLIER_CODE"        VARCHAR2(10 BYTE),
+    "ORI_SUPPLIER_CODE"    VARCHAR2(10 BYTE),
+    "ORDER_DATE"           DATE,
+    "RLSE_DATE"            DATE,
+    "QUOTATION_NO"         VARCHAR2(30 BYTE),
+    "PR_NO"                VARCHAR2(15 BYTE),
+    "SO_NO"                VARCHAR2(15 BYTE),
+    "DO_NO"                VARCHAR2(15 BYTE),
+    "OI_NO"                VARCHAR2(15 BYTE),
+    "COO_NO"               VARCHAR2(15 BYTE),
+    "BUYER"                VARCHAR2(20 BYTE),
+    "SHIPTO_CUSTOMER_CODE" VARCHAR2(15 BYTE),
+    "SHIPTO_NAME"          VARCHAR2(45 BYTE),
+    "SHIPTO_ADDRESS1"      VARCHAR2(60 BYTE),
+    "SHIPTO_ADDRESS2"      VARCHAR2(60 BYTE),
+    "SHIPTO_ADDRESS3"      VARCHAR2(60 BYTE),
+    "SHIPTO_ADDRESS4"      VARCHAR2(60 BYTE),
+    "SHIPTO_PCODE"         VARCHAR2(15 BYTE),
+    "SHIPTO_CONTACT"       VARCHAR2(30 BYTE),
+    "SHIPTO_TEL_NO"        VARCHAR2(30 BYTE),
+    "SHIPTO_FAX_NO"        VARCHAR2(30 BYTE),
+    "BILLTO_COMP_CODE"     VARCHAR2(3 BYTE),
+    "BILLTO_PLANT_NO"      NUMBER(3, 0),
+    "BILLTO_CONTACT"       VARCHAR2(30 BYTE),
+    "BILLTO_TEL_NO"        VARCHAR2(30 BYTE),
+    "BILLTO_FAX_NO"        VARCHAR2(30 BYTE),
+    "CONTACT"              VARCHAR2(30 BYTE),
+    "DIV_CODE"             VARCHAR2(2 BYTE),
+    "DEPT_CODE"            VARCHAR2(3 BYTE),
+    "PAYMENT_IND"          VARCHAR2(1 BYTE),
+    "PAYMENT_TERM"         NUMBER(3, 0),
+    "PAYMENT_DESC"         VARCHAR2(30 BYTE),
+    "SHIPPING_TERM"        VARCHAR2(30 BYTE),
+    "PO_IND"               VARCHAR2(3 BYTE),
+    "PRINT_IND"            VARCHAR2(1 BYTE),
+    "OPEN_CLOSE"           VARCHAR2(1 BYTE),
+    "CLOSE_TYPE"           VARCHAR2(1 BYTE),
+    "CLOSE_DATE"           DATE,
+    "FORWARDER"            VARCHAR2(30 BYTE),
+    "DELIVERY_MODE"        VARCHAR2(30 BYTE),
+    "CURRENCY_CODE"        VARCHAR2(3 BYTE),
+    "CURRENCY_RATE"        NUMBER(10, 6),
+    "CARRIAGE"             NUMBER(16, 4),
+    "SERVICE"              NUMBER(16, 4),
+    "INSURANCE"            NUMBER(16, 4),
+    "MISC_CHARGES"         NUMBER(16, 4),
+    "DISCOUNT_AMOUNT"      NUMBER(16, 4),
+    "DISCOUNT_PERCENT"     NUMBER(8, 4),
+    "DISCOUNT_DESC"        VARCHAR2(60 BYTE),
+    "GST_PCT"              NUMBER(8, 4),
+    "GST_AMT"              NUMBER(16, 4),
+    "PRINT_REV"            VARCHAR2(5 BYTE),
+    "APPROVER"             VARCHAR2(30 BYTE),
+    "APPROVAL_DATE"        DATE,
+    "FINAL_APPROVER"       VARCHAR2(30 BYTE),
+    "FINAL_APPROVAL_DATE"  DATE,
+    "REV_NO"               VARCHAR2(5 BYTE),
+    "REV_DATE"             DATE,
+    "LAST_MODIFIED_USER"   VARCHAR2(30 BYTE),
+    "LAST_MODIFIED_DATE"   DATE,
+    "ENTRY_USER"           VARCHAR2(30 BYTE),
+    "ENTRY_DATE"           DATE,
+    "PO_AMOUNT"            NUMBER(16, 4),
+    "PO_SUB_TYPE"          VARCHAR2(10 BYTE),
+    "SPECIAL_DISC_PCT"     NUMBER(8, 4),
+    "SPECIAL_DISC_AMT"     NUMBER(16, 4),
+    "REMARKS"              VARCHAR2(2000 BYTE)
+);
+
+CREATE UNIQUE INDEX DRAFT_PUR_PK ON DRAFT_PUR ("COMPANY_CODE", "PLANT_NO", "PO_NO");
+
+ALTER TABLE DRAFT_PUR
+    ADD CONSTRAINT DRAFT_PUR_PK PRIMARY KEY ("COMPANY_CODE", "PLANT_NO", "PO_NO")
+        USING INDEX DRAFT_PUR_PK ENABLE;
+
+------------------ DRAFT_PURDET TABLE ------------------
+
+CREATE TABLE DRAFT_PURDET
+(
+    "COMPANY_CODE"     VARCHAR2(3 BYTE),
+    "PLANT_NO"         NUMBER(3, 0),
+    "PO_NO"            VARCHAR2(15 BYTE),
+    "REC_SEQ"          NUMBER(3, 0),
+    "SEQ_NO"           NUMBER(3, 0),
+    "PROJECT_NO"       VARCHAR2(15 BYTE),
+    "ITEM_NO"          VARCHAR2(15 BYTE),
+    "ITEM_TYPE"        NUMBER(2, 0),
+    "PART_NO"          VARCHAR2(60 BYTE),
+    "LOC"              VARCHAR2(5 BYTE),
+    "UOM"              VARCHAR2(3 BYTE),
+    "STOCK_STATUS"     VARCHAR2(1 BYTE),
+    "ORDER_NO"         VARCHAR2(15 BYTE),
+    "DUE_DATE"         DATE,
+    "ORDER_QTY"        NUMBER(16, 4),
+    "UNIT_PRICE"       NUMBER(16, 4),
+    "RLSE_DATE"        DATE,
+    "RLSE_QTY"         NUMBER(16, 4),
+    "RECD_DATE"        DATE,
+    "RECD_QTY"         NUMBER(16, 4),
+    "RECD_PRICE"       NUMBER(16, 4),
+    "RESV_QTY"         NUMBER(16, 4),
+    "INV_UOM"          VARCHAR2(3 BYTE),
+    "STD_PACK_QTY"     NUMBER(12, 6),
+    "STD_MATERIAL"     NUMBER(16, 4),
+    "FREIGHT"          NUMBER(16, 4),
+    "HANDLING"         NUMBER(16, 4),
+    "CUSTOM_DUTY"      NUMBER(16, 4),
+    "ANY_DISCOUNT"     VARCHAR2(1 BYTE),
+    "DISCOUNT_AMOUNT"  NUMBER(16, 4),
+    "DISCOUNT_PERCENT" NUMBER(8, 4),
+    "MBI_DATE"         DATE,
+    "BUY_FLAG"         VARCHAR2(1 BYTE),
+    "ADV_STATUS"       VARCHAR2(1 BYTE),
+    "REMARKS"          VARCHAR2(2000 BYTE),
+    "AP_RECD_QTY"      NUMBER(16, 4),
+    CONSTRAINT DRAFT_PURDET_FK FOREIGN KEY ("COMPANY_CODE", "PLANT_NO", "PO_NO")
+        REFERENCES DRAFT_PUR ("COMPANY_CODE", "PLANT_NO", "PO_NO") ENABLE
+);
+
+CREATE UNIQUE INDEX DRAFT_PURDET_PK ON DRAFT_PURDET ("COMPANY_CODE", "PLANT_NO", "PO_NO", "REC_SEQ");
+
+ALTER TABLE DRAFT_PURDET
+    ADD CONSTRAINT DRAFT_PURDET_PK PRIMARY KEY ("COMPANY_CODE", "PLANT_NO", "PO_NO", "REC_SEQ")
+        USING INDEX DRAFT_PURDET_PK ENABLE;
