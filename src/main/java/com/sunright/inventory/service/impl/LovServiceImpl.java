@@ -115,4 +115,13 @@ public class LovServiceImpl implements LovService {
                 .subtypeDesc(item.getSubtypeDesc())
                 .build()).collect(Collectors.toList());
     }
+
+    @Override
+    public List<ValueDescDTO> findCategoryGroups() {
+        return itemCatRepository.findCategoryGroups().stream().map(item -> ValueDescDTO.builder()
+                        .codeValue(item.getCodeValue())
+                        .codeDesc(item.getCodeDesc())
+                        .build())
+                .collect(Collectors.toList());
+    }
 }

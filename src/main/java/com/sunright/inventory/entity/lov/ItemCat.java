@@ -39,8 +39,15 @@ public class ItemCat extends BaseEntity {
     @Column(name = "DESIGN_QTYD", precision = 16, scale = 4)
     private BigDecimal designQtyd;
 
+    @Column(name = "MIF_A")
     private Integer mifA;
+
+    @Column(name = "MIF_B")
     private Integer mifB;
+
+    @Column(name = "MIF_C")
     private Integer mifC;
+
+    @Column(name = "MIF_D")
     private Integer mifD;
 }
