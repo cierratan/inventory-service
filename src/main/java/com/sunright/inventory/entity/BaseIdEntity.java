@@ -3,9 +3,11 @@ package com.sunright.inventory.entity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.persistence.Embeddable;
 import javax.persistence.MappedSuperclass;
 import java.io.Serializable;
 
+@Embeddable
 @MappedSuperclass
 @Data
 @NoArgsConstructor
