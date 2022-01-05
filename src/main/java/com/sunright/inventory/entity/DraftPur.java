@@ -1,5 +1,6 @@
 package com.sunright.inventory.entity;
 
+import com.sunright.inventory.entity.enums.Closure;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;

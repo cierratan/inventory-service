@@ -1,7 +1,6 @@
 package com.sunright.inventory.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.sunright.inventory.entity.Closure;
 import lombok.Getter;
 import lombok.Setter;
 
