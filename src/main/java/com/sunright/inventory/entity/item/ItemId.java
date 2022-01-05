@@ -1,5 +1,6 @@
-package com.sunright.inventory.entity;
+package com.sunright.inventory.entity.item;
 
+import com.sunright.inventory.entity.BaseIdEntity;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

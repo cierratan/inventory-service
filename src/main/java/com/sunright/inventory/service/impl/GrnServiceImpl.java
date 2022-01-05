@@ -1,9 +1,9 @@
 package com.sunright.inventory.service.impl;
 
 import com.sunright.inventory.dto.GrnDTO;
-import com.sunright.inventory.entity.Grn;
-import com.sunright.inventory.entity.GrnDet;
-import com.sunright.inventory.entity.GrnId;
+import com.sunright.inventory.entity.grn.Grn;
+import com.sunright.inventory.entity.grn.GrnDet;
+import com.sunright.inventory.entity.grn.GrnId;
 import com.sunright.inventory.repository.GrnDetRepository;
 import com.sunright.inventory.repository.GrnRepository;
 import com.sunright.inventory.service.GrnService;

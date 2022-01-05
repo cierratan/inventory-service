@@ -11,4 +11,5 @@ public interface LovService {
     List<ItemCatDTO> findItemCategories();
     List<CategorySubDTO> findSubCategories(String categoryCode);
     List<CodeDescDTO> findMSL();
+
 }

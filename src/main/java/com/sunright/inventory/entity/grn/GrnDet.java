@@ -1,6 +1,5 @@
-package com.sunright.inventory.entity;
+package com.sunright.inventory.entity.grn;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

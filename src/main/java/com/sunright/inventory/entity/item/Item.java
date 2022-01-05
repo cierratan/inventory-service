@@ -1,5 +1,8 @@
-package com.sunright.inventory.entity;
+package com.sunright.inventory.entity.item;
 
+import com.sunright.inventory.entity.BaseEntity;
+import com.sunright.inventory.entity.enums.Closure;
+import com.sunright.inventory.entity.enums.Obsolete;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;

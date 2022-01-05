@@ -5,7 +5,7 @@ import com.sunright.inventory.dto.SearchRequest;
 import com.sunright.inventory.dto.SearchResult;
 import com.sunright.inventory.dto.UserProfile;
 import com.sunright.inventory.dto.lov.LocationDTO;
-import com.sunright.inventory.entity.Status;
+import com.sunright.inventory.entity.enums.Status;
 import com.sunright.inventory.entity.lov.Location;
 import com.sunright.inventory.entity.lov.LocationId;
 import com.sunright.inventory.exception.NotFoundException;
@@ -105,17 +105,15 @@ public class LocationServiceImpl implements LocationService {
     public SearchResult<LocationDTO> searchBy(SearchRequest searchRequest) {
         Pageable pageable = PageRequest.of(searchRequest.getPage(), searchRequest.getLimit());
 
-        Page<Location> pgLocations;
+        Specification<Location> specs = where(queryGenerator.createDefaultSpecification());
 
         if(!CollectionUtils.isEmpty(searchRequest.getFilters())) {
-            Specification<Location> specs = where(queryGenerator.createDefaultSpecification());
             for (Filter filter : searchRequest.getFilters()) {
                 specs = specs.and(queryGenerator.createSpecification(filter));
             }
-            pgLocations = locationRepository.findAll(specs, pageable);
-        } else {
-            pgLocations = locationRepository.findAll(pageable);
         }
+
+        Page<Location> pgLocations = locationRepository.findAll(specs, pageable);
 
         SearchResult<LocationDTO> locations = new SearchResult<>();
         locations.setTotalRows(pgLocations.getTotalElements());

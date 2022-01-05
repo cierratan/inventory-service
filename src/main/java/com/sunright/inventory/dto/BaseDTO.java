@@ -1,7 +1,7 @@
 package com.sunright.inventory.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.sunright.inventory.entity.Status;
+import com.sunright.inventory.entity.enums.Status;
 import lombok.Getter;
 import lombok.Setter;
 
