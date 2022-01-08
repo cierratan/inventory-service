@@ -17,8 +17,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -168,8 +166,6 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public SearchResult<ItemDTO> searchBy(SearchRequest searchRequest) {
-        Pageable pageable = PageRequest.of(searchRequest.getPage(), searchRequest.getLimit());
-
         Specification<Item> specs = where(queryGenerator.createDefaultSpecification());
 
         if(!CollectionUtils.isEmpty(searchRequest.getFilters())) {
@@ -178,7 +174,7 @@ public class ItemServiceImpl implements ItemService {
             }
         }
 
-        Page<Item> pgItems = itemRepository.findAll(specs, pageable);
+        Page<Item> pgItems = itemRepository.findAll(specs, queryGenerator.constructPageable(searchRequest));
 
         SearchResult<ItemDTO> items = new SearchResult<>();
         items.setTotalRows(pgItems.getTotalElements());

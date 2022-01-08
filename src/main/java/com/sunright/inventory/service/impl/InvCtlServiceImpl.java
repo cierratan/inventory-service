@@ -97,7 +97,6 @@ public class InvCtlServiceImpl implements InvCtlService {
 
     @Override
     public SearchResult<InvCtlDTO> searchBy(SearchRequest searchRequest) {
-        Pageable pageable = PageRequest.of(searchRequest.getPage(), searchRequest.getLimit());
 
         Specification activeStatus = ((root, query, criteriaBuilder) ->
                 criteriaBuilder.equal(root.get("status"), Status.ACTIVE));
@@ -110,7 +109,7 @@ public class InvCtlServiceImpl implements InvCtlService {
             }
         }
 
-        Page<InvCtl> pgInvCtl = invCtlRepository.findAll(specs, pageable);
+        Page<InvCtl> pgInvCtl = invCtlRepository.findAll(specs, queryGenerator.constructPageable(searchRequest));
 
         SearchResult<InvCtlDTO> invcCtl = new SearchResult<>();
         invcCtl.setTotalRows(pgInvCtl.getTotalElements());

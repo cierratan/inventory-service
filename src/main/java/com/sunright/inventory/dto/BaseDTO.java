@@ -5,10 +5,17 @@ import com.sunright.inventory.entity.enums.Status;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.ZonedDateTime;
+
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Setter
 @Getter
 public class BaseDTO {
     private Long version;
     private Status status;
+
+    private String createdBy;
+    private ZonedDateTime createdAt;
+    private String updatedBy;
+    private ZonedDateTime updatedAt;
 }
