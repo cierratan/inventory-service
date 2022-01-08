@@ -9,6 +9,17 @@ import org.springframework.stereotype.Component;
 @Component
 public class QueryGenerator {
 
+    public Specification createDefaultSpecificationWithId() {
+        Specification companyCode = ((root, query, criteriaBuilder) ->
+                criteriaBuilder.equal(root.get("ids").get("companyCode"), UserProfileContext.getUserProfile().getCompanyCode()));
+        Specification plantNo = ((root, query, criteriaBuilder) ->
+                criteriaBuilder.equal(root.get("ids").get("plantNo"), UserProfileContext.getUserProfile().getPlantNo()));
+        Specification status = ((root, query, criteriaBuilder) ->
+                criteriaBuilder.equal(root.get("status"), Status.ACTIVE));
+
+        return companyCode.and(plantNo).and(status);
+    }
+
     public Specification createDefaultSpecification() {
         Specification companyCode = ((root, query, criteriaBuilder) ->
                 criteriaBuilder.equal(root.get("id").get("companyCode"), UserProfileContext.getUserProfile().getCompanyCode()));
@@ -21,7 +32,7 @@ public class QueryGenerator {
     }
 
     public Specification createSpecification(Filter input) {
-        switch (input.getOperator()){
+        switch (input.getOperator()) {
             case EQUALS:
                 return (root, query, criteriaBuilder) ->
                         criteriaBuilder.equal(root.get(input.getField()),
@@ -35,13 +46,13 @@ public class QueryGenerator {
     }
 
     private Object castToRequiredType(Class fieldType, String value) {
-        if(fieldType.isAssignableFrom(Double.class)) {
+        if (fieldType.isAssignableFrom(Double.class)) {
             return Double.valueOf(value);
-        } else if(fieldType.isAssignableFrom(Integer.class)) {
+        } else if (fieldType.isAssignableFrom(Integer.class)) {
             return Integer.valueOf(value);
-        } else if(Enum.class.isAssignableFrom(fieldType)) {
+        } else if (Enum.class.isAssignableFrom(fieldType)) {
             return Enum.valueOf(fieldType, value);
-        } else if(fieldType.isAssignableFrom(String.class)) {
+        } else if (fieldType.isAssignableFrom(String.class)) {
             return value;
         }
 

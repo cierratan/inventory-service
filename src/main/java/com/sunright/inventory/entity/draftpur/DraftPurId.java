@@ -1,5 +1,6 @@
-package com.sunright.inventory.entity;
+package com.sunright.inventory.entity.draftpur;
 
+import com.sunright.inventory.entity.BaseIdEntity;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,7 +13,7 @@ import javax.persistence.Embeddable;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class SupplierId extends BaseIdEntity {
+public class DraftPurId extends BaseIdEntity {
 
-    private String supplierCode;
+    private String poNo;
 }

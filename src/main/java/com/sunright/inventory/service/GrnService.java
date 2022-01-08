@@ -1,10 +1,7 @@
 package com.sunright.inventory.service;
 
-import com.sunright.inventory.dto.DocmNoDTO;
-import com.sunright.inventory.dto.GrnDTO;
-import com.sunright.inventory.dto.GrnDetDTO;
+import com.sunright.inventory.dto.*;
 import com.sunright.inventory.entity.grn.Grn;
-import com.sunright.inventory.exception.ErrorMessage;
 
 import java.util.List;
 import java.util.Map;
@@ -15,13 +12,13 @@ public interface GrnService {
 
     List<Grn> get();
 
-    Map<String, Object> getLastGeneratedNoforGRN(DocmNoDTO docmNoDTO);
+    SearchResult<GrnDTO> searchBy(SearchRequest searchRequest);
 
-    ErrorMessage checkStatusPoNo(GrnDTO grnDTO);
+    Map<String, Object> getAllPoNo(UserProfile userProfile);
 
-    Map<String, Object> getPurInfo(GrnDTO grnDTO);
+    Map<String, Object> getGrnHeader(GrnDTO grnDTO);
 
-    Map<String, Object> getPurDetInfo(GrnDTO grnDTO);
+    Map<String, Object> getAllPartNo(GrnDTO grnDTO, UserProfile userProfile);
 
-    Map<String, Object> checkItemNoAndPartNo(GrnDTO grnDTO, GrnDetDTO grnDetDTO);
+    Map<String, Object> getGrnDetail(GrnDTO grnDTO, GrnDetDTO grnDetDTO);
 }

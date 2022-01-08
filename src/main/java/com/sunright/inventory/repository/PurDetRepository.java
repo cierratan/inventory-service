@@ -1,7 +1,7 @@
 package com.sunright.inventory.repository;
 
-import com.sunright.inventory.entity.PurDet;
-import com.sunright.inventory.entity.PurDetId;
+import com.sunright.inventory.entity.pur.PurDet;
+import com.sunright.inventory.entity.pur.PurDetId;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
@@ -12,8 +12,13 @@ import java.util.List;
 @Repository
 public interface PurDetRepository extends PagingAndSortingRepository<PurDet, PurDetId>, JpaSpecificationExecutor<PurDet> {
 
+    @Query(value = "select seq_no, part_no, item_no, rec_seq from purdet where company_code = :companyCode " +
+            "and plant_no = :plantNo and po_no = :poNo and (part_no like '%' || '%' || '%' or item_no like '%' || '%' || '%') " +
+            "and nvl(order_qty,0) > nvl(recd_qty,0)", nativeQuery = true)
+    List<Object[]> getDataFromPartNo(String companyCode, Integer plantNo, String poNo);
+
     @Query(value = "select pd.order_qty, substr(nvl(i.description, pd.remarks),1,60), pd.due_date, i.msl_code," +
-            "nvl(pd.order_qty,0) order_qty, pd.inv_uom, pd.std_pack_qty from purdet pd, item i where i.company_code(+) = pd.company_code " +
+            "nvl(pd.order_qty,0) order_qtys, pd.inv_uom, pd.std_pack_qty from purdet pd, item i where i.company_code(+) = pd.company_code " +
             "and i.plant_no(+) = pd.plant_no and i.item_no(+) = pd.item_no " +
             "and pd.company_code = :companyCode and pd.plant_no = :plantNo and pd.po_no = :poNo", nativeQuery = true)
     List<Object[]> getPurDetInfo(String companyCode, Integer plantNo, String poNo);
@@ -48,5 +53,5 @@ public interface PurDetRepository extends PagingAndSortingRepository<PurDet, Pur
             "OR (:partNo IS NULL ) AND ( pd.item_no LIKE '%' ||:itemNo || '%' ) OR ( pd.item_no LIKE '%' " +
             "||:itemNo || '%' ) AND ( pd.part_no LIKE '%' ||:partNo || '%' ) ) AND ( pd.rec_seq =:poRecSeq " +
             "OR :poRecSeq IS NULL ) AND nvl(pd.order_qty,0) > nvl(pd.recd_qty,0)", nativeQuery = true)
-    List<Object[]> getItemInfo(String companyCode, Integer plantNo, String poNo, String itemNo, String partNo, Integer poRecSeq);
+    List<Object[]> getDataFromItemAndPartNo(String companyCode, Integer plantNo, String poNo, String itemNo, String partNo, Integer poRecSeq);
 }

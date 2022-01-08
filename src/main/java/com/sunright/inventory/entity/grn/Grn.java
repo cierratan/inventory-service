@@ -22,7 +22,7 @@ public class Grn extends BaseEntity {
     private Long id;
 
     @Embedded
-    private GrnId grnId;
+    private GrnId ids;
 
     @Version
     private Long version;
@@ -40,8 +40,6 @@ public class Grn extends BaseEntity {
     @Column(name = "STATUS_1", insertable = false, updatable = false)
     private String statuz;
 
-    private String entryUser;
-    private Date entryDate;
     private Date closedDate;
     private String docmType;
     private String requestor;
