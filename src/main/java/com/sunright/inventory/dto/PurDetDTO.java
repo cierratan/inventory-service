@@ -47,4 +47,5 @@ public class PurDetDTO extends BaseDTO {
 
     private String mslCode;
     private String codeDesc;
+    private String description;
 }

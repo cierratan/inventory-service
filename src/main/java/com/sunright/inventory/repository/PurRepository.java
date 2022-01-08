@@ -1,7 +1,7 @@
 package com.sunright.inventory.repository;
 
-import com.sunright.inventory.entity.Pur;
-import com.sunright.inventory.entity.PurId;
+import com.sunright.inventory.entity.pur.Pur;
+import com.sunright.inventory.entity.pur.PurId;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
@@ -13,16 +13,17 @@ import java.util.List;
 public interface PurRepository extends PagingAndSortingRepository<Pur, PurId>, JpaSpecificationExecutor<Pur> {
 
     @Query(value = "select po_no,decode(open_close,'A', decode(s1.in_transit, 0, 'C', 'A'),open_close) open_close " +
-            "from s_pur, (select sum(order_qty - nvl(recd_qty,0)) in_transit from s_purdet " +
+            "from pur, (select sum(order_qty - nvl(recd_qty,0)) in_transit from purdet " +
             "where company_code = :companyCode and plant_no = :plantNo and po_no = :poNo) s1 where company_code = :companyCode " +
             "and plant_no = :plantNo and po_no = :poNo", nativeQuery = true)
     List<Object[]> checkStatusPoNoPur(String companyCode, Integer plantNo, String poNo);
 
-    @Query(value = "select supplier_code,currency_code,buyer,rlse_date,remarks " +
-            "from s_pur where company_code = :companyCode and plant_no = :plantNo and po_no = :poNo", nativeQuery = true)
+    @Query(value = "select supplier_code, currency_code, currency_rate, buyer, rlse_date, " +
+            "regexp_replace(remarks,'[[:space:]~!@$%^&*_+=\\\"]',' ') remarks from pur " +
+            "where company_code = :companyCode and plant_no = :plantNo and po_no = :poNo", nativeQuery = true)
     List<Object[]> getPurInfo(String companyCode, Integer plantNo, String poNo);
 
-    @Query(value = "select name from s_supplier where company_code = :companyCode " +
-            "and plant_no = :plantNo and supplier_code = :supplierCode", nativeQuery = true)
-    List<Object[]> getSupplierName(String companyCode, Integer plantNo, String supplierCode);
+    @Query(value = "SELECT po_no FROM pur WHERE company_code = :companyCode " +
+            "AND plant_no = :plantNo AND nvl(open_close,'X') NOT IN ('V','Y') ORDER BY po_no", nativeQuery = true)
+    List<Object[]> getAllPoNo(String companyCode, Integer plantNo);
 }

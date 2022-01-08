@@ -1,5 +1,6 @@
-package com.sunright.inventory.entity;
+package com.sunright.inventory.entity.pur;
 
+import com.sunright.inventory.entity.BaseIdEntity;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,8 +13,8 @@ import javax.persistence.Embeddable;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class DocmNoId extends BaseIdEntity {
+public class PurDetId extends BaseIdEntity {
 
-    private String type;
-    private String subType;
+    private String poNo;
+    private Integer recSeq;
 }

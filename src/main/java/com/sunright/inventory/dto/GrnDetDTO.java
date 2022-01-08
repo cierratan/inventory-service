@@ -19,8 +19,8 @@ public class GrnDetDTO extends BaseDTO {
     private String grnNo;
     private String subType;
     private Integer seqNo;
+    private String poNo;
 
-    @NotBlank(message = "Item No. Can Not be Blank !")
     private String itemNo;
 
     @NotBlank(message = "Part No. Can Not be Blank !")
@@ -46,4 +46,12 @@ public class GrnDetDTO extends BaseDTO {
     private BigDecimal stdPackQty;
     private BigDecimal apRecdQty;
     private String remarks;
+
+    private BigDecimal orderQty;
+    private Date dueDate;
+    private String mslCode;
+
+    private String description;
+    private BigDecimal resvQty;
+    private String invUom;
 }

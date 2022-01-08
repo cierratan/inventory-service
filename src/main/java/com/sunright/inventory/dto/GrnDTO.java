@@ -5,20 +5,16 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.validation.constraints.NotBlank;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 
-@JsonInclude(JsonInclude.Include.NON_NULL)
 @Getter
 @Setter
 @Builder
 public class GrnDTO extends BaseDTO {
 
     private Long id;
-
-    @NotBlank(message = "Grn No must not be empty")
     private String grnNo;
     private String subType;
 
@@ -38,5 +34,9 @@ public class GrnDTO extends BaseDTO {
     private Date approvalDate;
     private String reqSubmitNo;
     private Date reqSubmitDate;
+    private String poRemarks;
+    private String supplierName;
+    private String buyer;
+    private Date rlseDate;
     private List<GrnDetDTO> grnDetList;
 }

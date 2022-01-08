@@ -1,7 +1,6 @@
-package com.sunright.inventory.entity;
+package com.sunright.inventory.entity.pur;
 
-import com.sunright.inventory.entity.enums.Closure;
-import lombok.AllArgsConstructor;
+import com.sunright.inventory.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -10,15 +9,14 @@ import javax.persistence.*;
 import java.math.BigDecimal;
 import java.util.Date;
 
-@Entity(name = "DRAFT_PUR")
+@Entity(name = "PUR")
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public class DraftPur extends BaseEntity {
+@NoArgsConstructor
+public class Pur extends BaseEntity {
 
     @EmbeddedId
-    private DraftPurId id;
+    private PurId id;
 
     /*@Version
     private Long version;*/
@@ -48,7 +46,7 @@ public class DraftPur extends BaseEntity {
     private String shiptoTelNo;
     private String shiptoFaxNo;
     private String billtoCompCode;
-    private Integer billtoPlantNo;
+    private String billtoPlantNo;
     private String billtoContact;
     private String billtoTelNo;
     private String billtoFaxNo;
@@ -56,14 +54,13 @@ public class DraftPur extends BaseEntity {
     private String divCode;
     private String deptCode;
     private String paymentInd;
-    private Integer paymentTerm;
+    private String paymentTerm;
     private String paymentDesc;
     private String shippingTerm;
     private String poInd;
     private String printInd;
 
-    @Enumerated(EnumType.STRING)
-    private Closure openClose;
+    private String openClose;
 
     private String closeType;
     private Date closeDate;
@@ -124,5 +121,4 @@ public class DraftPur extends BaseEntity {
     private BigDecimal specialDiscAmt;
 
     private String remarks;
-
 }
