@@ -25,6 +25,12 @@ public interface ItemCatRepository extends JpaRepository<ItemCat, ItemCatId>, Jp
             "and map.id.mapFrom = :mapFrom and item.id.companyCode = :companyCode and item.id.plantNo = :plantNo ")
     List<CategorySubProjection> findSubCatBy(String categoryCode, String mapType, String mapFrom, String companyCode, Integer plantNo, Sort sort);
 
+    @Query("SELECT det.codeValue as codeValue, det.codeDesc as codeDesc " +
+            "FROM DEFAULT_CODE_DET det " +
+            "WHERE det.id.defaultCode = 'ITEMCAT.CAT_GRP' AND det.status = '1' " +
+            "ORDER BY det.id.seqNo")
+    List<ValueDescProjection> findCategoryGroups();
+
     @Query("SELECT code FROM CODE_DESC code WHERE code.id.type = :type ")
     List<CodeDesc> findCodeDescBy(String type, Sort sort);
 }

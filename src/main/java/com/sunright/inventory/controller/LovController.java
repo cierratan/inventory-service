@@ -48,4 +48,9 @@ public class LovController {
     public ResponseEntity<List<CodeDescDTO>> getMSLs() {
         return new ResponseEntity<>(lovService.findMSL(), HttpStatus.OK);
     }
+
+    @GetMapping("category-groups")
+    public ResponseEntity<List<ValueDescDTO>> getCategoryGroups() {
+        return new ResponseEntity<>(lovService.findCategoryGroups(), HttpStatus.OK);
+    }
 }
