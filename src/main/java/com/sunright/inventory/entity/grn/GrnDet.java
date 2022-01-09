@@ -56,7 +56,7 @@ public class GrnDet {
 
     private String remarks;
 
-    @JsonBackReference(value = "grnDetId")
+    //@JsonBackReference(value = "grnDetId")
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "GRN_ID")
     private Grn grn;

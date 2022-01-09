@@ -48,7 +48,7 @@ public class Grn extends BaseEntity {
     private String reqSubmitNo;
     private Date reqSubmitDate;
 
-    @JsonManagedReference(value = "grnDetId")
+    //@JsonManagedReference(value = "grnDetId")
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "grn", cascade = CascadeType.ALL)
     private List<GrnDet> grnDetList;
 }

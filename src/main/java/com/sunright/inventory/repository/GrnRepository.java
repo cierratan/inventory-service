@@ -13,4 +13,6 @@ public interface GrnRepository extends PagingAndSortingRepository<Grn, GrnId>, J
 
     Optional<Grn> findGrnByIdsGrnNo(String grnNo);
 
+    Optional<Grn> findGrnByIds(GrnId grnId);
+
 }

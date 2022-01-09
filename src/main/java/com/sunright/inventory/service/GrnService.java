@@ -1,24 +1,25 @@
 package com.sunright.inventory.service;
 
-import com.sunright.inventory.dto.*;
-import com.sunright.inventory.entity.grn.Grn;
+import com.sunright.inventory.dto.GrnDTO;
+import com.sunright.inventory.dto.GrnDetDTO;
+import com.sunright.inventory.dto.SearchRequest;
+import com.sunright.inventory.dto.SearchResult;
 
 import java.util.List;
-import java.util.Map;
 
 public interface GrnService {
 
-    Map<String, Object> create(GrnDTO input);
+    GrnDTO createGrn(GrnDTO input);
 
-    List<Grn> get();
+    GrnDTO findBy(String grnNo, String subType);
 
     SearchResult<GrnDTO> searchBy(SearchRequest searchRequest);
 
-    Map<String, Object> getAllPoNo(UserProfile userProfile);
+    List<GrnDTO> findAllPoNo();
 
-    Map<String, Object> getGrnHeader(GrnDTO grnDTO);
+    List<GrnDTO> getGrnHeader(String poNo);
 
-    Map<String, Object> getAllPartNo(GrnDTO grnDTO, UserProfile userProfile);
+    List<GrnDetDTO> getAllPartNo(String poNo);
 
-    Map<String, Object> getGrnDetail(GrnDTO grnDTO, GrnDetDTO grnDetDTO);
+    List<GrnDetDTO> getGrnDetail(String poNo, String itemNo, String partNo, Integer poRecSeq);
 }
