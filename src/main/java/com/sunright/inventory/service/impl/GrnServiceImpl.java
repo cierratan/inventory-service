@@ -15,8 +15,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -507,8 +505,6 @@ public class GrnServiceImpl implements GrnService {
 
     @Override
     public SearchResult<GrnDTO> searchBy(SearchRequest searchRequest) {
-        Pageable pageable = PageRequest.of(searchRequest.getPage(), searchRequest.getLimit());
-
         Specification specs = where(queryGenerator.createDefaultSpecificationWithId());
 
         if (!CollectionUtils.isEmpty(searchRequest.getFilters())) {
@@ -517,7 +513,7 @@ public class GrnServiceImpl implements GrnService {
             }
         }
 
-        Page<Grn> pgGrns = grnRepository.findAll(specs, pageable);
+        Page<Grn> pgGrns = grnRepository.findAll(specs, queryGenerator.constructPageable(searchRequest));
 
         SearchResult<GrnDTO> grns = new SearchResult<>();
         grns.setTotalRows(pgGrns.getTotalElements());

@@ -103,8 +103,6 @@ public class ItemCatServiceImpl implements ItemCatService {
 
     @Override
     public SearchResult<ItemCatDTO> searchBy(SearchRequest searchRequest) {
-        Pageable pageable = PageRequest.of(searchRequest.getPage(), searchRequest.getLimit());
-
         Specification<ItemCat> specs = where(queryGenerator.createDefaultSpecification());
 
         if(!CollectionUtils.isEmpty(searchRequest.getFilters())) {
@@ -113,7 +111,7 @@ public class ItemCatServiceImpl implements ItemCatService {
             }
         }
 
-        Page<ItemCat> pgItemCat = itemCatRepository.findAll(specs, pageable);
+        Page<ItemCat> pgItemCat = itemCatRepository.findAll(specs, queryGenerator.constructPageable(searchRequest));
 
         SearchResult<ItemCatDTO> itemCategories = new SearchResult<>();
         itemCategories.setTotalRows(pgItemCat.getTotalElements());

@@ -12,8 +12,6 @@ import com.sunright.inventory.util.QueryGenerator;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -99,8 +97,6 @@ public class UOMServiceImpl implements UOMService {
 
     @Override
     public SearchResult<UomDTO> searchBy(SearchRequest searchRequest) {
-        Pageable pageable = PageRequest.of(searchRequest.getPage(), searchRequest.getLimit());
-
         Specification activeStatus = ((root, query, criteriaBuilder) ->
                 criteriaBuilder.equal(root.get("status"), Status.ACTIVE));
 
@@ -112,7 +108,7 @@ public class UOMServiceImpl implements UOMService {
             }
         }
 
-        Page<UOM> pgUOM = uomRepository.findAll(specs, pageable);
+        Page<UOM> pgUOM = uomRepository.findAll(specs, queryGenerator.constructPageable(searchRequest));
 
         SearchResult<UomDTO> uom = new SearchResult<>();
         uom.setTotalRows(pgUOM.getTotalElements());

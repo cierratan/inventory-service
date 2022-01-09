@@ -103,8 +103,6 @@ public class LocationServiceImpl implements LocationService {
 
     @Override
     public SearchResult<LocationDTO> searchBy(SearchRequest searchRequest) {
-        Pageable pageable = PageRequest.of(searchRequest.getPage(), searchRequest.getLimit());
-
         Specification<Location> specs = where(queryGenerator.createDefaultSpecification());
 
         if(!CollectionUtils.isEmpty(searchRequest.getFilters())) {
@@ -113,7 +111,7 @@ public class LocationServiceImpl implements LocationService {
             }
         }
 
-        Page<Location> pgLocations = locationRepository.findAll(specs, pageable);
+        Page<Location> pgLocations = locationRepository.findAll(specs, queryGenerator.constructPageable(searchRequest));
 
         SearchResult<LocationDTO> locations = new SearchResult<>();
         locations.setTotalRows(pgLocations.getTotalElements());

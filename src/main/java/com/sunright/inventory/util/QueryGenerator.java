@@ -1,10 +1,17 @@
 package com.sunright.inventory.util;
 
+import com.sunright.inventory.dto.DataSorting;
 import com.sunright.inventory.dto.Filter;
+import com.sunright.inventory.dto.SearchRequest;
+import com.sunright.inventory.dto.SortOption;
 import com.sunright.inventory.entity.enums.Status;
 import com.sunright.inventory.interceptor.UserProfileContext;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
 @Component
 public class QueryGenerator {
@@ -43,6 +50,18 @@ public class QueryGenerator {
             default:
                 throw new RuntimeException("Operation not supported yet");
         }
+    }
+
+    public Pageable constructPageable(SearchRequest searchRequest) {
+        Sort sort = Sort.by(Sort.Direction.DESC, "updatedAt");
+
+        if(!CollectionUtils.isEmpty(searchRequest.getSorts())) {
+            for (DataSorting dataSort : searchRequest.getSorts()) {
+                sort = sort.and(Sort.by(dataSort.getSort() == SortOption.ASC ? Sort.Direction.ASC : Sort.Direction.DESC, dataSort.getField()));
+            }
+        }
+
+        return PageRequest.of(searchRequest.getPage(), searchRequest.getLimit(), sort);
     }
 
     private Object castToRequiredType(Class fieldType, String value) {
