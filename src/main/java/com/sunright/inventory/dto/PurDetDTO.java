@@ -1,13 +1,17 @@
 package com.sunright.inventory.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.util.Date;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 @Getter
 @Setter
+@Builder
 public class PurDetDTO extends BaseDTO {
 
     private String poNo;

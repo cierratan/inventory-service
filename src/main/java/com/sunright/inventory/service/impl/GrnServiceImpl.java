@@ -6,6 +6,7 @@ import com.sunright.inventory.entity.grn.Grn;
 import com.sunright.inventory.entity.grn.GrnDet;
 import com.sunright.inventory.entity.grn.GrnId;
 import com.sunright.inventory.exception.ErrorMessage;
+import com.sunright.inventory.exception.NotFoundException;
 import com.sunright.inventory.interceptor.UserProfileContext;
 import com.sunright.inventory.repository.*;
 import com.sunright.inventory.repository.lov.DefaultCodeDetailRepository;
@@ -21,9 +22,13 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static org.springframework.data.jpa.domain.Specification.where;
@@ -61,72 +66,61 @@ public class GrnServiceImpl implements GrnService {
     private QueryGenerator queryGenerator;
 
     @Override
-    public Map<String, Object> getAllPoNo(UserProfile userProfile) {
+    public List<GrnDTO> findAllPoNo() {
 
-        Map<String, Object> map = new HashMap<>();
-        try {
-            List<PurDTO> list = new ArrayList<>();
-            List<Object[]> getAllPONo = purRepository.getAllPoNo(userProfile.getCompanyCode(), userProfile.getPlantNo());
-            for (Object[] data : getAllPONo) {
-                PurDTO dto = new PurDTO();
-                dto.setPoNo((String) data[0]);
-                list.add(dto);
-            }
-            map.put("contentData", list);
-            map.put("totalRecords", (long) list.size());
-        } catch (Exception e) {
-            e.printStackTrace();
+        UserProfile userProfile = UserProfileContext.getUserProfile();
+        List<GrnDTO> list = new ArrayList<>();
+        List<Object[]> getAllPONo = purRepository.getAllPoNo(userProfile.getCompanyCode(), userProfile.getPlantNo());
+        for (Object[] data : getAllPONo) {
+            GrnDTO dto = GrnDTO.builder().build();
+            dto.setPoNo((String) data[0]);
+            list.add(dto);
         }
-        return map;
+        return list;
     }
 
     @Override
-    public Map<String, Object> getGrnHeader(GrnDTO grnDTO) {
+    public List<GrnDTO> getGrnHeader(String poNo) {
 
-        Map<String, Object> map = new HashMap<>();
         SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
         String date = sdf.format(new Date());
-        try {
-            UserProfile userProfile = UserProfileContext.getUserProfile();
-            List<GrnDTO> list = new ArrayList<>();
-            Map<String, Object> checkStatusPONo = checkStatusPoNo(grnDTO, userProfile);
-            if (checkStatusPONo.get("statusPONo") != null) {
-                map.put("contentData", checkStatusPONo.get("statusPONo"));
+        UserProfile userProfile = UserProfileContext.getUserProfile();
+        List<GrnDTO> list = new ArrayList<>();
+        checkStatusPoNo(poNo, userProfile);
+        List<DocmNoDTO> lastNoForGrnList = getLastGeneratedNoforGRN(userProfile);
+        List<PurDTO> purInfoList = getPurInfo(poNo, userProfile);
+        for (DocmNoDTO dtoDocmNo : lastNoForGrnList) {
+            GrnDTO grnDTO = GrnDTO.builder().build();
+            grnDTO.setGrnNo(dtoDocmNo.getPrefix());
+            if (grnDTO.getGrnNo() == null) {
+                ErrorMessage.builder().message("Grn No. must not be empty").build();
             } else {
-                List<DocmNoDTO> lastNoForGrnList = getLastGeneratedNoforGRN(userProfile);
-                List<PurDTO> purInfoList = getPurInfo(grnDTO, userProfile);
-                for (DocmNoDTO dtoDocmNo : lastNoForGrnList) {
-                    grnDTO.setGrnNo(dtoDocmNo.getPrefix());
-                    if (grnDTO.getGrnNo() == null) {
-                        map.put("contentData", "Grn No. must not be empty");
-                    } else {
-                        for (PurDTO dtoPur : purInfoList) {
-                            grnDTO.setSupplierCode(dtoPur.getSupplierCode());
-                            grnDTO.setCurrencyCode(dtoPur.getCurrencyCode());
-                            grnDTO.setCurrencyRate(dtoPur.getCurrencyRate());
-                            grnDTO.setBuyer(dtoPur.getBuyer());
-                            grnDTO.setRlseDate(dtoPur.getRlseDate());
-                            grnDTO.setPoRemarks(dtoPur.getRemarks());
-                            grnDTO.setRecdDate(sdf.parse(date));
-                            List<SupplierDTO> supplierList = supplierName(grnDTO.getSupplierCode(), userProfile);
-                            for (SupplierDTO dtoSupplier : supplierList) {
-                                grnDTO.setSupplierName(dtoSupplier.getName());
-                                if (grnDTO.getSupplierName() == null) {
-                                    map.put("contentData", "Supplier Code not found");
-                                } else {
-                                    list.add(grnDTO);
-                                }
-                            }
+                for (PurDTO dtoPur : purInfoList) {
+                    grnDTO.setSupplierCode(dtoPur.getSupplierCode());
+                    grnDTO.setCurrencyCode(dtoPur.getCurrencyCode());
+                    grnDTO.setCurrencyRate(dtoPur.getCurrencyRate());
+                    grnDTO.setBuyer(dtoPur.getBuyer());
+                    grnDTO.setRlseDate(dtoPur.getRlseDate());
+                    grnDTO.setPoRemarks(dtoPur.getRemarks());
+                    try {
+                        grnDTO.setRecdDate(sdf.parse(date));
+                    } catch (ParseException e) {
+                        e.printStackTrace();
+                    }
+                    List<SupplierDTO> supplierList = supplierName(grnDTO.getSupplierCode(), userProfile);
+                    for (SupplierDTO dtoSupplier : supplierList) {
+                        grnDTO.setSupplierName(dtoSupplier.getName());
+                        if (grnDTO.getSupplierName() == null) {
+                            ErrorMessage.builder().message("Supplier Code not found").build();
+                        } else {
+                            list.add(grnDTO);
                         }
-                        map.put("contentData", list);
                     }
                 }
             }
-            map.put("totalRecords", (long) list.size());
-        } catch (Exception e) {
-            e.printStackTrace();
         }
-        return map;
+
+        return list;
     }
 
     private List<DocmNoDTO> getLastGeneratedNoforGRN(UserProfile userProfile) {
@@ -143,33 +137,32 @@ public class GrnServiceImpl implements GrnService {
         return list;
     }
 
-    private Map<String, Object> checkStatusPoNo(GrnDTO grnDTO, UserProfile userProfile) {
+    private void checkStatusPoNo(String poNo, UserProfile userProfile) {
 
-        Map<String, Object> map = new HashMap<>();
         try {
-            List<Object[]> pur = purRepository.checkStatusPoNoPur(userProfile.getCompanyCode(), userProfile.getPlantNo(), grnDTO.getPoNo());
-            List<Object[]> draftPur = draftPurRepository.checkStatusPoNoDraftPur(userProfile.getCompanyCode(), userProfile.getPlantNo(), grnDTO.getPoNo());
+            List<Object[]> pur = purRepository.checkStatusPoNoPur(userProfile.getCompanyCode(), userProfile.getPlantNo(), poNo);
+            List<Object[]> draftPur = draftPurRepository.checkStatusPoNoDraftPur(userProfile.getCompanyCode(), userProfile.getPlantNo(), poNo);
             for (Object[] dataDraftPur : draftPur) {
-                PurDTO dto = new PurDTO();
+                PurDTO dto = PurDTO.builder().build();
                 dto.setPoNo((String) dataDraftPur[0]);
                 dto.setOpenClose((String) dataDraftPur[1]);
                 if (dto.getOpenClose().equalsIgnoreCase("C")) {
-                    map.put("statusPONo", "PO already Closed, Purchase Receipt not allowed.");
+                    ErrorMessage.builder().message("PO already Closed, Purchase Receipt not allowed.").build();
                 } else if (!dto.getOpenClose().equalsIgnoreCase("A")) {
-                    map.put("statusPONo", "PO is yet to be Approved, Purchase Receipt not allowed.");
+                    ErrorMessage.builder().message("PO is yet to be Approved, Purchase Receipt not allowed.").build();
                 } else if (dto.getOpenClose().equalsIgnoreCase("V")) {
-                    map.put("statusPONo", "PO already Voided, Purchase Receipt not allowed.");
+                    ErrorMessage.builder().message("PO already Voided, Purchase Receipt not allowed.").build();
                 } else if (dto.getPoNo() == null) {
-                    map.put("statusPONo", "Invalid PO No!" + dto.getPoNo() + " ");
+                    ErrorMessage.builder().message("Invalid PO No!").build();
                 } else {
                     if (dto.getPoNo() != null && dto.getOpenClose() != null) {
                         for (Object[] data : pur) {
                             dto.setPoNo((String) data[0]);
                             dto.setOpenClose((String) data[1]);
                             if (dto.getOpenClose().equalsIgnoreCase("C")) {
-                                map.put("statusPONo", "PO already Closed, Purchase Receipt not allowed.");
+                                ErrorMessage.builder().message("PO already Closed, Purchase Receipt not allowed.").build();
                             } else if (!dto.getOpenClose().equalsIgnoreCase("A")) {
-                                map.put("statusPONo", "PO is yet to be Approved, Purchase Receipt not allowed.");
+                                ErrorMessage.builder().message("PO is yet to be Approved, Purchase Receipt not allowed.").build();
                             }
                         }
                     }
@@ -178,15 +171,14 @@ public class GrnServiceImpl implements GrnService {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return map;
     }
 
-    private List<PurDTO> getPurInfo(GrnDTO grnDTO, UserProfile userProfile) {
+    private List<PurDTO> getPurInfo(String poNo, UserProfile userProfile) {
 
         List<PurDTO> list = new ArrayList<>();
-        List<Object[]> purInfo = purRepository.getPurInfo(userProfile.getCompanyCode(), userProfile.getPlantNo(), grnDTO.getPoNo());
+        List<Object[]> purInfo = purRepository.getPurInfo(userProfile.getCompanyCode(), userProfile.getPlantNo(), poNo);
         for (Object[] data : purInfo) {
-            PurDTO dto = new PurDTO();
+            PurDTO dto = PurDTO.builder().build();
             dto.setSupplierCode((String) data[0]);
             dto.setCurrencyCode((String) data[1]);
             dto.setCurrencyRate((BigDecimal) data[2]);
@@ -213,146 +205,115 @@ public class GrnServiceImpl implements GrnService {
     }
 
     @Override
-    public Map<String, Object> getAllPartNo(GrnDTO grnDTO, UserProfile userProfile) {
+    public List<GrnDetDTO> getAllPartNo(String poNo) {
 
-        Map<String, Object> map = new HashMap<>();
-        try {
-            List<PurDetDTO> list = new ArrayList<>();
-            List<Object[]> getDataFromPartNo = purDetRepository.getDataFromPartNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), grnDTO.getPoNo());
-            for (Object[] data : getDataFromPartNo) {
-                PurDetDTO dto = new PurDetDTO();
-                BigDecimal seqNo = new BigDecimal(String.valueOf(data[0]));
-                dto.setSeqNo(seqNo.intValue());
-                dto.setPartNo((String) data[1]);
-                dto.setItemNo((String) data[2]);
-                BigDecimal recSeq = new BigDecimal(String.valueOf(data[3]));
-                dto.setRecSeq(recSeq.intValue());
-                list.add(dto);
-            }
-            map.put("contentData", list);
-            map.put("totalRecords", (long) list.size());
-        } catch (Exception e) {
-            e.printStackTrace();
+        UserProfile userProfile = UserProfileContext.getUserProfile();
+        List<GrnDetDTO> list = new ArrayList<>();
+        List<Object[]> getDataFromPartNo = purDetRepository.getDataFromPartNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), poNo);
+        for (Object[] data : getDataFromPartNo) {
+            GrnDetDTO dto = GrnDetDTO.builder().build();
+            BigDecimal seqNo = new BigDecimal(String.valueOf(data[0]));
+            dto.setSeqNo(seqNo.intValue());
+            dto.setPartNo((String) data[1]);
+            dto.setItemNo((String) data[2]);
+            BigDecimal recSeq = new BigDecimal(String.valueOf(data[3]));
+            dto.setPoRecSeq(recSeq.intValue());
+            list.add(dto);
         }
-        return map;
+
+        return list;
     }
 
     @Override
-    public Map<String, Object> getGrnDetail(GrnDTO grnDTO, GrnDetDTO grnDetDTO) {
+    public List<GrnDetDTO> getGrnDetail(String poNo, String itemNo, String partNo, Integer poRecSeq) {
 
-        Map<String, Object> map = new HashMap<>();
-        try {
-            UserProfile userProfile = UserProfileContext.getUserProfile();
-            List<GrnDetDTO> list = new ArrayList<>();
-            List<PurDetDTO> getDataDetail = getDetailInfo(grnDTO, grnDTO.getGrnDetList(), userProfile);
-            if (grnDTO.getGrnDetList().get(0).getPartNo() != null) {
-                map = checkDataFromPartNo(grnDTO, grnDTO.getGrnDetList(), userProfile);
-                if (map.get("partNoMsgError") != null) {
-                    map.put("contentData", map.get("partNoMsgError"));
-                }
-            } else {
-                map = checkDataFromItemNo(grnDTO, grnDTO.getGrnDetList(), userProfile);
-                if (map.get("itemNoMsgError") != null) {
-                    map.put("contentData", map.get("itemNoMsgError"));
-                }
-            }
+        UserProfile userProfile = UserProfileContext.getUserProfile();
+        List<GrnDetDTO> list = new ArrayList<>();
+        List<PurDetDTO> getDataDetail = getDetailInfo(poNo, itemNo, partNo, poRecSeq, userProfile);
 
-            if (grnDTO.getGrnDetList().get(0).getPartNo() == null && grnDTO.getGrnDetList().get(0).getItemNo() == null) {
-                map = checkDataFromPartNo(grnDTO, grnDTO.getGrnDetList(), userProfile);
-                if (map.get("partNoMsgError") != null) {
-                    map.put("contentData", map.get("partNoMsgError"));
-                }
-            }
-
-            for (PurDetDTO dto : getDataDetail) {
-                grnDetDTO.setPoRecSeq(dto.getRecSeq());
-                grnDetDTO.setItemNo(dto.getItemNo());
-                grnDetDTO.setPartNo(dto.getPartNo());
-                grnDetDTO.setLoc(dto.getLoc());
-                grnDetDTO.setItemType(dto.getItemType());
-                grnDetDTO.setProjectNo(dto.getProjectNo());
-                grnDetDTO.setPoNo(dto.getPoNo());
-                grnDetDTO.setDescription(dto.getDescription());
-                grnDetDTO.setMslCode(dto.getMslCode());
-                String codeDesc = defaultCodeDetailRepository.findCodeDescBy(userProfile.getCompanyCode(), userProfile.getPlantNo(), dto.getUom());
-                grnDetDTO.setUom(codeDesc);
-                grnDetDTO.setOrderQty(dto.getOrderQty());
-                grnDetDTO.setPoPrice(dto.getUnitPrice());
-                grnDetDTO.setDueDate(dto.getDueDate());
-                grnDetDTO.setResvQty(dto.getResvQty());
-                grnDetDTO.setInvUom(dto.getInvUom());
-                grnDetDTO.setStdPackQty(dto.getStdPackQty());
-                grnDetDTO.setRemarks(dto.getRemarks());
-                list.add(grnDetDTO);
-            }
-            map.put("contentData", list);
-            map.put("totalRecords", (long) list.size());
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (partNo != null) {
+            checkDataFromPartNo(poNo, partNo, poRecSeq, userProfile);
+        } else {
+            checkDataFromItemNo(poNo, itemNo, userProfile);
         }
-        return map;
+
+        if (partNo == null && itemNo == null) {
+            checkDataFromPartNo(poNo, partNo, poRecSeq, userProfile);
+        }
+
+        for (PurDetDTO dto : getDataDetail) {
+            GrnDetDTO grnDetDTO = GrnDetDTO.builder().build();
+            grnDetDTO.setPoRecSeq(dto.getRecSeq());
+            grnDetDTO.setItemNo(dto.getItemNo());
+            grnDetDTO.setPartNo(dto.getPartNo());
+            grnDetDTO.setLoc(dto.getLoc());
+            grnDetDTO.setItemType(dto.getItemType());
+            grnDetDTO.setProjectNo(dto.getProjectNo());
+            grnDetDTO.setPoNo(dto.getPoNo());
+            grnDetDTO.setDescription(dto.getDescription());
+            grnDetDTO.setMslCode(dto.getMslCode());
+            String codeDesc = defaultCodeDetailRepository.findCodeDescBy(userProfile.getCompanyCode(), userProfile.getPlantNo(), dto.getUom());
+            grnDetDTO.setUom(codeDesc);
+            grnDetDTO.setOrderQty(dto.getOrderQty());
+            grnDetDTO.setPoPrice(dto.getUnitPrice());
+            grnDetDTO.setDueDate(dto.getDueDate());
+            grnDetDTO.setResvQty(dto.getResvQty());
+            grnDetDTO.setInvUom(dto.getInvUom());
+            grnDetDTO.setStdPackQty(dto.getStdPackQty());
+            grnDetDTO.setRemarks(dto.getRemarks());
+            list.add(grnDetDTO);
+        }
+
+        return list;
     }
 
-    private Map<String, Object> checkDataFromItemNo(GrnDTO grnDTO, List<GrnDetDTO> grnDetDTO, UserProfile userProfile) {
+    private void checkDataFromItemNo(String poNo, String itemNo, UserProfile userProfile) {
 
-        Map<String, Object> map = new HashMap<>();
-        try {
-            int countItemNo = 0;
-            List<Object[]> checkItemNo = purDetRepository.checkItemNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), grnDTO.getPoNo(), grnDetDTO.get(0).getItemNo());
-            for (Object[] data : checkItemNo) {
-                BigDecimal count = new BigDecimal(String.valueOf(data[0]));
-                countItemNo = count.intValue();
-            }
-            if (countItemNo == 0) {
-                map.put("itemNoMsgError", "The Part No is either invalid or qty fully received!");
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+        int countItemNo = 0;
+        List<Object[]> checkItemNo = purDetRepository.checkItemNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), poNo, itemNo);
+        for (Object[] data : checkItemNo) {
+            BigDecimal count = new BigDecimal(String.valueOf(data[0]));
+            countItemNo = count.intValue();
         }
-        return map;
-
+        if (countItemNo == 0) {
+            ErrorMessage.builder().message("The Part No is either invalid or qty fully received!").build();
+        }
     }
 
-    private Map<String, Object> checkDataFromPartNo(GrnDTO grnDTO, List<GrnDetDTO> grnDetDTO, UserProfile userProfile) {
+    private void checkDataFromPartNo(String poNo, String partNo, Integer poRecSeq, UserProfile userProfile) {
 
-        Map<String, Object> map = new HashMap<>();
-        try {
-            int recSeq = 0;
-            String partNo = "";
-            List<Object[]> checkPartNo = purDetRepository.checkPartNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), grnDTO.getPoNo(), grnDetDTO.get(0).getPartNo());
-            List<Object[]> checkDuplicatePartNo = purDetRepository.checkDuplicatePartNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), grnDTO.getPoNo(), grnDetDTO.get(0).getPartNo(), grnDetDTO.get(0).getPoRecSeq());
+        int recSeq = 0;
+        String partno = "";
+        List<Object[]> checkPartNo = purDetRepository.checkPartNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), poNo, partNo);
+        List<Object[]> checkDuplicatePartNo = purDetRepository.checkDuplicatePartNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), poNo, partNo, poRecSeq);
 
-            for (Object[] data : checkPartNo) {
-                BigDecimal count = new BigDecimal(String.valueOf(data[0]));
-                int countPartNo = count.intValue();
-                if (countPartNo == 0) {
-                    map.put("partNoMsgError", "The Part No is either invalid or qty fully received!");
-                }
-                for (Object[] data2 : checkDuplicatePartNo) {
-                    PurDetDTO dto = new PurDetDTO();
-                    BigDecimal recS = new BigDecimal(String.valueOf(data[0]));
-                    dto.setRecSeq(recS.intValue());
-                    dto.setPartNo((String) data2[1]);
-                    partNo = dto.getPartNo();
-                    recSeq = dto.getRecSeq();
-                }
-                if (grnDetDTO.get(0).getPartNo().equals(partNo) & grnDetDTO.get(0).getPoRecSeq() == recSeq) {
-                    map.put("partNoMsgError", "Duplicate Part No found!'");
-                }
+        for (Object[] data : checkPartNo) {
+            BigDecimal count = new BigDecimal(String.valueOf(data[0]));
+            int countPartNo = count.intValue();
+            if (countPartNo == 0) {
+                ErrorMessage.builder().message("The Part No is either invalid or qty fully received!").build();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+            for (Object[] data2 : checkDuplicatePartNo) {
+                PurDetDTO dto = PurDetDTO.builder().build();
+                BigDecimal recS = new BigDecimal(String.valueOf(data[0]));
+                dto.setRecSeq(recS.intValue());
+                dto.setPartNo((String) data2[1]);
+                partno = dto.getPartNo();
+                recSeq = dto.getRecSeq();
+            }
+            if (partNo.equals(partno) & poRecSeq == recSeq) {
+                ErrorMessage.builder().message("Duplicate Part No found!'").build();
+            }
         }
-        return map;
     }
 
-    private List<PurDetDTO> getDetailInfo(GrnDTO grnDTO, List<GrnDetDTO> grnDetDTO, UserProfile userProfile) {
+    private List<PurDetDTO> getDetailInfo(String poNo, String itemNo, String partNo, Integer poRecSeq, UserProfile userProfile) {
 
         List<PurDetDTO> list = new ArrayList<>();
-        List<Object[]> getDetailInfo = purDetRepository.getDataFromItemAndPartNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), grnDTO.getPoNo(),
-                grnDetDTO.get(0).getItemNo(), grnDetDTO.get(0).getPartNo(), grnDetDTO.get(0).getPoRecSeq());
-        for (Object[] data : getDetailInfo) {
-            PurDetDTO dto = new PurDetDTO();
+        List<Object[]> detailInfo = purDetRepository.getDataFromItemAndPartNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), poNo,
+                itemNo, partNo, poRecSeq);
+        for (Object[] data : detailInfo) {
+            PurDetDTO dto = PurDetDTO.builder().build();
             BigDecimal recSeq = new BigDecimal(String.valueOf(data[1]));
             BigDecimal itemType = new BigDecimal(String.valueOf(data[5]));
             dto.setPartNo((String) data[0]);
@@ -377,23 +338,21 @@ public class GrnServiceImpl implements GrnService {
     }
 
     @Override
-    public Map<String, Object> create(GrnDTO grnDTO) {
+    public GrnDTO createGrn(GrnDTO input) {
 
-        Map<String, Object> map = new HashMap<>();
         SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
         String date = sdf.format(new Date());
-
         try {
             UserProfile userProfile = UserProfileContext.getUserProfile();
 
             GrnId grnId = new GrnId();
-            BeanUtils.copyProperties(grnDTO, grnId);
+            BeanUtils.copyProperties(input, grnId);
 
             Grn grn = new Grn();
             grn.setIds(grnId);
-            BeanUtils.copyProperties(grnDTO, grn);
+            BeanUtils.copyProperties(input, grn);
 
-            grn.setIds(populateGrnId(grnDTO.getGrnNo(), grnDTO.getSubType()));
+            grn.setIds(populateGrnId(input.getGrnNo(), input.getSubType()));
             grn.setRecdDate(sdf.parse(date));
             grn.setStatus(Status.ACTIVE);
             grn.setCreatedBy(userProfile.getUsername());
@@ -401,58 +360,52 @@ public class GrnServiceImpl implements GrnService {
             grn.setUpdatedBy(userProfile.getUsername());
             grn.setUpdatedAt(ZonedDateTime.now());
 
-            Optional<Grn> grnOptional = grnRepository.findGrnByIdsGrnNo(grnDTO.getGrnNo());
+            Optional<Grn> grnOptional = grnRepository.findGrnByIdsGrnNo(input.getGrnNo());
             if (grnOptional.isPresent()) {
-                map.put("grnExists", "GRN Record exists ! New GRN No: " + grnDTO.getGrnNo() + " is being assigned !");
+                ErrorMessage.builder().message("GRN Record exists ! New GRN No: " + input.getGrnNo() + " is being assigned !").build();
             } else {
-                log.info("Saving new GRN : {}", grn);
                 Grn saved = grnRepository.save(grn);
-                populateAfterSaving(grnDTO, saved);
-                if (grnDTO.getGrnDetList() != null) {
+                populateAfterSaving(input, saved);
+                if (input.getGrnDetList() != null) {
                     List<GrnDet> grnDetList = new ArrayList<>();
-                    for (int i = 0; i < grnDTO.getGrnDetList().size(); i++) {
+                    for (int i = 0; i < input.getGrnDetList().size(); i++) {
                         GrnDet grnDet = new GrnDet();
-                        BeanUtils.copyProperties(grnDTO, grnDet);
-                        grnDet.setSeqNo(grnDTO.getGrnDetList().get(i).getSeqNo());
-                        grnDet.setLoc(grnDTO.getGrnDetList().get(i).getLoc());
-                        grnDet.setItemNo(grnDTO.getGrnDetList().get(i).getItemNo());
-                        grnDet.setPartNo(grnDTO.getGrnDetList().get(i).getPartNo());
-                        grnDet.setItemType(grnDTO.getGrnDetList().get(i).getItemType());
-                        grnDet.setProjectNo(grnDTO.getGrnDetList().get(i).getProjectNo());
-                        grnDet.setPoRecSeq(grnDTO.getGrnDetList().get(i).getPoRecSeq());
-                        grnDet.setUom(grnDTO.getGrnDetList().get(i).getUom());
-                        grnDet.setRecdQty(grnDTO.getGrnDetList().get(i).getRecdQty());
-                        grnDet.setRecdPrice(grnDTO.getGrnDetList().get(i).getRecdPrice());
-                        grnDet.setPoPrice(grnDTO.getGrnDetList().get(i).getPoPrice());
-                        grnDet.setIssuedQty(grnDTO.getGrnDetList().get(i).getIssuedQty());
-                        grnDet.setLabelQty(grnDTO.getGrnDetList().get(i).getLabelQty());
-                        grnDet.setStdPackQty(grnDTO.getGrnDetList().get(i).getStdPackQty());
-                        grnDet.setRemarks(grnDTO.getGrnDetList().get(i).getRemarks());
+                        BeanUtils.copyProperties(input, grnDet);
+                        grnDet.setSeqNo(input.getGrnDetList().get(i).getSeqNo());
+                        grnDet.setLoc(input.getGrnDetList().get(i).getLoc());
+                        grnDet.setItemNo(input.getGrnDetList().get(i).getItemNo());
+                        grnDet.setPartNo(input.getGrnDetList().get(i).getPartNo());
+                        grnDet.setItemType(input.getGrnDetList().get(i).getItemType());
+                        grnDet.setProjectNo(input.getGrnDetList().get(i).getProjectNo());
+                        grnDet.setPoRecSeq(input.getGrnDetList().get(i).getPoRecSeq());
+                        grnDet.setUom(input.getGrnDetList().get(i).getUom());
+                        grnDet.setRecdQty(input.getGrnDetList().get(i).getRecdQty());
+                        grnDet.setRecdPrice(input.getGrnDetList().get(i).getRecdPrice());
+                        grnDet.setPoPrice(input.getGrnDetList().get(i).getPoPrice());
+                        grnDet.setIssuedQty(input.getGrnDetList().get(i).getIssuedQty());
+                        grnDet.setLabelQty(input.getGrnDetList().get(i).getLabelQty());
+                        grnDet.setStdPackQty(input.getGrnDetList().get(i).getStdPackQty());
+                        grnDet.setRemarks(input.getGrnDetList().get(i).getRemarks());
                         grnDet.setGrnId(grn.getIds());
                         grnDet.setGrn(grn);
                         grnDet.setRecdDate(sdf.parse(date));
                         grnDetList.add(grnDet);
-                        map.put("contentData", grnDetList);
-                        map.put("totalRecords", (long) grnDetList.size());
                         // pre insert
                         if (grnDet.getPartNo() != null) {
-                            checkReceivedQty(grnDetList, grnDTO.getPoNo());
+                            checkReceivedQty(grnDetList, input.getPoNo());
                             checkLabelQty(grnDetList);
                         }
                         checkRecdQty(grnDetList);
                         checkUnitPrice(grnDetList);
                         grnDetRepository.save(grnDet);
                         postSaving(userProfile);
-
-                        map.put("successSave", "Transaction Complete: " + (long) grnDetList.size() + " records applied and saved");
                     }
-                    log.info("{} GRN Detail records saved. {}", grnDetList.size(), grnDetList);
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return map;
+        return input;
     }
 
     private void populateAfterSaving(GrnDTO grnDTO, Grn saved) {
@@ -473,7 +426,6 @@ public class GrnServiceImpl implements GrnService {
         for (GrnDet grnDet : grnDetList) {
             if (grnDet.getLabelQty().intValue() > 0 && grnDet.getLabelQty().intValue() > grnDet.getRecdQty().intValue()) {
                 ErrorMessage.builder().message("Qty per label is more than Received Qty!").build();
-                return;
             }
         }
     }
@@ -484,23 +436,61 @@ public class GrnServiceImpl implements GrnService {
         List<Object[]> purDetInfo = purDetRepository.getPurDetInfo(userProfile.getCompanyCode(), userProfile.getPlantNo(), poNo);
         for (GrnDet grnDet : grnDetList) {
             for (Object[] data : purDetInfo) {
-                PurDetDTO dto = new PurDetDTO();
+                PurDetDTO dto = PurDetDTO.builder().build();
                 dto.setOrderQty((BigDecimal) data[0]);
                 if (grnDet.getRecdQty().intValue() == 0) {
                     ErrorMessage.builder().message("Received Qty cannot be empty or zero!").build();
-                    return;
                 } else if (grnDet.getRecdQty().intValue() > 0 && grnDet.getRecdQty().intValue() > dto.getOrderQty().intValue()) {
                     ErrorMessage.builder().message("Receiving more than Ordered is not allowed!").build();
-                    return;
                 }
             }
         }
-
     }
 
     @Override
-    public List<Grn> get() {
-        return (List<Grn>) grnRepository.findAll();
+    public GrnDTO findBy(String grnNo, String subType) {
+
+        GrnId grnId = populateGrnId(grnNo, subType);
+        Grn grn = checkIfRecordExist(grnId);
+        List<GrnDetDTO> list = new ArrayList<>();
+        GrnDetDTO grnDetDTO = GrnDetDTO.builder().build();
+        for (GrnDet grnDet : grn.getGrnDetList()) {
+            grnDetDTO.setId(grnDet.getId());
+            grnDetDTO.setSeqNo(grnDet.getSeqNo());
+            grnDetDTO.setItemNo(grnDet.getItemNo());
+            grnDetDTO.setPartNo(grnDet.getPartNo());
+            grnDetDTO.setLoc(grnDet.getLoc());
+            grnDetDTO.setItemType(grnDet.getItemType());
+            grnDetDTO.setProjectNo(grnDet.getProjectNo());
+            grnDetDTO.setPoNo(grnDet.getPoNo());
+            grnDetDTO.setPoRecSeq(grnDet.getPoRecSeq());
+            grnDetDTO.setSivNo(grnDet.getSivNo());
+            grnDetDTO.setUom(grnDet.getUom());
+            grnDetDTO.setRecdDate(grnDet.getRecdDate());
+            grnDetDTO.setRecdPrice(grnDet.getRecdPrice());
+            grnDetDTO.setPoPrice(grnDet.getPoPrice());
+            grnDetDTO.setIssuedQty(grnDet.getIssuedQty());
+            grnDetDTO.setLabelQty(grnDet.getLabelQty());
+            grnDetDTO.setStdPackQty(grnDet.getStdPackQty());
+            grnDetDTO.setApRecdQty(grnDet.getApRecdQty());
+            grnDetDTO.setRemarks(grnDet.getRemarks());
+        }
+        list.add(grnDetDTO);
+        GrnDTO grnDTO = GrnDTO.builder().grnDetList(list).build();
+        BeanUtils.copyProperties(grn, grnDTO);
+        BeanUtils.copyProperties(grn.getIds(), grnDTO);
+
+        return grnDTO;
+    }
+
+    private Grn checkIfRecordExist(GrnId grnId) {
+
+        Optional<Grn> optionalGrn = grnRepository.findGrnByIds(grnId);
+
+        if (!optionalGrn.isPresent()) {
+            throw new NotFoundException("Record is not found");
+        }
+        return optionalGrn.get();
     }
 
     @Override
@@ -521,8 +511,31 @@ public class GrnServiceImpl implements GrnService {
         grns.setCurrentPageNumber(pgGrns.getPageable().getPageNumber());
         grns.setCurrentPageSize(pgGrns.getNumberOfElements());
         grns.setRows(pgGrns.getContent().stream().map(grn -> {
-            GrnDTO grnDTO = GrnDTO.builder().build();
-            BeanUtils.copyProperties(grn.getId(), grnDTO);
+            List<GrnDetDTO> list = new ArrayList<>();
+            GrnDetDTO grnDetDTO = GrnDetDTO.builder().build();
+            for (GrnDet grnDet : grn.getGrnDetList()) {
+                grnDetDTO.setId(grnDet.getId());
+                grnDetDTO.setSeqNo(grnDet.getSeqNo());
+                grnDetDTO.setItemNo(grnDet.getItemNo());
+                grnDetDTO.setPartNo(grnDet.getPartNo());
+                grnDetDTO.setLoc(grnDet.getLoc());
+                grnDetDTO.setItemType(grnDet.getItemType());
+                grnDetDTO.setProjectNo(grnDet.getProjectNo());
+                grnDetDTO.setPoNo(grnDet.getPoNo());
+                grnDetDTO.setPoRecSeq(grnDet.getPoRecSeq());
+                grnDetDTO.setSivNo(grnDet.getSivNo());
+                grnDetDTO.setUom(grnDet.getUom());
+                grnDetDTO.setRecdDate(grnDet.getRecdDate());
+                grnDetDTO.setRecdPrice(grnDet.getRecdPrice());
+                grnDetDTO.setPoPrice(grnDet.getPoPrice());
+                grnDetDTO.setIssuedQty(grnDet.getIssuedQty());
+                grnDetDTO.setLabelQty(grnDet.getLabelQty());
+                grnDetDTO.setStdPackQty(grnDet.getStdPackQty());
+                grnDetDTO.setApRecdQty(grnDet.getApRecdQty());
+                grnDetDTO.setRemarks(grnDet.getRemarks());
+            }
+            list.add(grnDetDTO);
+            GrnDTO grnDTO = GrnDTO.builder().grnDetList(list).build();
             BeanUtils.copyProperties(grn.getIds(), grnDTO);
             BeanUtils.copyProperties(grn, grnDTO);
             return grnDTO;
@@ -549,7 +562,6 @@ public class GrnServiceImpl implements GrnService {
             if (grnDet.getRecdQty().intValue() > 0) {
                 if (!grnDet.getPoPrice().equals(grnDet.getRecdPrice())) {
                     ErrorMessage.builder().message("Unit price is not equal to receiving price !").build();
-                    return;
                 }
             }
         }
@@ -566,10 +578,8 @@ public class GrnServiceImpl implements GrnService {
                     recQty = recQty.add(grnDet.getRecdQty());
                     if (recQty.intValue() > grnDet.getRecdQty().intValue()) {
                         ErrorMessage.builder().message("Receiving more than Ordered is not allowed!").build();
-                        return;
                     }
                 }
-
             }
         }
     }

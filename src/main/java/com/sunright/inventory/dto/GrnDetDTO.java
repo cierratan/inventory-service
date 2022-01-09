@@ -54,4 +54,5 @@ public class GrnDetDTO extends BaseDTO {
     private String description;
     private BigDecimal resvQty;
     private String invUom;
+    private GrnDTO grnDTO;
 }

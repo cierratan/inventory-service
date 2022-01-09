@@ -1,19 +1,16 @@
 package com.sunright.inventory.controller;
 
-import com.sunright.inventory.dto.*;
-import com.sunright.inventory.interceptor.UserProfileContext;
+import com.sunright.inventory.dto.GrnDTO;
+import com.sunright.inventory.dto.GrnDetDTO;
+import com.sunright.inventory.dto.SearchRequest;
+import com.sunright.inventory.dto.SearchResult;
 import com.sunright.inventory.service.GrnService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
-
-import static org.springframework.http.HttpStatus.*;
+import java.util.List;
 
 @RestController
 @RequestMapping("grns")
@@ -23,170 +20,34 @@ public class GrnController {
     private GrnService grnService;
 
     @GetMapping("pono")
-    public ResponseEntity getAllPoNo() {
-        UserProfile userProfile = UserProfileContext.getUserProfile();
-        Map<String, Object> result = grnService.getAllPoNo(userProfile);
-        try {
-            return ResponseEntity.ok(Response.builder()
-                    .timeStamp(LocalDateTime.now())
-                    .data(new HashMap<String, Object>() {{
-                        put("grn", result.get("contentData"));
-                    }})
-                    .totalRecords((Long) result.get("totalRecords"))
-                    .message("Fetching all PO No.")
-                    .status(OK)
-                    .statusCode(OK.value())
-                    .build());
-
-        } catch (Exception e) {
-            return ResponseEntity.ok(Response.builder()
-                    .timeStamp(LocalDateTime.now())
-                    .data(new HashMap<String, Object>() {{
-                        put("grn", result.get("contentData"));
-                    }})
-                    .totalRecords((Long) result.get("totalRecords"))
-                    .message(e.getMessage())
-                    .status(INTERNAL_SERVER_ERROR)
-                    .statusCode(INTERNAL_SERVER_ERROR.value())
-                    .build());
-        }
+    public ResponseEntity<List<GrnDTO>> allPoNo() {
+        return new ResponseEntity<>(grnService.findAllPoNo(), HttpStatus.OK);
     }
 
-    @PostMapping("partno")
-    public ResponseEntity getAllPartNo(@RequestBody @Valid GrnDTO grnDTO) {
-        UserProfile userProfile = UserProfileContext.getUserProfile();
-        Map<String, Object> result = grnService.getAllPartNo(grnDTO, userProfile);
-        try {
-            return ResponseEntity.ok(Response.builder()
-                    .timeStamp(LocalDateTime.now())
-                    .data(new HashMap<String, Object>() {{
-                        put("grn", result.get("contentData"));
-                    }})
-                    .totalRecords((Long) result.get("totalRecords"))
-                    .message("Fetching Data from Part No. ")
-                    .status(OK)
-                    .statusCode(OK.value())
-                    .build());
-
-        } catch (Exception e) {
-            return ResponseEntity.ok(Response.builder()
-                    .timeStamp(LocalDateTime.now())
-                    .data(new HashMap<String, Object>() {{
-                        put("grn", result.get("contentData"));
-                    }})
-                    .totalRecords((Long) result.get("totalRecords"))
-                    .message(e.getMessage())
-                    .status(INTERNAL_SERVER_ERROR)
-                    .statusCode(INTERNAL_SERVER_ERROR.value())
-                    .build());
-        }
+    @GetMapping("partno")
+    public ResponseEntity<List<GrnDetDTO>> allPartNo(@RequestParam String poNo) {
+        return new ResponseEntity<>(grnService.getAllPartNo(poNo), HttpStatus.OK);
     }
 
-    @PostMapping("detail")
-    public ResponseEntity<Object> getGrnDetail(@RequestBody GrnDTO grnDTO, GrnDetDTO grnDetDTO) {
-        Map<String, Object> result = grnService.getGrnDetail(grnDTO,grnDetDTO);
-        try {
-            return ResponseEntity.ok(Response.builder()
-                    .timeStamp(LocalDateTime.now())
-                    .data(new HashMap<String, Object>() {{
-                        put("grn", result.get("contentData"));
-                    }})
-                    .totalRecords((Long) result.get("totalRecords"))
-                    .message("Fetching All Data for GRN Detail")
-                    .status(OK)
-                    .statusCode(OK.value())
-                    .build());
-        } catch (Exception e) {
-            return ResponseEntity.ok(Response.builder()
-                    .timeStamp(LocalDateTime.now())
-                    .data(new HashMap<String, Object>() {{
-                        put("grn", result.get("contentData"));
-                    }})
-                    .totalRecords((Long) result.get("totalRecords"))
-                    .message(e.getMessage())
-                    .status(INTERNAL_SERVER_ERROR)
-                    .statusCode(INTERNAL_SERVER_ERROR.value())
-                    .build());
-        }
+    @GetMapping("detail")
+    public ResponseEntity<List<GrnDetDTO>> detail(@RequestParam String poNo, @RequestParam String itemNo, @RequestParam String partNo, @RequestParam Integer poRecSeq) {
+        return new ResponseEntity<>(grnService.getGrnDetail(poNo, itemNo, partNo, poRecSeq), HttpStatus.OK);
+
     }
 
-    @PostMapping("header")
-    public ResponseEntity<Object> getGrnHeader(@RequestBody @Valid GrnDTO grnDTO) {
-        Map<String, Object> result = grnService.getGrnHeader(grnDTO);
-        try {
-            return ResponseEntity.ok(Response.builder()
-                    .timeStamp(LocalDateTime.now())
-                    .data(new HashMap<String, Object>() {{
-                        put("grn", result.get("contentData"));
-                    }})
-                    .totalRecords((Long) result.get("totalRecords"))
-                    .message("Fetching All Data for GRN Header")
-                    .status(OK)
-                    .statusCode(OK.value())
-                    .build());
-        } catch (Exception e) {
-            return ResponseEntity.ok(Response.builder()
-                    .timeStamp(LocalDateTime.now())
-                    .data(new HashMap<String, Object>() {{
-                        put("grn", result.get("contentData"));
-                    }})
-                    .totalRecords((Long) result.get("totalRecords"))
-                    .message(e.getMessage())
-                    .status(INTERNAL_SERVER_ERROR)
-                    .statusCode(INTERNAL_SERVER_ERROR.value())
-                    .build());
-        }
+    @GetMapping("header")
+    public ResponseEntity<List<GrnDTO>> header(@RequestParam String poNo) {
+        return new ResponseEntity<>(grnService.getGrnHeader(poNo), HttpStatus.OK);
     }
 
     @PostMapping
-    public ResponseEntity<Object> create(@RequestBody @Valid GrnDTO grnDTO) {
-        Map<String, Object> result = grnService.create(grnDTO);
-        try {
-            if (result.get("grnExists") != null) {
-                return ResponseEntity.ok(Response.builder()
-                        .timeStamp(LocalDateTime.now())
-                        .totalRecords(0L)
-                        .message(result.get("grnExists").toString())
-                        .status(OK)
-                        .statusCode(OK.value())
-                        .build());
-            }
-            return ResponseEntity.ok(Response.builder()
-                    .timeStamp(LocalDateTime.now())
-                    .data(new HashMap<String, Object>() {{
-                        put("grn", result.get("contentData"));
-                    }})
-                    .totalRecords((Long) result.get("totalRecords"))
-                    .message(result.get("successSave").toString())
-                    .status(CREATED)
-                    .statusCode(CREATED.value())
-                    .build());
-
-        } catch (Exception e) {
-            return ResponseEntity.ok(Response.builder()
-                    .timeStamp(LocalDateTime.now())
-                    .data(new HashMap<String, Object>() {{
-                        put("grn", result.get("contentData"));
-                    }})
-                    .totalRecords((Long) result.get("totalRecords"))
-                    .message(e.getMessage())
-                    .status(INTERNAL_SERVER_ERROR)
-                    .statusCode(INTERNAL_SERVER_ERROR.value())
-                    .build());
-        }
+    public ResponseEntity<GrnDTO> create(@RequestBody GrnDTO grn) {
+        return new ResponseEntity<>(grnService.createGrn(grn), HttpStatus.CREATED);
     }
 
-    @GetMapping
-    public ResponseEntity get() {
-        return ResponseEntity.ok(Response.builder()
-                .timeStamp(LocalDateTime.now())
-                .data(new HashMap<String, Object>() {{
-                    put("grn", grnService.get());
-                }})
-                .message("Fetching all GRN")
-                .status(OK)
-                .statusCode(OK.value())
-                .build());
+    @GetMapping("{grnNo}-{subType}")
+    public ResponseEntity<GrnDTO> get(@PathVariable String grnNo, @PathVariable String subType) {
+        return new ResponseEntity<>(grnService.findBy(grnNo, subType), HttpStatus.OK);
     }
 
     @PostMapping("search")
