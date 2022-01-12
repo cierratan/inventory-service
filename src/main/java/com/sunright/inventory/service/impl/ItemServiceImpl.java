@@ -1,6 +1,9 @@
 package com.sunright.inventory.service.impl;
 
 import com.sunright.inventory.dto.*;
+import com.sunright.inventory.dto.search.Filter;
+import com.sunright.inventory.dto.search.SearchRequest;
+import com.sunright.inventory.dto.search.SearchResult;
 import com.sunright.inventory.entity.enums.Status;
 import com.sunright.inventory.entity.item.Item;
 import com.sunright.inventory.entity.item.ItemId;

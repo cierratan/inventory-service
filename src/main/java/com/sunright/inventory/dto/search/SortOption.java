@@ -1,4 +1,4 @@
-package com.sunright.inventory.dto;
+package com.sunright.inventory.dto.search;
 
 public enum SortOption {
     ASC, DESC;

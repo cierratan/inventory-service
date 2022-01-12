@@ -2,8 +2,8 @@ package com.sunright.inventory.service;
 
 import com.sunright.inventory.dto.GrnDTO;
 import com.sunright.inventory.dto.GrnDetDTO;
-import com.sunright.inventory.dto.SearchRequest;
-import com.sunright.inventory.dto.SearchResult;
+import com.sunright.inventory.dto.search.SearchRequest;
+import com.sunright.inventory.dto.search.SearchResult;
 
 import java.util.List;
 

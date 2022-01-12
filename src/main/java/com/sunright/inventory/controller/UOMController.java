@@ -1,7 +1,7 @@
 package com.sunright.inventory.controller;
 
-import com.sunright.inventory.dto.SearchRequest;
-import com.sunright.inventory.dto.SearchResult;
+import com.sunright.inventory.dto.search.SearchRequest;
+import com.sunright.inventory.dto.search.SearchResult;
 import com.sunright.inventory.dto.UomDTO;
 import com.sunright.inventory.service.UOMService;
 import org.springframework.beans.factory.annotation.Autowired;

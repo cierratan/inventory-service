@@ -1,8 +1,8 @@
 package com.sunright.inventory.service;
 
 import com.sunright.inventory.dto.ItemDTO;
-import com.sunright.inventory.dto.SearchRequest;
-import com.sunright.inventory.dto.SearchResult;
+import com.sunright.inventory.dto.search.SearchRequest;
+import com.sunright.inventory.dto.search.SearchResult;
 
 public interface ItemService {
     ItemDTO createItem(ItemDTO input);

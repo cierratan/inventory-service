@@ -1,7 +1,7 @@
 package com.sunright.inventory.service;
 
-import com.sunright.inventory.dto.SearchRequest;
-import com.sunright.inventory.dto.SearchResult;
+import com.sunright.inventory.dto.search.SearchRequest;
+import com.sunright.inventory.dto.search.SearchResult;
 import com.sunright.inventory.dto.UomDTO;
 
 public interface UOMService {
