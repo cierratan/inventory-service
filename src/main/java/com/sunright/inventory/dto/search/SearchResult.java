@@ -1,4 +1,4 @@
-package com.sunright.inventory.dto;
+package com.sunright.inventory.dto.search;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;

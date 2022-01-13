@@ -1,6 +1,9 @@
 package com.sunright.inventory.service.impl;
 
 import com.sunright.inventory.dto.*;
+import com.sunright.inventory.dto.search.Filter;
+import com.sunright.inventory.dto.search.SearchRequest;
+import com.sunright.inventory.dto.search.SearchResult;
 import com.sunright.inventory.entity.BaseIdEntity;
 import com.sunright.inventory.entity.InvCtl;
 import com.sunright.inventory.entity.enums.Status;
@@ -12,8 +15,6 @@ import com.sunright.inventory.util.QueryGenerator;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;

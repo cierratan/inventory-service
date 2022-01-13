@@ -1,8 +1,8 @@
 package com.sunright.inventory.controller;
 
 import com.sunright.inventory.dto.ItemDTO;
-import com.sunright.inventory.dto.SearchRequest;
-import com.sunright.inventory.dto.SearchResult;
+import com.sunright.inventory.dto.search.SearchRequest;
+import com.sunright.inventory.dto.search.SearchResult;
 import com.sunright.inventory.service.ItemService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

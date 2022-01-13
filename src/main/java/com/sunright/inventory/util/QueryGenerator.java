@@ -1,9 +1,9 @@
 package com.sunright.inventory.util;
 
-import com.sunright.inventory.dto.DataSorting;
-import com.sunright.inventory.dto.Filter;
-import com.sunright.inventory.dto.SearchRequest;
-import com.sunright.inventory.dto.SortOption;
+import com.sunright.inventory.dto.search.DataSorting;
+import com.sunright.inventory.dto.search.Filter;
+import com.sunright.inventory.dto.search.SearchRequest;
+import com.sunright.inventory.dto.search.SortOption;
 import com.sunright.inventory.entity.enums.Status;
 import com.sunright.inventory.interceptor.UserProfileContext;
 import org.springframework.data.domain.PageRequest;
