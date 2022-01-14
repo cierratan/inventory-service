@@ -3,9 +3,7 @@ package com.sunright.inventory.entity.msr;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.Column;
-import javax.persistence.EmbeddedId;
-import javax.persistence.Entity;
+import javax.persistence.*;
 import java.math.BigDecimal;
 
 @Entity(name = "MSRDET")
@@ -54,4 +52,12 @@ public class MSRDetail {
 
     private String mrvNo;
     private String remarks;
+
+    @ManyToOne
+    @JoinColumns({
+            @JoinColumn(name = "companyCode", referencedColumnName = "companyCode", nullable = false, insertable = false, updatable = false),
+            @JoinColumn(name = "plantNo", referencedColumnName = "plantNo", nullable = false, insertable = false, updatable = false),
+            @JoinColumn(name = "msrNo", referencedColumnName = "msrNo", nullable = false, insertable = false, updatable = false)
+    })
+    private MSR msr;
 }

@@ -1,7 +1,6 @@
 package com.sunright.inventory.dto.msr;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.sunright.inventory.dto.BaseDTO;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -12,10 +11,9 @@ import java.math.BigDecimal;
 @Getter
 @Setter
 @Builder
-public class MsrDetailDTO extends BaseDTO {
+public class MsrDetailDTO {
     private String msrNo;
     private int seqNo;
-    private Long version;
 
     private String itemNo;
     private String partNo;
