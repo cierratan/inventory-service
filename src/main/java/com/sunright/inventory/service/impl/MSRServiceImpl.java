@@ -81,10 +81,53 @@ public class MSRServiceImpl implements MSRService {
 
     @Override
     public MsrDTO findBy(String msrNo) {
-        MSRId msrId = populateId(msrNo);
+        return convertToMsrDTO(checkIfRecordExist(populateId(msrNo)));
+    }
 
-        MSR msr = checkIfRecordExist(msrId);
 
+    @Override
+    public SearchResult<MsrDTO> searchBy(SearchRequest searchRequest) {
+        Specification<MSR> specs = where(queryGenerator.createDefaultSpecification());
+
+        if(!CollectionUtils.isEmpty(searchRequest.getFilters())) {
+            for (Filter filter : searchRequest.getFilters()) {
+                specs = specs.and(queryGenerator.createSpecification(filter));
+            }
+        }
+
+        Page<MSR> pgMSR = msrRepository.findAll(specs, queryGenerator.constructPageable(searchRequest));
+
+        SearchResult<MsrDTO> result = new SearchResult<>();
+        result.setTotalRows(pgMSR.getTotalElements());
+        result.setTotalPages(pgMSR.getTotalPages());
+        result.setCurrentPageNumber(pgMSR.getPageable().getPageNumber());
+        result.setCurrentPageSize(pgMSR.getNumberOfElements());
+        result.setRows(pgMSR.getContent().stream().map(msr -> convertToMsrDTO(msr)).collect(Collectors.toList()));
+
+        return result;
+    }
+
+    private MSRId populateId(String msrNo) {
+        UserProfile userProfile = UserProfileContext.getUserProfile();
+
+        MSRId msrId = new MSRId();
+        msrId.setCompanyCode(userProfile.getCompanyCode());
+        msrId.setPlantNo(userProfile.getPlantNo());
+        msrId.setMsrNo(msrNo);
+
+        return msrId;
+    }
+
+    private MSR checkIfRecordExist(MSRId id) {
+        Optional<MSR> optionalItem = msrRepository.findById(id);
+
+        if (optionalItem.isEmpty()) {
+            throw new NotFoundException("Record is not found");
+        }
+        return optionalItem.get();
+    }
+
+    private MsrDTO convertToMsrDTO(MSR msr) {
         Set<MsrDetailDTO> msrDetails = new HashSet<>();
         if(!CollectionUtils.isEmpty(msr.getMsrDetails())) {
             msrDetails = msr.getMsrDetails().stream().map(detail -> {
@@ -104,56 +147,6 @@ public class MSRServiceImpl implements MSRService {
         BeanUtils.copyProperties(msr.getId(), msrDTO);
         BeanUtils.copyProperties(msr, msrDTO);
         msrDTO.setMsrDetails(msrDetails);
-
         return msrDTO;
-    }
-
-    @Override
-    public SearchResult<MsrDTO> searchBy(SearchRequest searchRequest) {
-        Specification<MSR> specs = where(queryGenerator.createDefaultSpecification());
-
-        if(!CollectionUtils.isEmpty(searchRequest.getFilters())) {
-            for (Filter filter : searchRequest.getFilters()) {
-                specs = specs.and(queryGenerator.createSpecification(filter));
-            }
-        }
-
-        Page<MSR> pgMSR = msrRepository.findAll(specs, queryGenerator.constructPageable(searchRequest));
-
-        SearchResult<MsrDTO> result = new SearchResult<>();
-        result.setTotalRows(pgMSR.getTotalElements());
-        result.setTotalPages(pgMSR.getTotalPages());
-        result.setCurrentPageNumber(pgMSR.getPageable().getPageNumber());
-        result.setCurrentPageSize(pgMSR.getNumberOfElements());
-        result.setRows(pgMSR.getContent().stream().map(msr -> {
-            MsrDTO locationDTO = MsrDTO.builder().build();
-            BeanUtils.copyProperties(msr.getId(), locationDTO);
-            BeanUtils.copyProperties(msr, locationDTO);
-            return locationDTO;
-        }).collect(Collectors.toList()));
-
-        return result;
-    }
-
-    private MSRId populateId(String msrNo) {
-        UserProfile userProfile = UserProfileContext.getUserProfile();
-
-        MSRId msrId = new MSRId();
-        msrId.setCompanyCode(userProfile.getCompanyCode());
-        msrId.setPlantNo(userProfile.getPlantNo());
-        msrId.setMsrNo(msrNo);
-
-        return msrId;
-    }
-
-    private MSR checkIfRecordExist(MSRId id) {
-//        Optional<MSR> optionalItem = msrRepository.findById(id);
-//
-//        if (optionalItem.isEmpty()) {
-//            throw new NotFoundException("Record is not found");
-//        }
-//        return optionalItem.get();
-
-        return msrRepository.getById(id);
     }
 }
