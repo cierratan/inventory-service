@@ -1,13 +1,12 @@
 package com.sunright.inventory.service.impl;
 
 import com.sunright.inventory.dto.UserProfile;
-import com.sunright.inventory.dto.lov.LocationDTO;
 import com.sunright.inventory.dto.msr.MsrDTO;
+import com.sunright.inventory.dto.msr.MsrDetailDTO;
 import com.sunright.inventory.dto.search.Filter;
 import com.sunright.inventory.dto.search.SearchRequest;
 import com.sunright.inventory.dto.search.SearchResult;
 import com.sunright.inventory.entity.enums.Status;
-import com.sunright.inventory.entity.lov.Location;
 import com.sunright.inventory.entity.msr.MSR;
 import com.sunright.inventory.entity.msr.MSRDetail;
 import com.sunright.inventory.entity.msr.MSRDetailId;
@@ -56,6 +55,8 @@ public class MSRServiceImpl implements MSRService {
                 id.setSeqNo(detail.getSeqNo());
 
                 MSRDetail msrDetail = new MSRDetail();
+                msrDetail.setId(id);
+                BeanUtils.copyProperties(detail, msrDetail);
 
                 return msrDetail;
             }).collect(Collectors.toSet());
@@ -84,9 +85,25 @@ public class MSRServiceImpl implements MSRService {
 
         MSR msr = checkIfRecordExist(msrId);
 
+        Set<MsrDetailDTO> msrDetails = new HashSet<>();
+        if(!CollectionUtils.isEmpty(msr.getMsrDetails())) {
+            msrDetails = msr.getMsrDetails().stream().map(detail -> {
+                MsrDetailDTO msrDetail = MsrDetailDTO.builder()
+                        .msrNo(detail.getId().getMsrNo())
+                        .seqNo(detail.getId().getSeqNo())
+                        .build();
+
+                BeanUtils.copyProperties(detail, msrDetail);
+
+                return msrDetail;
+            }).collect(Collectors.toSet());
+        }
+
         MsrDTO msrDTO = MsrDTO.builder().build();
-        BeanUtils.copyProperties(msr, msrDTO);
+
         BeanUtils.copyProperties(msr.getId(), msrDTO);
+        BeanUtils.copyProperties(msr, msrDTO);
+        msrDTO.setMsrDetails(msrDetails);
 
         return msrDTO;
     }
@@ -130,11 +147,13 @@ public class MSRServiceImpl implements MSRService {
     }
 
     private MSR checkIfRecordExist(MSRId id) {
-        Optional<MSR> optionalItem = msrRepository.findById(id);
+//        Optional<MSR> optionalItem = msrRepository.findById(id);
+//
+//        if (optionalItem.isEmpty()) {
+//            throw new NotFoundException("Record is not found");
+//        }
+//        return optionalItem.get();
 
-        if (optionalItem.isEmpty()) {
-            throw new NotFoundException("Record is not found");
-        }
-        return optionalItem.get();
+        return msrRepository.getById(id);
     }
 }

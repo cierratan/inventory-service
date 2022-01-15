@@ -1,17 +1,19 @@
 package com.sunright.inventory.entity.msr;
 
 import com.sunright.inventory.entity.BaseEntity;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
 import java.util.Set;
 
 @Entity(name = "MSR")
-@Data
-@EqualsAndHashCode(callSuper = true)
+@Setter
+@Getter
+@AllArgsConstructor
 @NoArgsConstructor
 public class MSR extends BaseEntity {
 
@@ -31,11 +33,6 @@ public class MSR extends BaseEntity {
     @Column(name = "CURRENCY_RATE", precision = 10, scale = 6)
     private BigDecimal currencyRate;
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumns({
-            @JoinColumn(referencedColumnName = "companyCode", updatable = false),
-            @JoinColumn(referencedColumnName = "plantNo", updatable = false),
-            @JoinColumn(referencedColumnName = "msrNo", updatable = false)
-    })
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "msr")
     private Set<MSRDetail> msrDetails;
 }
