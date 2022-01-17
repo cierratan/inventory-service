@@ -1,6 +1,5 @@
 package com.sunright.inventory.entity.grn;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -56,8 +55,7 @@ public class GrnDet {
 
     private String remarks;
 
-    //@JsonBackReference(value = "grnDetId")
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinColumn(name = "GRN_ID")
     private Grn grn;
 }

@@ -1,8 +1,8 @@
-package com.sunright.inventory.dto;
+package com.sunright.inventory.dto.pur;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.sunright.inventory.entity.enums.Closure;
+import com.sunright.inventory.dto.BaseDTO;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -14,7 +14,7 @@ import java.util.Date;
 @Getter
 @Setter
 @Builder
-public class DraftPurDTO extends BaseDTO {
+public class PurDTO extends BaseDTO {
 
     private String poNo;
     private String docmType;
@@ -55,7 +55,7 @@ public class DraftPurDTO extends BaseDTO {
     private String shippingTerm;
     private String poInd;
     private String printInd;
-    private Closure openClose;
+    private String openClose;
     private String closeType;
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
@@ -89,5 +89,7 @@ public class DraftPurDTO extends BaseDTO {
     private String poSubType;
     private BigDecimal specialDiscPct;
     private BigDecimal specialDiscAmt;
-    private String remakrs;
+    private String remarks;
+
+    private String message;
 }

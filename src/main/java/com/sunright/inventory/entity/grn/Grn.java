@@ -1,6 +1,5 @@
 package com.sunright.inventory.entity.grn;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.sunright.inventory.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -37,7 +36,7 @@ public class Grn extends BaseEntity {
 
     private Date recdDate;
 
-    @Column(name = "STATUS_1", insertable = false, updatable = false)
+    @Column(name = "STATUS_1")
     private String statuz;
 
     private Date closedDate;
@@ -48,7 +47,6 @@ public class Grn extends BaseEntity {
     private String reqSubmitNo;
     private Date reqSubmitDate;
 
-    //@JsonManagedReference(value = "grnDetId")
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "grn", cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.EAGER, mappedBy = "grn", orphanRemoval = true, cascade = CascadeType.ALL)
     private List<GrnDet> grnDetList;
 }

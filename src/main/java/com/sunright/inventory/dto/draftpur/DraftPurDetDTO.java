@@ -1,6 +1,7 @@
-package com.sunright.inventory.dto;
+package com.sunright.inventory.dto.draftpur;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.sunright.inventory.dto.BaseDTO;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -12,7 +13,7 @@ import java.util.Date;
 @Getter
 @Setter
 @Builder
-public class PurDetDTO extends BaseDTO {
+public class DraftPurDetDTO extends BaseDTO {
 
     private String poNo;
     private Integer recSeq;
@@ -48,8 +49,4 @@ public class PurDetDTO extends BaseDTO {
     private String advStatus;
     private String remarks;
     private BigDecimal apRecdQty;
-
-    private String mslCode;
-    private String codeDesc;
-    private String description;
 }

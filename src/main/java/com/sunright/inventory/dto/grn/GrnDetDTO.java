@@ -1,6 +1,7 @@
-package com.sunright.inventory.dto;
+package com.sunright.inventory.dto.grn;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.sunright.inventory.dto.BaseDTO;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -26,16 +27,21 @@ public class GrnDetDTO extends BaseDTO {
     @NotBlank(message = "Part No. Can Not be Blank !")
     private String partNo;
 
-    @NotBlank(message = "Location must not be empty")
+    @NotBlank(message = "Location Can Not be Blank !")
     private String loc;
 
+    @NotBlank(message = "Item Type Can Not be Blank !")
     private Integer itemType;
+
     private String projectNo;
     private Integer poRecSeq;
     private String sivNo;
     private String uom;
     private Date recdDate;
+
     private BigDecimal recdQty;
+
+    @NotBlank(message = "Recd Price Can Not be Blank !")
     private BigDecimal recdPrice;
     private BigDecimal poPrice;
     private BigDecimal issuedQty;
@@ -54,5 +60,9 @@ public class GrnDetDTO extends BaseDTO {
     private String description;
     private BigDecimal resvQty;
     private String invUom;
-    private GrnDTO grnDTO;
+
+    private BigDecimal retnQty;
+    private BigDecimal retnPrice;
+
+    private String message;
 }

@@ -1,6 +1,7 @@
-package com.sunright.inventory.dto;
+package com.sunright.inventory.dto.grn;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.sunright.inventory.dto.BaseDTO;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -40,4 +41,7 @@ public class GrnDTO extends BaseDTO {
     private String buyer;
     private Date rlseDate;
     private List<GrnDetDTO> grnDetList;
+
+    private String msrNo;
+    private String message;
 }

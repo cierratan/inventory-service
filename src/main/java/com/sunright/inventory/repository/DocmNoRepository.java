@@ -14,7 +14,7 @@ import java.util.List;
 @Repository
 public interface DocmNoRepository extends PagingAndSortingRepository<DocmNo, DocmNoId>, JpaSpecificationExecutor<DocmNo> {
 
-    @Query(value = "SELECT prefix||lpad(to_char(nvl(last_generated_no,0)+1),5,'0'), nvl(last_generated_no,0)+1 " +
+    @Query(value = "SELECT prefix||lpad(to_char(nvl(last_generated_no,0)+1),5,'0') prefix , nvl(last_generated_no,0)+1 last_generated_no " +
             "FROM docm_no WHERE company_code = :companyCode and plant_no = :plantNo and type = 'GRN' AND sub_type = 'N'", nativeQuery = true)
     List<Object[]> getLastGeneratedNoforGRN(String companyCode, Integer plantNo);
 
@@ -22,5 +22,9 @@ public interface DocmNoRepository extends PagingAndSortingRepository<DocmNo, Doc
     @Query(value = "update docm_no set last_generated_no = :lastGeneratedNo where company_code = :companyCode " +
             "and plant_no = :plantNo and sub_type = 'N' and type = 'GRN'", nativeQuery = true)
     void updateLastGeneratedNo(BigDecimal lastGeneratedNo, String companyCode, Integer plantNo);
+
+    @Query(value = "SELECT prefix||lpad(to_char(nvl(last_generated_no,0)+1),5,'0') prefix, nvl(last_generated_no,0)+1 last_generated_no " +
+            "FROM docm_no WHERE company_code = :companyCode and plant_no = :plantNo and type = 'GRN' AND sub_type = 'M'", nativeQuery = true)
+    List<Object[]> getLastGeneratedNoforGRNManual(String companyCode, Integer plantNo);
 
 }

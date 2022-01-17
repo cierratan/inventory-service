@@ -1,8 +1,6 @@
 package com.sunright.inventory.entity.pur;
 
-import com.sunright.inventory.entity.BaseEntity;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.Column;
@@ -13,9 +11,8 @@ import java.util.Date;
 
 @Entity(name = "PURDET")
 @Data
-@EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
-public class PurDet extends BaseEntity {
+public class PurDet {
 
     @EmbeddedId
     private PurDetId id;

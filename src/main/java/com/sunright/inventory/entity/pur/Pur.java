@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import javax.persistence.*;
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.Set;
 
 @Entity(name = "PUR")
 @Data
@@ -121,4 +122,12 @@ public class Pur extends BaseEntity {
     private BigDecimal specialDiscAmt;
 
     private String remarks;
+
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumns({
+            @JoinColumn(referencedColumnName = "companyCode", updatable = false),
+            @JoinColumn(referencedColumnName = "plantNo", updatable = false),
+            @JoinColumn(referencedColumnName = "poNo", updatable = false)
+    })
+    private Set<PurDet> purDetails;
 }
