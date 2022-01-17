@@ -1,14 +1,21 @@
 package com.sunright.inventory.service.impl;
 
-import com.sunright.inventory.dto.*;
+import com.sunright.inventory.dto.UserProfile;
+import com.sunright.inventory.dto.docmno.DocmNoDTO;
+import com.sunright.inventory.dto.grn.GrnDTO;
+import com.sunright.inventory.dto.grn.GrnDetDTO;
+import com.sunright.inventory.dto.msr.MsrDTO;
+import com.sunright.inventory.dto.pur.PurDTO;
+import com.sunright.inventory.dto.pur.PurDetDTO;
 import com.sunright.inventory.dto.search.Filter;
 import com.sunright.inventory.dto.search.SearchRequest;
 import com.sunright.inventory.dto.search.SearchResult;
+import com.sunright.inventory.dto.supplier.SupplierDTO;
 import com.sunright.inventory.entity.enums.Status;
 import com.sunright.inventory.entity.grn.Grn;
 import com.sunright.inventory.entity.grn.GrnDet;
 import com.sunright.inventory.entity.grn.GrnId;
-import com.sunright.inventory.exception.ErrorMessage;
+import com.sunright.inventory.entity.msr.MSR;
 import com.sunright.inventory.exception.NotFoundException;
 import com.sunright.inventory.interceptor.UserProfileContext;
 import com.sunright.inventory.repository.*;
@@ -54,16 +61,22 @@ public class GrnServiceImpl implements GrnService {
     private PurRepository purRepository;
 
     @Autowired
-    private PurDetRepository purDetRepository;
-
-    @Autowired
     private DraftPurRepository draftPurRepository;
 
     @Autowired
     private SupplierRepository supplierRepository;
 
     @Autowired
+    private MSRRepository msrRepository;
+
+    @Autowired
+    private ItemRepository itemRepository;
+
+    @Autowired
     private DefaultCodeDetailRepository defaultCodeDetailRepository;
+
+    @Autowired
+    private BombypjRepository bombypjRepository;
 
     @Autowired
     private QueryGenerator queryGenerator;
@@ -83,97 +96,86 @@ public class GrnServiceImpl implements GrnService {
     }
 
     @Override
-    public List<GrnDTO> getGrnHeader(String poNo) {
+    public GrnDTO getGrnHeader(String poNo) {
 
         SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
         String date = sdf.format(new Date());
         UserProfile userProfile = UserProfileContext.getUserProfile();
-        List<GrnDTO> list = new ArrayList<>();
+        GrnDTO grnDTO = GrnDTO.builder().build();
         checkStatusPoNo(poNo, userProfile);
-        List<DocmNoDTO> lastNoForGrnList = getLastGeneratedNoforGRN(userProfile);
+        DocmNoDTO prefixGrnNo = getLastGeneratedNoforGRN(userProfile);
         List<PurDTO> purInfoList = getPurInfo(poNo, userProfile);
-        for (DocmNoDTO dtoDocmNo : lastNoForGrnList) {
-            GrnDTO grnDTO = GrnDTO.builder().build();
-            grnDTO.setGrnNo(dtoDocmNo.getPrefix());
-            if (grnDTO.getGrnNo() == null) {
-                ErrorMessage.builder().message("Grn No. must not be empty").build();
-            } else {
-                for (PurDTO dtoPur : purInfoList) {
-                    grnDTO.setSupplierCode(dtoPur.getSupplierCode());
-                    grnDTO.setCurrencyCode(dtoPur.getCurrencyCode());
-                    grnDTO.setCurrencyRate(dtoPur.getCurrencyRate());
-                    grnDTO.setBuyer(dtoPur.getBuyer());
-                    grnDTO.setRlseDate(dtoPur.getRlseDate());
-                    grnDTO.setPoRemarks(dtoPur.getRemarks());
-                    try {
-                        grnDTO.setRecdDate(sdf.parse(date));
-                    } catch (ParseException e) {
-                        e.printStackTrace();
-                    }
-                    List<SupplierDTO> supplierList = supplierName(grnDTO.getSupplierCode(), userProfile);
-                    for (SupplierDTO dtoSupplier : supplierList) {
-                        grnDTO.setSupplierName(dtoSupplier.getName());
-                        if (grnDTO.getSupplierName() == null) {
-                            ErrorMessage.builder().message("Supplier Code not found").build();
-                        } else {
-                            list.add(grnDTO);
-                        }
-                    }
+        grnDTO.setGrnNo(prefixGrnNo.getPrefix());
+        if (grnDTO.getGrnNo() == null) {
+            grnDTO.setMessage("Grn No. must not be empty");
+        } else {
+            for (PurDTO dtoPur : purInfoList) {
+                grnDTO.setSupplierCode(dtoPur.getSupplierCode());
+                grnDTO.setCurrencyCode(dtoPur.getCurrencyCode());
+                grnDTO.setCurrencyRate(dtoPur.getCurrencyRate());
+                grnDTO.setBuyer(dtoPur.getBuyer());
+                grnDTO.setRlseDate(dtoPur.getRlseDate());
+                grnDTO.setPoRemarks(dtoPur.getRemarks());
+                try {
+                    grnDTO.setRecdDate(sdf.parse(date));
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+                SupplierDTO supName = supplierName(grnDTO.getSupplierCode(), userProfile);
+                grnDTO.setSupplierName(supName.getName());
+                if (grnDTO.getSupplierName() == null) {
+                    grnDTO.setMessage("Supplier Code not found");
                 }
             }
         }
-
-        return list;
+        return grnDTO;
     }
 
-    private List<DocmNoDTO> getLastGeneratedNoforGRN(UserProfile userProfile) {
+    private DocmNoDTO getLastGeneratedNoforGRN(UserProfile userProfile) {
 
-        List<DocmNoDTO> list = new ArrayList<>();
+        DocmNoDTO dto = DocmNoDTO.builder().build();
         List<Object[]> generatedNoforGRN = docmNoRepository.getLastGeneratedNoforGRN(userProfile.getCompanyCode(), userProfile.getPlantNo());
         for (Object[] data : generatedNoforGRN) {
-            DocmNoDTO dto = new DocmNoDTO();
             BigDecimal d = new BigDecimal(String.valueOf(data[1]));
             dto.setPrefix((String) data[0]);
             dto.setLastGeneratedNo(d.intValue());
-            list.add(dto);
         }
-        return list;
+        return dto;
     }
 
-    private void checkStatusPoNo(String poNo, UserProfile userProfile) {
+    private GrnDetDTO checkStatusPoNo(String poNo, UserProfile userProfile) {
 
-        try {
-            List<Object[]> pur = purRepository.checkStatusPoNoPur(userProfile.getCompanyCode(), userProfile.getPlantNo(), poNo);
-            List<Object[]> draftPur = draftPurRepository.checkStatusPoNoDraftPur(userProfile.getCompanyCode(), userProfile.getPlantNo(), poNo);
-            for (Object[] dataDraftPur : draftPur) {
-                PurDTO dto = PurDTO.builder().build();
-                dto.setPoNo((String) dataDraftPur[0]);
-                dto.setOpenClose((String) dataDraftPur[1]);
-                if (dto.getOpenClose().equalsIgnoreCase("C")) {
-                    ErrorMessage.builder().message("PO already Closed, Purchase Receipt not allowed.").build();
-                } else if (!dto.getOpenClose().equalsIgnoreCase("A")) {
-                    ErrorMessage.builder().message("PO is yet to be Approved, Purchase Receipt not allowed.").build();
-                } else if (dto.getOpenClose().equalsIgnoreCase("V")) {
-                    ErrorMessage.builder().message("PO already Voided, Purchase Receipt not allowed.").build();
-                } else if (dto.getPoNo() == null) {
-                    ErrorMessage.builder().message("Invalid PO No!").build();
-                } else {
-                    if (dto.getPoNo() != null && dto.getOpenClose() != null) {
-                        for (Object[] data : pur) {
-                            dto.setPoNo((String) data[0]);
-                            dto.setOpenClose((String) data[1]);
-                            if (dto.getOpenClose().equalsIgnoreCase("C")) {
-                                ErrorMessage.builder().message("PO already Closed, Purchase Receipt not allowed.").build();
-                            } else if (!dto.getOpenClose().equalsIgnoreCase("A")) {
-                                ErrorMessage.builder().message("PO is yet to be Approved, Purchase Receipt not allowed.").build();
-                            }
+        GrnDetDTO detDTO = GrnDetDTO.builder().build();
+        List<Object[]> pur = purRepository.checkStatusPoNoPur(userProfile.getCompanyCode(), userProfile.getPlantNo(), poNo);
+        List<Object[]> draftPur = draftPurRepository.checkStatusPoNoDraftPur(userProfile.getCompanyCode(), userProfile.getPlantNo(), poNo);
+        for (Object[] dataDraftPur : draftPur) {
+            PurDTO dto = PurDTO.builder().build();
+            dto.setPoNo((String) dataDraftPur[0]);
+            dto.setOpenClose((String) dataDraftPur[1]);
+            if (dto.getOpenClose().equalsIgnoreCase("C")) {
+                detDTO.setMessage("PO already Closed, Purchase Receipt not allowed.");
+            } else if (!dto.getOpenClose().equalsIgnoreCase("A")) {
+                detDTO.setMessage("PO is yet to be Approved, Purchase Receipt not allowed.");
+            } else if (dto.getOpenClose().equalsIgnoreCase("V")) {
+                detDTO.setMessage("PO already Voided, Purchase Receipt not allowed.");
+            } else if (dto.getPoNo() == null) {
+                detDTO.setMessage("Invalid PO No!");
+            } else {
+                if (dto.getPoNo() != null && dto.getOpenClose() != null) {
+                    for (Object[] data : pur) {
+                        dto.setPoNo((String) data[0]);
+                        dto.setOpenClose((String) data[1]);
+                        if (dto.getOpenClose().equalsIgnoreCase("C")) {
+                            detDTO.setMessage("PO already Closed, Purchase Receipt not allowed.");
+                        } else if (!dto.getOpenClose().equalsIgnoreCase("A")) {
+                            detDTO.setMessage("PO is yet to be Approved, Purchase Receipt not allowed.");
                         }
                     }
                 }
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
+
+        return detDTO;
     }
 
     private List<PurDTO> getPurInfo(String poNo, UserProfile userProfile) {
@@ -194,17 +196,14 @@ public class GrnServiceImpl implements GrnService {
         return list;
     }
 
-    private List<SupplierDTO> supplierName(String supplierCode, UserProfile userProfile) {
+    private SupplierDTO supplierName(String supplierCode, UserProfile userProfile) {
 
-        List<SupplierDTO> list = new ArrayList<>();
+        SupplierDTO dto = SupplierDTO.builder().build();
         List<Object[]> supplierNameInfo = supplierRepository.getSupplierName(userProfile.getCompanyCode(), userProfile.getPlantNo(), supplierCode);
         for (Object[] data : supplierNameInfo) {
-            SupplierDTO dto = new SupplierDTO();
             dto.setName((String) data[0]);
-            list.add(dto);
         }
-
-        return list;
+        return dto;
     }
 
     @Override
@@ -212,7 +211,7 @@ public class GrnServiceImpl implements GrnService {
 
         UserProfile userProfile = UserProfileContext.getUserProfile();
         List<GrnDetDTO> list = new ArrayList<>();
-        List<Object[]> getDataFromPartNo = purDetRepository.getDataFromPartNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), poNo);
+        List<Object[]> getDataFromPartNo = purRepository.getDataFromPartNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), poNo);
         for (Object[] data : getDataFromPartNo) {
             GrnDetDTO dto = GrnDetDTO.builder().build();
             BigDecimal seqNo = new BigDecimal(String.valueOf(data[0]));
@@ -228,10 +227,10 @@ public class GrnServiceImpl implements GrnService {
     }
 
     @Override
-    public List<GrnDetDTO> getGrnDetail(String poNo, String itemNo, String partNo, Integer poRecSeq) {
+    public GrnDetDTO getGrnDetail(String poNo, String itemNo, String partNo, Integer poRecSeq) {
 
         UserProfile userProfile = UserProfileContext.getUserProfile();
-        List<GrnDetDTO> list = new ArrayList<>();
+        GrnDetDTO grnDetDTO = GrnDetDTO.builder().build();
         List<PurDetDTO> getDataDetail = getDetailInfo(poNo, itemNo, partNo, poRecSeq, userProfile);
 
         if (partNo != null) {
@@ -245,7 +244,6 @@ public class GrnServiceImpl implements GrnService {
         }
 
         for (PurDetDTO dto : getDataDetail) {
-            GrnDetDTO grnDetDTO = GrnDetDTO.builder().build();
             grnDetDTO.setPoRecSeq(dto.getRecSeq());
             grnDetDTO.setItemNo(dto.getItemNo());
             grnDetDTO.setPartNo(dto.getPartNo());
@@ -264,37 +262,453 @@ public class GrnServiceImpl implements GrnService {
             grnDetDTO.setInvUom(dto.getInvUom());
             grnDetDTO.setStdPackQty(dto.getStdPackQty());
             grnDetDTO.setRemarks(dto.getRemarks());
-            list.add(grnDetDTO);
         }
 
-        return list;
+        return grnDetDTO;
     }
 
-    private void checkDataFromItemNo(String poNo, String itemNo, UserProfile userProfile) {
+    @Override
+    public GrnDTO getDefaultValueForGrnManual() {
+
+        SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+        String date = sdf.format(new Date());
+        UserProfile userProfile = UserProfileContext.getUserProfile();
+        GrnDTO dto = GrnDTO.builder().build();
+        List<Object[]> prefix = docmNoRepository.getLastGeneratedNoforGRNManual(userProfile.getCompanyCode(), userProfile.getPlantNo());
+        if (prefix == null || prefix.size() == 0) {
+            dto.setMessage("Not found in DOCM_NO table for type GRN-M !");
+        } else {
+            for (Object[] data : prefix) {
+                dto.setGrnNo((String) data[0]);
+                dto.setSubType("M");
+                dto.setStatuz("Y");
+                try {
+                    dto.setRecdDate(sdf.parse(date));
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+                dto.setCurrencyRate(new BigDecimal(1));
+                dto.setCurrencyCode("USD");
+                dto.setEntryUser(userProfile.getUsername());
+                try {
+                    dto.setEntryDate(sdf.parse(date));
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return dto;
+    }
+
+    @Override
+    public GrnDTO checkIfGrnExists(String grnNo) {
+
+        UserProfile userProfile = UserProfileContext.getUserProfile();
+        GrnDTO dto = GrnDTO.builder().build();
+        Optional<Grn> grnOptional = grnRepository.findGrnByIdsGrnNo(grnNo);
+        List<Object[]> prefix = docmNoRepository.getLastGeneratedNoforGRNManual(userProfile.getCompanyCode(), userProfile.getPlantNo());
+        for (Object[] data : prefix) {
+            dto.setGrnNo((String) data[0]);
+        }
+        if(grnOptional.isPresent()){
+            if (grnOptional.get().getIds().getGrnNo().equals(dto.getGrnNo())) {
+                dto.setMessage("GRN Record exists ! New GRN No: " + dto.getGrnNo() + " is being assigned !");
+            }
+        }
+        return dto;
+    }
+
+    @Override
+    public MsrDTO checkIfMsrNoValid(String msrNo) {
+
+        UserProfile userProfile = UserProfileContext.getUserProfile();
+        MsrDTO dto = MsrDTO.builder().build();
+        Optional<MSR> msrOptional = msrRepository.findMSRById_CompanyCodeAndId_PlantNoAndId_MsrNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), msrNo);
+        if (!msrOptional.isPresent()) {
+            dto.setMessage("Invalid MSR No");
+        } else {
+            dto.setMsrNo(msrOptional.get().getId().getMsrNo());
+        }
+        return dto;
+    }
+
+    @Override
+    public GrnDetDTO checkNextItem(GrnDTO input) {
+
+        UserProfile userProfile = UserProfileContext.getUserProfile();
+        GrnDetDTO dto = GrnDetDTO.builder().build();
+        int countMsrItemNo = 0;
+        int countMsrPartNo = 0;
+        int countItemNo = 0;
+        int countPartNo = 0;
+        String msrNo = input.getMsrNo();
+        for (int i = 0; i < input.getGrnDetList().size(); i++) {
+
+            String itemNo = input.getGrnDetList().get(i).getItemNo();
+            String partNo = input.getGrnDetList().get(i).getPartNo();
+            Integer itemType = input.getGrnDetList().get(i).getItemType();
+            String projectNo = input.getGrnDetList().get(i).getProjectNo();
+            String poNo = input.getGrnDetList().get(i).getPoNo();
+            BigDecimal recdPrice = input.getGrnDetList().get(i).getRecdPrice();
+            BigDecimal recdQty = input.getGrnDetList().get(i).getRecdQty();
+            BigDecimal retnQty = input.getGrnDetList().get(i).getRetnQty();
+            BigDecimal labelQty = input.getGrnDetList().get(i).getLabelQty();
+
+            if (itemType == null) {
+                checkItemType(dto);
+            }
+
+            if (itemNo == null) {
+                checkItemNo(dto);
+            }
+
+            if (itemType != null) {
+                if (!Integer.toString(itemType).contains("0") && !Integer.toString(itemType).contains("1")) {
+                    checkItemTypeNotNull(dto);
+                }
+            }
+
+            if (msrNo != null) {
+                if (itemNo != null) {
+                    List<Object[]> countByItemNo = msrRepository.getCountMsrByItemNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), msrNo, itemNo);
+                    for (Object[] data : countByItemNo) {
+                        BigDecimal count = new BigDecimal(String.valueOf(data[0]));
+                        countMsrItemNo = count.intValue();
+                    }
+                    if (countMsrItemNo == 0) {
+                        checkMsrItemNo(dto);
+                    } else if (countMsrItemNo > 1) {
+                        List<Object[]> lovPartNo = msrRepository.showLovPartNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), msrNo, partNo, itemNo);
+                        for (Object[] data : lovPartNo) {
+                            dto.setSeqNo((Integer) data[0]);
+                            dto.setPartNo((String) data[1]);
+                            dto.setItemNo((String) data[2]);
+                        }
+                        List<Object[]> objects = msrRepository.itemInfo(userProfile.getCompanyCode(),
+                                userProfile.getPlantNo(), msrNo, dto.getPartNo(), dto.getItemNo(), dto.getSeqNo());
+                        for (Object[] data : objects) {
+                            dto.setPartNo((String) data[0]);
+                            dto.setSeqNo((Integer) data[1]);
+                            dto.setItemNo((String) data[2]);
+                            dto.setDescription((String) data[3]);
+                            dto.setMslCode((String) data[4]);
+                            dto.setItemType((Integer) data[5]);
+                            dto.setLoc((String) data[6]);
+                            dto.setUom((String) data[7]);
+                            dto.setProjectNo((String) data[8]);
+                            dto.setGrnNo((String) data[9]);
+                            dto.setRetnQty((BigDecimal) data[10]);
+                            dto.setRetnPrice((BigDecimal) data[11]);
+                        }
+                    }
+
+                    List<Object[]> countByPartNo = msrRepository.getCountMsrByPartNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), msrNo, partNo);
+                    for (Object[] data : countByPartNo) {
+                        BigDecimal count = new BigDecimal(String.valueOf(data[0]));
+                        countMsrPartNo = count.intValue();
+                    }
+                    if (countMsrPartNo == 0) {
+                        checkMsrPartNo(dto);
+                    } else if (countMsrPartNo > 1) {
+                        List<Object[]> lovPartNo = msrRepository.showLovPartNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), msrNo, partNo, itemNo);
+                        for (Object[] data : lovPartNo) {
+                            dto.setSeqNo((Integer) data[0]);
+                            dto.setPartNo((String) data[1]);
+                            dto.setItemNo((String) data[2]);
+                        }
+                        List<Object[]> objects = msrRepository.itemInfo(userProfile.getCompanyCode(),
+                                userProfile.getPlantNo(), msrNo, dto.getPartNo(), dto.getItemNo(), dto.getSeqNo());
+                        for (Object[] data : objects) {
+                            dto.setPartNo((String) data[0]);
+                            dto.setSeqNo((Integer) data[1]);
+                            dto.setItemNo((String) data[2]);
+                            dto.setDescription((String) data[3]);
+                            dto.setMslCode((String) data[4]);
+                            dto.setItemType((Integer) data[5]);
+                            dto.setLoc((String) data[6]);
+                            dto.setUom((String) data[7]);
+                            dto.setProjectNo((String) data[8]);
+                            dto.setGrnNo((String) data[9]);
+                            dto.setRetnQty((BigDecimal) data[10]);
+                            dto.setRetnPrice((BigDecimal) data[11]);
+                        }
+                    }
+
+                    if (!(countMsrItemNo == 0 && countMsrItemNo > 1 && countMsrPartNo == 0 && countMsrPartNo > 1)) {
+                        List<Object[]> objects = msrRepository.itemInfo(userProfile.getCompanyCode(),
+                                userProfile.getPlantNo(), msrNo, partNo, itemNo, dto.getSeqNo());
+                        for (Object[] data : objects) {
+                            dto.setPartNo((String) data[0]);
+                            dto.setSeqNo((Integer) data[1]);
+                            dto.setItemNo((String) data[2]);
+                            dto.setDescription((String) data[3]);
+                            dto.setMslCode((String) data[4]);
+                            dto.setItemType((Integer) data[5]);
+                            dto.setLoc((String) data[6]);
+                            dto.setUom((String) data[7]);
+                            dto.setProjectNo((String) data[8]);
+                            dto.setGrnNo((String) data[9]);
+                            dto.setRetnQty((BigDecimal) data[10]);
+                            dto.setRetnPrice((BigDecimal) data[11]);
+                            Optional<Grn> optionalGrn = grnRepository.findGrnByIds_CompanyCodeAndIds_PlantNoAndIds_GrnNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), dto.getGrnNo());
+                            if (optionalGrn.isPresent()) {
+                                dto.setPoNo(optionalGrn.get().getPoNo());
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (itemType != null) {
+                if (itemType == 0) {
+                    if (itemNo == null) {
+                        checkItemNo(dto);
+                    } else {
+                        if (itemNo != null) {
+                            List<Object[]> itemType0 = itemRepository.getCountByItemNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), itemNo);
+                            for (Object[] data : itemType0) {
+                                BigDecimal count = new BigDecimal(String.valueOf(data[0]));
+                                countItemNo = count.intValue();
+                            }
+                            if (countItemNo == 0) {
+                                checkValidItemNo(dto);
+                            } else if (countItemNo > 1) {
+                                List<Object[]> lovItemPart = itemRepository.lovItemPart(userProfile.getCompanyCode(), userProfile.getPlantNo(), partNo, itemNo);
+                                for (Object[] data : lovItemPart) {
+                                    dto.setPartNo((String) data[0]);
+                                    dto.setItemNo((String) data[1]);
+                                }
+                                List<Object[]> itemInfo = itemRepository.itemInfo(userProfile.getCompanyCode(), userProfile.getPlantNo(), dto.getItemNo());
+                                for (Object[] data : itemInfo) {
+                                    dto.setPartNo((String) data[0]);
+                                    dto.setItemNo((String) data[1]);
+                                    dto.setDescription((String) data[2]);
+                                    dto.setLoc((String) data[3]);
+                                    dto.setUom((String) data[4]);
+                                }
+                            } else {
+                                List<Object[]> byItemNo = itemRepository.getItemAndPartNoByItemNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), itemNo);
+                                for (Object[] data : byItemNo) {
+                                    dto.setItemNo((String) data[0]);
+                                    dto.setPartNo((String) data[1]);
+                                }
+                            }
+
+                            List<Object[]> objects = itemRepository.getCountByPartNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), dto.getPartNo());
+                            for (Object[] data : objects) {
+                                BigDecimal count = new BigDecimal(String.valueOf(data[0]));
+                                countPartNo = count.intValue();
+                            }
+                            if (countPartNo == 0) {
+                                checkValidPartNo(dto);
+                            } else if (countPartNo > 1) {
+                                List<Object[]> lovItemPart = itemRepository.lovItemPart(userProfile.getCompanyCode(), userProfile.getPlantNo(), dto.getPartNo(), dto.getItemNo());
+                                for (Object[] data : lovItemPart) {
+                                    dto.setPartNo((String) data[0]);
+                                    dto.setItemNo((String) data[1]);
+                                }
+                                List<Object[]> itemInfo = itemRepository.itemInfo(userProfile.getCompanyCode(), userProfile.getPlantNo(), dto.getItemNo());
+                                for (Object[] data : itemInfo) {
+                                    dto.setPartNo((String) data[0]);
+                                    dto.setItemNo((String) data[1]);
+                                    dto.setDescription((String) data[2]);
+                                    dto.setLoc((String) data[3]);
+                                    dto.setUom((String) data[4]);
+                                }
+                            } else {
+                                List<Object[]> byPartNo = itemRepository.getItemAndPartNoByPartNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), dto.getPartNo());
+                                for (Object[] data : byPartNo) {
+                                    dto.setItemNo((String) data[0]);
+                                    dto.setPartNo((String) data[1]);
+                                }
+                            }
+
+                            List<Object[]> itemInfo = itemRepository.itemInfo(userProfile.getCompanyCode(), userProfile.getPlantNo(), dto.getItemNo());
+                            for (Object[] data : itemInfo) {
+                                dto.setPartNo((String) data[0]);
+                                dto.setItemNo((String) data[1]);
+                                dto.setDescription((String) data[2]);
+                                dto.setLoc((String) data[3]);
+                                dto.setUom((String) data[4]);
+                            }
+                        }
+
+                        if (projectNo != null) {
+                            List<Object[]> objects = bombypjRepository.getPrjNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), projectNo);
+                            for (Object[] data : objects) {
+                                dto.setProjectNo((String) data[0]);
+                            }
+                            if (dto.getProjectNo() == null) {
+                                checkProjectNoIfNull(dto);
+                            } else if (itemType == 0) {
+                                List<Object[]> alternate = bombypjRepository.getAltrnt(userProfile.getCompanyCode(), userProfile.getPlantNo(), dto.getProjectNo(), itemNo);
+                                for (Object[] data : alternate) {
+                                    dto.setItemNo((String) data[0]);
+                                }
+                                if (dto.getItemNo() == null) {
+                                    checkItemNoInProject(dto);
+                                }
+                            }
+                        }
+
+                        if (poNo != null) {
+                            List<Object[]> objects = purRepository.getPoNoAndRecSeq(userProfile.getCompanyCode(), userProfile.getPlantNo(), itemType, itemNo, partNo, poNo);
+                            for (Object[] data : objects) {
+                                BigDecimal seqNo = new BigDecimal(String.valueOf(data[1]));
+                                dto.setPoNo((String) data[0]);
+                                dto.setSeqNo(seqNo.intValue());
+                            }
+                            if (dto.getPoNo() == null) {
+                                checkValidPoNo(dto);
+                            } else if (dto.getSeqNo() == null) {
+                                checkItemNotInPo(dto);
+                            }
+                        }
+
+                        if (recdPrice != null) {
+                            if (recdPrice.intValue() < 0) {
+                                checkValidRecdPrice(dto);
+                            } else if (itemNo != null) {
+                                String source = null;
+                                List<Object[]> objects = itemRepository.getSource(userProfile.getCompanyCode(), userProfile.getPlantNo(), itemNo);
+                                for (Object[] data : objects) {
+                                    source = (String) data[0];
+                                }
+                                if (source == null) {
+                                    checkSourceStockItem(dto);
+                                }
+
+                                if (source.equals("C")) {
+                                    if (recdPrice.intValue() > 0) {
+                                        checkValidRecdPriceForConsignedItem(dto);
+                                    }
+                                }
+                            }
+                        }
+
+                        if (recdQty != null) {
+                            if (recdQty.intValue() <= 0) {
+                                checkRecdQty(dto);
+                            } else if (retnQty.intValue() > 0 && recdQty.intValue() > retnQty.intValue()) {
+                                checkRecdRetnQty(dto, retnQty);
+                            }
+                        }
+
+                        if (labelQty != null) {
+                            if (labelQty.intValue() <= 0) {
+                                checkLabelQty(dto);
+                            } else if (recdQty.intValue() < labelQty.intValue()) {
+                                checkRecdLabelQty(dto, recdQty);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return dto;
+    }
+
+    private void checkItemTypeNotNull(GrnDetDTO dto) {
+        dto.setMessage("Please enter 0-Stock, 1-Non Stock !");
+    }
+
+    private void checkValidRecdPrice(GrnDetDTO dto) {
+        dto.setMessage("Invalid Recd Price");
+    }
+
+    private void checkRecdLabelQty(GrnDetDTO dto, BigDecimal recdQty) {
+        dto.setMessage("Received Qty only " + recdQty + " units !");
+    }
+
+    private void checkLabelQty(GrnDetDTO dto) {
+        dto.setMessage("Qty/Label MUST be > 0 !");
+    }
+
+    private void checkRecdRetnQty(GrnDetDTO dto, BigDecimal retnQty) {
+        dto.setMessage("Return Qty only " + retnQty + " units !");
+    }
+
+    private void checkRecdQty(GrnDetDTO dto) {
+        dto.setMessage("Received Qty MUST be > 0 !");
+    }
+
+    private void checkValidRecdPriceForConsignedItem(GrnDetDTO dto) {
+        dto.setMessage("Invalid Recd Price for Consigned Item");
+    }
+
+    private void checkSourceStockItem(GrnDetDTO dto) {
+        dto.setMessage("Unknown source for Stock Item");
+    }
+
+    private void checkItemNotInPo(GrnDetDTO dto) {
+        dto.setMessage("Item not in PO");
+    }
+
+    private void checkValidPoNo(GrnDetDTO dto) {
+        dto.setMessage("PO No is Invalid / Not found in Master File !");
+    }
+
+    private void checkItemNoInProject(GrnDetDTO dto) {
+        dto.setMessage("Item not found in project");
+    }
+
+    private void checkProjectNoIfNull(GrnDetDTO dto) {
+        dto.setMessage("Project No is Invalid / Not found in Master File !");
+    }
+
+    private void checkValidPartNo(GrnDetDTO dto) {
+        dto.setMessage("The Part No is invalid!");
+    }
+
+    private void checkValidItemNo(GrnDetDTO dto) {
+        dto.setMessage("The Item No is invalid!");
+    }
+
+    private void checkMsrPartNo(GrnDetDTO dto) {
+        dto.setMessage("The Part No is either invalid or qty fully received!");
+    }
+
+    private void checkMsrItemNo(GrnDetDTO dto) {
+        dto.setMessage("The Item No is either invalid or qty fully received!");
+    }
+
+    private void checkItemType(GrnDetDTO dto) {
+        dto.setMessage("Item Type Can Not be Blank !");
+    }
+
+    private void checkItemNo(GrnDetDTO dto) {
+        dto.setMessage("Item No Can Not be Blank !");
+    }
+
+    private GrnDetDTO checkDataFromItemNo(String poNo, String itemNo, UserProfile userProfile) {
 
         int countItemNo = 0;
-        List<Object[]> checkItemNo = purDetRepository.checkItemNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), poNo, itemNo);
+        List<Object[]> checkItemNo = purRepository.checkItemNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), poNo, itemNo);
+        GrnDetDTO detDTO = GrnDetDTO.builder().build();
+
         for (Object[] data : checkItemNo) {
             BigDecimal count = new BigDecimal(String.valueOf(data[0]));
             countItemNo = count.intValue();
         }
         if (countItemNo == 0) {
-            ErrorMessage.builder().message("The Part No is either invalid or qty fully received!").build();
+            detDTO.setMessage("The Part No is either invalid or qty fully received!");
         }
+        return detDTO;
     }
 
-    private void checkDataFromPartNo(String poNo, String partNo, Integer poRecSeq, UserProfile userProfile) {
+    private GrnDetDTO checkDataFromPartNo(String poNo, String partNo, Integer poRecSeq, UserProfile userProfile) {
 
         int recSeq = 0;
         String partno = "";
-        List<Object[]> checkPartNo = purDetRepository.checkPartNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), poNo, partNo);
-        List<Object[]> checkDuplicatePartNo = purDetRepository.checkDuplicatePartNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), poNo, partNo, poRecSeq);
+        List<Object[]> checkPartNo = purRepository.checkPartNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), poNo, partNo);
+        List<Object[]> checkDuplicatePartNo = purRepository.checkDuplicatePartNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), poNo, partNo, poRecSeq);
+        GrnDetDTO detDTO = GrnDetDTO.builder().build();
 
         for (Object[] data : checkPartNo) {
             BigDecimal count = new BigDecimal(String.valueOf(data[0]));
             int countPartNo = count.intValue();
             if (countPartNo == 0) {
-                ErrorMessage.builder().message("The Part No is either invalid or qty fully received!").build();
+                detDTO.setMessage("The Part No is either invalid or qty fully received!");
             }
             for (Object[] data2 : checkDuplicatePartNo) {
                 PurDetDTO dto = PurDetDTO.builder().build();
@@ -305,15 +719,16 @@ public class GrnServiceImpl implements GrnService {
                 recSeq = dto.getRecSeq();
             }
             if (partNo.equals(partno) & poRecSeq == recSeq) {
-                ErrorMessage.builder().message("Duplicate Part No found!'").build();
+                detDTO.setMessage("Duplicate Part No found!'");
             }
         }
+        return detDTO;
     }
 
     private List<PurDetDTO> getDetailInfo(String poNo, String itemNo, String partNo, Integer poRecSeq, UserProfile userProfile) {
 
         List<PurDetDTO> list = new ArrayList<>();
-        List<Object[]> detailInfo = purDetRepository.getDataFromItemAndPartNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), poNo,
+        List<Object[]> detailInfo = purRepository.getDataFromItemAndPartNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), poNo,
                 itemNo, partNo, poRecSeq);
         for (Object[] data : detailInfo) {
             PurDetDTO dto = PurDetDTO.builder().build();
@@ -365,7 +780,7 @@ public class GrnServiceImpl implements GrnService {
 
             Optional<Grn> grnOptional = grnRepository.findGrnByIdsGrnNo(input.getGrnNo());
             if (grnOptional.isPresent()) {
-                ErrorMessage.builder().message("GRN Record exists ! New GRN No: " + input.getGrnNo() + " is being assigned !").build();
+                input.setMessage("GRN Record exists ! New GRN No: " + input.getGrnNo() + " is being assigned !");
             } else {
                 Grn saved = grnRepository.save(grn);
                 populateAfterSaving(input, saved);
@@ -393,13 +808,6 @@ public class GrnServiceImpl implements GrnService {
                         grnDet.setGrn(grn);
                         grnDet.setRecdDate(sdf.parse(date));
                         grnDetList.add(grnDet);
-                        // pre insert
-                        if (grnDet.getPartNo() != null) {
-                            checkReceivedQty(grnDetList, input.getPoNo());
-                            checkLabelQty(grnDetList);
-                        }
-                        checkRecdQty(grnDetList);
-                        checkUnitPrice(grnDetList);
                         grnDetRepository.save(grnDet);
                         postSaving(userProfile);
                     }
@@ -421,32 +829,6 @@ public class GrnServiceImpl implements GrnService {
         for (Object[] data : generatedNoforGRN) {
             BigDecimal lastGeneratedNo = new BigDecimal(String.valueOf(data[1]));
             docmNoRepository.updateLastGeneratedNo(lastGeneratedNo, userProfile.getCompanyCode(), userProfile.getPlantNo());
-        }
-    }
-
-    private void checkLabelQty(List<GrnDet> grnDetList) {
-
-        for (GrnDet grnDet : grnDetList) {
-            if (grnDet.getLabelQty().intValue() > 0 && grnDet.getLabelQty().intValue() > grnDet.getRecdQty().intValue()) {
-                ErrorMessage.builder().message("Qty per label is more than Received Qty!").build();
-            }
-        }
-    }
-
-    private void checkReceivedQty(List<GrnDet> grnDetList, String poNo) {
-
-        UserProfile userProfile = UserProfileContext.getUserProfile();
-        List<Object[]> purDetInfo = purDetRepository.getPurDetInfo(userProfile.getCompanyCode(), userProfile.getPlantNo(), poNo);
-        for (GrnDet grnDet : grnDetList) {
-            for (Object[] data : purDetInfo) {
-                PurDetDTO dto = PurDetDTO.builder().build();
-                dto.setOrderQty((BigDecimal) data[0]);
-                if (grnDet.getRecdQty().intValue() == 0) {
-                    ErrorMessage.builder().message("Received Qty cannot be empty or zero!").build();
-                } else if (grnDet.getRecdQty().intValue() > 0 && grnDet.getRecdQty().intValue() > dto.getOrderQty().intValue()) {
-                    ErrorMessage.builder().message("Receiving more than Ordered is not allowed!").build();
-                }
-            }
         }
     }
 
@@ -557,33 +939,5 @@ public class GrnServiceImpl implements GrnService {
         grnId.setSubType(subType);
 
         return grnId;
-    }
-
-    private void checkUnitPrice(List<GrnDet> grnDetList) {
-
-        for (GrnDet grnDet : grnDetList) {
-            if (grnDet.getRecdQty().intValue() > 0) {
-                if (!grnDet.getPoPrice().equals(grnDet.getRecdPrice())) {
-                    ErrorMessage.builder().message("Unit price is not equal to receiving price !").build();
-                }
-            }
-        }
-    }
-
-    private void checkRecdQty(List<GrnDet> grnDetList) {
-
-        for (GrnDet grnDet : grnDetList) {
-            int poRecSeq = 0;
-            if (poRecSeq != grnDet.getPoRecSeq()) {
-                poRecSeq = grnDet.getPoRecSeq();
-                BigDecimal recQty = grnDet.getRecdQty();
-                if (grnDet.getPoRecSeq() == poRecSeq) {
-                    recQty = recQty.add(grnDet.getRecdQty());
-                    if (recQty.intValue() > grnDet.getRecdQty().intValue()) {
-                        ErrorMessage.builder().message("Receiving more than Ordered is not allowed!").build();
-                    }
-                }
-            }
-        }
     }
 }

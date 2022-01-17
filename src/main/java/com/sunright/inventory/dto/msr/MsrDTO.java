@@ -27,4 +27,6 @@ public class MsrDTO extends BaseDTO {
     private BigDecimal currencyRate;
 
     private Set<MsrDetailDTO> msrDetails;
+
+    private String message;
 }

@@ -1,13 +1,18 @@
-package com.sunright.inventory.dto;
+package com.sunright.inventory.dto.supplier;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.sunright.inventory.dto.BaseDTO;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.util.Date;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 @Getter
 @Setter
+@Builder
 public class SupplierDTO extends BaseDTO {
 
     private String supplierCode;

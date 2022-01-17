@@ -1,7 +1,8 @@
 package com.sunright.inventory.controller;
 
-import com.sunright.inventory.dto.GrnDTO;
-import com.sunright.inventory.dto.GrnDetDTO;
+import com.sunright.inventory.dto.grn.GrnDTO;
+import com.sunright.inventory.dto.grn.GrnDetDTO;
+import com.sunright.inventory.dto.msr.MsrDTO;
 import com.sunright.inventory.dto.search.SearchRequest;
 import com.sunright.inventory.dto.search.SearchResult;
 import com.sunright.inventory.service.GrnService;
@@ -10,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -19,24 +21,45 @@ public class GrnController {
     @Autowired
     private GrnService grnService;
 
+    @PostMapping("check-next-item")
+    public ResponseEntity<GrnDetDTO> nextItem(@RequestBody GrnDTO input) {
+        return new ResponseEntity<>(grnService.checkNextItem(input), HttpStatus.OK);
+    }
+
+    @GetMapping("check-msrno-valid")
+    public ResponseEntity<MsrDTO> valid(@RequestParam String msrNo) {
+        return new ResponseEntity<>(grnService.checkIfMsrNoValid(msrNo), HttpStatus.OK);
+    }
+
+    @GetMapping("check-grnno-exists")
+    public ResponseEntity<GrnDTO> exists(@RequestParam String grnNo) {
+        return new ResponseEntity<>(grnService.checkIfGrnExists(grnNo), HttpStatus.OK);
+    }
+
+    @GetMapping("default-value")
+    public ResponseEntity<GrnDTO> value() {
+        return new ResponseEntity<>(grnService.getDefaultValueForGrnManual(), HttpStatus.OK);
+    }
+
     @GetMapping("pono")
-    public ResponseEntity<List<GrnDTO>> allPoNo() {
+    public ResponseEntity<List<GrnDTO>> pono() {
         return new ResponseEntity<>(grnService.findAllPoNo(), HttpStatus.OK);
     }
 
     @GetMapping("partno")
-    public ResponseEntity<List<GrnDetDTO>> allPartNo(@RequestParam String poNo) {
+    public ResponseEntity<List<GrnDetDTO>> partno(@RequestParam String poNo) {
         return new ResponseEntity<>(grnService.getAllPartNo(poNo), HttpStatus.OK);
     }
 
     @GetMapping("detail")
-    public ResponseEntity<List<GrnDetDTO>> detail(@RequestParam String poNo, @RequestParam String itemNo, @RequestParam String partNo, @RequestParam Integer poRecSeq) {
+    public ResponseEntity<GrnDetDTO> detail(@RequestParam String poNo, @RequestParam String itemNo,
+                                                  @RequestParam String partNo, @RequestParam Integer poRecSeq) {
         return new ResponseEntity<>(grnService.getGrnDetail(poNo, itemNo, partNo, poRecSeq), HttpStatus.OK);
 
     }
 
     @GetMapping("header")
-    public ResponseEntity<List<GrnDTO>> header(@RequestParam String poNo) {
+    public ResponseEntity<GrnDTO> header(@RequestParam String poNo) {
         return new ResponseEntity<>(grnService.getGrnHeader(poNo), HttpStatus.OK);
     }
 
