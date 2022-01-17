@@ -310,8 +310,10 @@ public class GrnServiceImpl implements GrnService {
         for (Object[] data : prefix) {
             dto.setGrnNo((String) data[0]);
         }
-        if (grnOptional.get().getIds().getGrnNo().equals(dto.getGrnNo())) {
-            dto.setMessage("GRN Record exists ! New GRN No: " + dto.getGrnNo() + " is being assigned !");
+        if(grnOptional.isPresent()){
+            if (grnOptional.get().getIds().getGrnNo().equals(dto.getGrnNo())) {
+                dto.setMessage("GRN Record exists ! New GRN No: " + dto.getGrnNo() + " is being assigned !");
+            }
         }
         return dto;
     }
