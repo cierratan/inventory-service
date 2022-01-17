@@ -1,7 +1,7 @@
 package com.sunright.inventory.dto.lov;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.sunright.inventory.dto.BaseDTO;
+import com.sunright.inventory.dto.InvBaseDTO;
 import com.sunright.inventory.entity.enums.MRPStatus;
 import lombok.Builder;
 import lombok.Getter;
@@ -13,7 +13,7 @@ import java.math.BigDecimal;
 @Getter
 @Setter
 @Builder
-public class ItemCatDTO extends BaseDTO {
+public class ItemCatDTO extends InvBaseDTO {
     private String categoryCode;
     private String categorySubCode;
     private String categoryGroup;

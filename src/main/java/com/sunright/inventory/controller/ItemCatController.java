@@ -1,8 +1,8 @@
 package com.sunright.inventory.controller;
 
+import com.sunright.inventory.dto.lov.ItemCatDTO;
 import com.sunright.inventory.dto.search.SearchRequest;
 import com.sunright.inventory.dto.search.SearchResult;
-import com.sunright.inventory.dto.lov.ItemCatDTO;
 import com.sunright.inventory.service.ItemCatService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -23,31 +23,23 @@ public class ItemCatController {
         return new ResponseEntity<>(itemCatService.createItemCat(itemCat), HttpStatus.OK);
     }
 
-    @PutMapping("{categoryCode}-{categorySubCode}-{categoryGroup}")
+    @PutMapping("{id}")
     public ResponseEntity<ItemCatDTO> edit(@RequestBody ItemCatDTO itemCat,
-                                            @PathVariable String categoryCode,
-                                            @PathVariable String categorySubCode,
-                                            @PathVariable String categoryGroup) {
-        itemCat.setCategoryCode(categoryCode);
-        itemCat.setCategorySubCode(categorySubCode);
-        itemCat.setCategoryGroup(categoryGroup);
+                                            @PathVariable Long id) {
+        itemCat.setId(id);
 
         return new ResponseEntity<>(itemCatService.editItemCat(itemCat), HttpStatus.OK);
     }
 
-    @GetMapping("{categoryCode}-{categorySubCode}-{categoryGroup}")
-    public ResponseEntity<ItemCatDTO> get(@PathVariable String categoryCode,
-                                          @PathVariable String categorySubCode,
-                                          @PathVariable String categoryGroup) {
-        return new ResponseEntity<>(itemCatService.findBy(categoryCode, categorySubCode, categoryGroup), HttpStatus.OK);
+    @GetMapping("{id}")
+    public ResponseEntity<ItemCatDTO> get(@PathVariable Long id) {
+        return new ResponseEntity<>(itemCatService.findBy(id), HttpStatus.OK);
     }
 
-    @DeleteMapping("{categoryCode}-{categorySubCode}-{categoryGroup}")
+    @DeleteMapping("{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable String categoryCode,
-                       @PathVariable String categorySubCode,
-                       @PathVariable String categoryGroup) {
-        itemCatService.deleteItemCat(categoryCode, categorySubCode, categoryGroup);
+    public void delete(@PathVariable Long id) {
+        itemCatService.deleteItemCat(id);
     }
 
     @PostMapping("search")

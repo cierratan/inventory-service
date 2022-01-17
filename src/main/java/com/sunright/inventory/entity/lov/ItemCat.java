@@ -1,6 +1,6 @@
 package com.sunright.inventory.entity.lov;
 
-import com.sunright.inventory.entity.BaseEntity;
+import com.sunright.inventory.entity.InvBaseEntity;
 import com.sunright.inventory.entity.enums.MRPStatus;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -13,13 +13,18 @@ import java.math.BigDecimal;
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public class ItemCat extends BaseEntity {
+public class ItemCat extends InvBaseEntity {
 
-    @EmbeddedId
-    private ItemCatId id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Version
     private Long version;
+
+    private String categoryCode;
+    private String categorySubCode;
+    private String categoryGroup;
 
     private String description;
     private String subDescription;

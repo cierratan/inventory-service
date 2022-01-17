@@ -20,22 +20,22 @@ public class ItemController {
         return new ResponseEntity<>(itemService.createItem(item), HttpStatus.OK);
     }
 
-    @GetMapping("{itemNo}")
-    public ResponseEntity<ItemDTO> get(@PathVariable String itemNo) {
-        return new ResponseEntity<>(itemService.findBy(itemNo), HttpStatus.OK);
+    @GetMapping("{id}")
+    public ResponseEntity<ItemDTO> get(@PathVariable Long id) {
+        return new ResponseEntity<>(itemService.findBy(id), HttpStatus.OK);
     }
 
-    @PutMapping("{itemNo}")
+    @PutMapping("{id}")
     public ResponseEntity<ItemDTO> edit(@RequestBody ItemDTO item,
-                                            @PathVariable String itemNo) {
-        item.setItemNo(itemNo);
+                                            @PathVariable Long id) {
+        item.setId(id);
         return new ResponseEntity<>(itemService.editItem(item), HttpStatus.OK);
     }
 
-    @DeleteMapping("{itemNo}")
+    @DeleteMapping("{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable String itemNo) {
-        itemService.deleteItem(itemNo);
+    public void delete(@PathVariable Long id) {
+        itemService.deleteItem(id);
     }
 
     @PostMapping("search")

@@ -15,7 +15,7 @@ import java.util.Date;
 @Getter
 @Setter
 @Builder
-public class ItemDTO extends BaseDTO {
+public class ItemDTO extends InvBaseDTO {
     private Boolean rohsStatus;
 
     private String itemNo;

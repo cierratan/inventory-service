@@ -1,6 +1,6 @@
 package com.sunright.inventory.entity.msr;
 
-import com.sunright.inventory.entity.BaseEntity;
+import com.sunright.inventory.entity.InvBaseEntity;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -15,14 +15,16 @@ import java.util.Set;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class MSR extends BaseEntity {
+public class MSR extends InvBaseEntity {
 
-    @EmbeddedId
-    private MSRId id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Version
     private Long version;
 
+    private String msrNo;
     private String supplierCode;
     private String docmNo;
     private String batchId;

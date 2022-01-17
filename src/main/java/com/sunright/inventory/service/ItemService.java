@@ -7,7 +7,7 @@ import com.sunright.inventory.dto.search.SearchResult;
 public interface ItemService {
     ItemDTO createItem(ItemDTO input);
     ItemDTO editItem(ItemDTO input);
-    ItemDTO findBy(String itemNo);
-    void deleteItem(String itemNo);
+    ItemDTO findBy(Long id);
+    void deleteItem(Long id);
     SearchResult<ItemDTO> searchBy(SearchRequest searchRequest);
 }

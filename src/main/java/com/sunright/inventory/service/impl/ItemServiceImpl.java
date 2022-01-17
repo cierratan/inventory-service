@@ -1,14 +1,14 @@
 package com.sunright.inventory.service.impl;
 
-import com.sunright.inventory.dto.*;
+import com.sunright.inventory.dto.ItemDTO;
+import com.sunright.inventory.dto.UserProfile;
 import com.sunright.inventory.dto.search.Filter;
 import com.sunright.inventory.dto.search.SearchRequest;
 import com.sunright.inventory.dto.search.SearchResult;
+import com.sunright.inventory.entity.Item;
+import com.sunright.inventory.entity.ItemLoc;
 import com.sunright.inventory.entity.enums.Status;
-import com.sunright.inventory.entity.item.Item;
-import com.sunright.inventory.entity.item.ItemId;
-import com.sunright.inventory.entity.itemloc.ItemLoc;
-import com.sunright.inventory.entity.itemloc.ItemLocId;
+import com.sunright.inventory.exception.DuplicateException;
 import com.sunright.inventory.exception.NotFoundException;
 import com.sunright.inventory.interceptor.UserProfileContext;
 import com.sunright.inventory.repository.ItemLocRepository;
@@ -28,6 +28,7 @@ import javax.transaction.Transactional;
 import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -50,17 +51,18 @@ public class ItemServiceImpl implements ItemService {
     public ItemDTO createItem(ItemDTO input) {
         UserProfile userProfile = UserProfileContext.getUserProfile();
 
-        ItemId itemId = new ItemId();
-        BeanUtils.copyProperties(input, itemId);
+        List<Item> found = itemRepository.findByCompanyCodeAndPlantNoAndItemNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), input.getItemNo());
+
+        if(!CollectionUtils.isEmpty(found)) {
+            throw new DuplicateException(String.format("Duplicate item with itemNo: %s", input.getItemNo()));
+        }
 
         Item item = new Item();
-        item.setId(itemId);
-
         BeanUtils.copyProperties(input, item);
 
-        item.setId(populateItemId(input.getItemNo()));
+        item.setCompanyCode(userProfile.getCompanyCode());
+        item.setPlantNo(userProfile.getPlantNo());
         item.setStrRohsStatus(BooleanUtils.toString(input.getRohsStatus(), "1", "0"));
-
         item.setStatus(Status.ACTIVE);
         item.setCreatedBy(userProfile.getUsername());
         item.setCreatedAt(ZonedDateTime.now());
@@ -73,17 +75,9 @@ public class ItemServiceImpl implements ItemService {
         updateAlternate(input, userProfile);
 
         // insert itemloc
-        ItemLocId itemLocId = new ItemLocId();
-        BeanUtils.copyProperties(saved.getId(), itemLocId);
-
         ItemLoc itemLoc = new ItemLoc();
-        itemLoc.setId(itemLocId);
-        itemLoc.setCategoryCode(item.getCategoryCode());
-        itemLoc.setCategorySubCode(item.getCategorySubCode());
-        itemLoc.setQoh(item.getQoh());
-        itemLoc.setLoc(item.getLoc());
-        itemLoc.setPartNo(item.getPartNo());
-        itemLoc.setDescription(item.getDescription());
+        BeanUtils.copyProperties(saved, itemLoc);
+        itemLoc.setItemId(saved.getId());
         itemLoc.setStatus(Status.ACTIVE);
         itemLoc.setCreatedBy(userProfile.getUsername());
         itemLoc.setCreatedAt(ZonedDateTime.now());
@@ -100,13 +94,12 @@ public class ItemServiceImpl implements ItemService {
     @Override
     @Transactional
     public ItemDTO editItem(ItemDTO input) {
-        ItemId itemId = populateItemId(input.getItemNo());
-
-        Item found = checkIfRecordExist(itemId);
+        Item found = checkIfRecordExist(input.getId());
 
         Item item = new Item();
         BeanUtils.copyProperties(input, item, "status");
-        item.setId(itemId);
+        item.setCompanyCode(UserProfileContext.getUserProfile().getCompanyCode());
+        item.setPlantNo(UserProfileContext.getUserProfile().getPlantNo());
         item.setStatus(found.getStatus());
         item.setUpdatedBy(UserProfileContext.getUserProfile().getUsername());
         item.setUpdatedAt(ZonedDateTime.now());
@@ -117,16 +110,17 @@ public class ItemServiceImpl implements ItemService {
         updateAlternate(input, UserProfileContext.getUserProfile());
 
         // update item loc
-        ItemLocId itemLocId = new ItemLocId();
-        BeanUtils.copyProperties(saved.getId(), itemLocId);
+        List<ItemLoc> itemLocs = itemLocRepository.findByCompanyCodeAndPlantNoAndItemNoAndLoc(saved.getCompanyCode(), saved.getPlantNo(), saved.getItemNo(), saved.getLoc());
 
-        ItemLoc itemLoc = itemLocRepository.getById(itemLocId);
-        itemLoc.setPartNo(item.getPartNo());
-        itemLoc.setDescription(item.getDescription());
-        itemLoc.setUpdatedBy(UserProfileContext.getUserProfile().getUsername());
-        itemLoc.setUpdatedAt(ZonedDateTime.now());
+        if(!CollectionUtils.isEmpty(itemLocs) && itemLocs.size() == 1) {
+            ItemLoc itemLoc = itemLocRepository.getById(itemLocs.get(0).getId());
+            itemLoc.setPartNo(item.getPartNo());
+            itemLoc.setDescription(item.getDescription());
+            itemLoc.setUpdatedBy(UserProfileContext.getUserProfile().getUsername());
+            itemLoc.setUpdatedAt(ZonedDateTime.now());
 
-        itemLocRepository.save(itemLoc);
+            itemLocRepository.save(itemLoc);
+        }
 
         populateAfterSaving(input, item, saved);
 
@@ -134,10 +128,8 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public ItemDTO findBy(String itemNo) {
-        ItemId itemId = populateItemId(itemNo);
-
-        Item found = checkIfRecordExist(itemId);
+    public ItemDTO findBy(Long id) {
+        Item found = checkIfRecordExist(id);
 
         BigDecimal qoh = found.getQoh() != null ? found.getQoh() : new BigDecimal(0);
         BigDecimal prodResv = found.getProdnResv() != null ? found.getProdnResv() : new BigDecimal(0);
@@ -156,10 +148,8 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public void deleteItem(String itemNo) {
-        ItemId itemId = populateItemId(itemNo);
-
-        Item item = checkIfRecordExist(itemId);
+    public void deleteItem(Long id) {
+        Item item = checkIfRecordExist(id);
         item.setStatus(Status.DELETED);
         item.setUpdatedBy(UserProfileContext.getUserProfile().getUsername());
         item.setUpdatedAt(ZonedDateTime.now());
@@ -169,7 +159,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public SearchResult<ItemDTO> searchBy(SearchRequest searchRequest) {
-        Specification<Item> specs = where(queryGenerator.createDefaultSpecification());
+        Specification<Item> specs = where(queryGenerator.createDefaultSpec());
 
         if(!CollectionUtils.isEmpty(searchRequest.getFilters())) {
             for (Filter filter : searchRequest.getFilters()) {
@@ -199,17 +189,6 @@ public class ItemServiceImpl implements ItemService {
         return items;
     }
 
-    private ItemId populateItemId(String itemNo) {
-        UserProfile userProfile = UserProfileContext.getUserProfile();
-
-        ItemId itemId = new ItemId();
-        itemId.setCompanyCode(userProfile.getCompanyCode());
-        itemId.setPlantNo(userProfile.getPlantNo());
-        itemId.setItemNo(itemNo);
-
-        return itemId;
-    }
-
     private void updateAlternate(ItemDTO input, UserProfile userProfile) {
         if(StringUtils.isNotBlank(input.getObsoleteItem())) {
             itemRepository.updateAlternate(
@@ -231,6 +210,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     private void populateAfterSaving(ItemDTO input, Item item, Item saved) {
+        input.setId(saved.getId());
         input.setVersion(saved.getVersion());
         input.setEoh(item.getQoh().subtract(item.getProdnResv()).add(item.getOrderQty()));
         input.setQryObsItem(item.getObsoleteItem());
@@ -247,8 +227,8 @@ public class ItemServiceImpl implements ItemService {
         }
     }
 
-    private Item checkIfRecordExist(ItemId itemId) {
-        Optional<Item> optionalItem = itemRepository.findById(itemId);
+    private Item checkIfRecordExist(Long id) {
+        Optional<Item> optionalItem = itemRepository.findById(id);
 
         if (optionalItem.isEmpty()) {
             throw new NotFoundException("Record is not found");

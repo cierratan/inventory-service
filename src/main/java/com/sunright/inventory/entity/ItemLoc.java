@@ -1,27 +1,26 @@
-package com.sunright.inventory.entity.itemloc;
+package com.sunright.inventory.entity;
 
-import com.sunright.inventory.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.Column;
-import javax.persistence.EmbeddedId;
-import javax.persistence.Entity;
-import javax.persistence.Version;
+import javax.persistence.*;
 import java.math.BigDecimal;
 
 @Entity(name = "ITEMLOC")
 @Data
-@EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
-public class ItemLoc extends BaseEntity {
-    @EmbeddedId
-    private ItemLocId id;
+@EqualsAndHashCode(callSuper = true)
+public class ItemLoc extends InvBaseEntity {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Version
     private Long version;
 
+    private Long itemId;
+    private String itemNo;
     private String loc;
     private String partNo;
     private String description;

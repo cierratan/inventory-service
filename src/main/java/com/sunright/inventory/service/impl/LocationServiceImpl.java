@@ -1,13 +1,13 @@
 package com.sunright.inventory.service.impl;
 
+import com.sunright.inventory.dto.UserProfile;
+import com.sunright.inventory.dto.lov.LocationDTO;
 import com.sunright.inventory.dto.search.Filter;
 import com.sunright.inventory.dto.search.SearchRequest;
 import com.sunright.inventory.dto.search.SearchResult;
-import com.sunright.inventory.dto.UserProfile;
-import com.sunright.inventory.dto.lov.LocationDTO;
 import com.sunright.inventory.entity.enums.Status;
 import com.sunright.inventory.entity.lov.Location;
-import com.sunright.inventory.entity.lov.LocationId;
+import com.sunright.inventory.exception.DuplicateException;
 import com.sunright.inventory.exception.NotFoundException;
 import com.sunright.inventory.interceptor.UserProfileContext;
 import com.sunright.inventory.repository.lov.LocationRepository;
@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -39,9 +40,15 @@ public class LocationServiceImpl implements LocationService {
     public LocationDTO createLocation(LocationDTO input) {
         UserProfile userProfile = UserProfileContext.getUserProfile();
 
+        List<Location> found = locationRepository.findByCompanyCodeAndPlantNoAndLoc(userProfile.getCompanyCode(), userProfile.getPlantNo(), input.getLoc());
+        if(!CollectionUtils.isEmpty(found)) {
+            throw new DuplicateException(String.format("Location %s already exist", input.getLoc()));
+        }
+
         Location location = new Location();
         BeanUtils.copyProperties(input, location);
-        location.setId(populateLocationId(input.getLoc()));
+        location.setCompanyCode(userProfile.getCompanyCode());
+        location.setPlantNo(userProfile.getPlantNo());
         location.setStatus(Status.ACTIVE);
         location.setCreatedBy(userProfile.getUsername());
         location.setCreatedAt(ZonedDateTime.now());
@@ -50,19 +57,19 @@ public class LocationServiceImpl implements LocationService {
 
         Location saved = locationRepository.save(location);
 
+        input.setId(saved.getId());
         input.setVersion(saved.getVersion());
         return input;
     }
 
     @Override
     public LocationDTO editLocation(LocationDTO input) {
-        LocationId locationId = populateLocationId(input.getLoc());
-
-        Location found = checkIfRecordExist(locationId);
+        Location found = checkIfRecordExist(input.getId());
 
         Location location = new Location();
         BeanUtils.copyProperties(input, location, "status");
-        location.setId(locationId);
+        location.setCompanyCode(UserProfileContext.getUserProfile().getCompanyCode());
+        location.setPlantNo(UserProfileContext.getUserProfile().getPlantNo());
         location.setStatus(found.getStatus());
         location.setUpdatedBy(UserProfileContext.getUserProfile().getUsername());
         location.setUpdatedAt(ZonedDateTime.now());
@@ -74,10 +81,8 @@ public class LocationServiceImpl implements LocationService {
     }
 
     @Override
-    public LocationDTO findBy(String loc) {
-        LocationId locationId = populateLocationId(loc);
-
-        Location location = checkIfRecordExist(locationId);
+    public LocationDTO findBy(Long id) {
+        Location location = checkIfRecordExist(id);
 
         LocationDTO locationDTO = new LocationDTO();
         BeanUtils.copyProperties(location, locationDTO);
@@ -87,10 +92,8 @@ public class LocationServiceImpl implements LocationService {
     }
 
     @Override
-    public void deleteLocation(String loc) {
-        LocationId locationId = populateLocationId(loc);
-
-        Location location = checkIfRecordExist(locationId);
+    public void deleteLocation(Long id) {
+        Location location = checkIfRecordExist(id);
 
         location.setStatus(Status.DELETED);
         location.setUpdatedBy(UserProfileContext.getUserProfile().getUsername());
@@ -101,7 +104,7 @@ public class LocationServiceImpl implements LocationService {
 
     @Override
     public SearchResult<LocationDTO> searchBy(SearchRequest searchRequest) {
-        Specification<Location> specs = where(queryGenerator.createDefaultSpecification());
+        Specification<Location> specs = where(queryGenerator.createDefaultSpec());
 
         if(!CollectionUtils.isEmpty(searchRequest.getFilters())) {
             for (Filter filter : searchRequest.getFilters()) {
@@ -126,18 +129,8 @@ public class LocationServiceImpl implements LocationService {
         return locations;
     }
 
-    private LocationId populateLocationId(String loc) {
-        UserProfile userProfile = UserProfileContext.getUserProfile();
-
-        LocationId locationId = new LocationId();
-        locationId.setCompanyCode(userProfile.getCompanyCode());
-        locationId.setPlantNo(userProfile.getPlantNo());
-        locationId.setLoc(loc);
-        return locationId;
-    }
-
-    private Location checkIfRecordExist(LocationId locationId) {
-        Optional<Location> optionalLocation = locationRepository.findById(locationId);
+    private Location checkIfRecordExist(Long id) {
+        Optional<Location> optionalLocation = locationRepository.findById(id);
 
         if (optionalLocation.isEmpty()) {
             throw new NotFoundException("Record is not found");

@@ -323,11 +323,11 @@ public class GrnServiceImpl implements GrnService {
 
         UserProfile userProfile = UserProfileContext.getUserProfile();
         MsrDTO dto = MsrDTO.builder().build();
-        Optional<MSR> msrOptional = msrRepository.findMSRById_CompanyCodeAndId_PlantNoAndId_MsrNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), msrNo);
+        Optional<MSR> msrOptional = msrRepository.findMSRByCompanyCodeAndPlantNoAndMsrNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), msrNo);
         if (!msrOptional.isPresent()) {
             dto.setMessage("Invalid MSR No");
         } else {
-            dto.setMsrNo(msrOptional.get().getId().getMsrNo());
+            dto.setMsrNo(msrOptional.get().getMsrNo());
         }
         return dto;
     }
@@ -464,143 +464,143 @@ public class GrnServiceImpl implements GrnService {
                     if (itemNo == null) {
                         checkItemNo(dto);
                     } else {
-                        if (itemNo != null) {
-                            List<Object[]> itemType0 = itemRepository.getCountByItemNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), itemNo);
-                            for (Object[] data : itemType0) {
-                                BigDecimal count = new BigDecimal(String.valueOf(data[0]));
-                                countItemNo = count.intValue();
-                            }
-                            if (countItemNo == 0) {
-                                checkValidItemNo(dto);
-                            } else if (countItemNo > 1) {
-                                List<Object[]> lovItemPart = itemRepository.lovItemPart(userProfile.getCompanyCode(), userProfile.getPlantNo(), partNo, itemNo);
-                                for (Object[] data : lovItemPart) {
-                                    dto.setPartNo((String) data[0]);
-                                    dto.setItemNo((String) data[1]);
-                                }
-                                List<Object[]> itemInfo = itemRepository.itemInfo(userProfile.getCompanyCode(), userProfile.getPlantNo(), dto.getItemNo());
-                                for (Object[] data : itemInfo) {
-                                    dto.setPartNo((String) data[0]);
-                                    dto.setItemNo((String) data[1]);
-                                    dto.setDescription((String) data[2]);
-                                    dto.setLoc((String) data[3]);
-                                    dto.setUom((String) data[4]);
-                                }
-                            } else {
-                                List<Object[]> byItemNo = itemRepository.getItemAndPartNoByItemNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), itemNo);
-                                for (Object[] data : byItemNo) {
-                                    dto.setItemNo((String) data[0]);
-                                    dto.setPartNo((String) data[1]);
-                                }
-                            }
-
-                            List<Object[]> objects = itemRepository.getCountByPartNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), dto.getPartNo());
-                            for (Object[] data : objects) {
-                                BigDecimal count = new BigDecimal(String.valueOf(data[0]));
-                                countPartNo = count.intValue();
-                            }
-                            if (countPartNo == 0) {
-                                checkValidPartNo(dto);
-                            } else if (countPartNo > 1) {
-                                List<Object[]> lovItemPart = itemRepository.lovItemPart(userProfile.getCompanyCode(), userProfile.getPlantNo(), dto.getPartNo(), dto.getItemNo());
-                                for (Object[] data : lovItemPart) {
-                                    dto.setPartNo((String) data[0]);
-                                    dto.setItemNo((String) data[1]);
-                                }
-                                List<Object[]> itemInfo = itemRepository.itemInfo(userProfile.getCompanyCode(), userProfile.getPlantNo(), dto.getItemNo());
-                                for (Object[] data : itemInfo) {
-                                    dto.setPartNo((String) data[0]);
-                                    dto.setItemNo((String) data[1]);
-                                    dto.setDescription((String) data[2]);
-                                    dto.setLoc((String) data[3]);
-                                    dto.setUom((String) data[4]);
-                                }
-                            } else {
-                                List<Object[]> byPartNo = itemRepository.getItemAndPartNoByPartNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), dto.getPartNo());
-                                for (Object[] data : byPartNo) {
-                                    dto.setItemNo((String) data[0]);
-                                    dto.setPartNo((String) data[1]);
-                                }
-                            }
-
-                            List<Object[]> itemInfo = itemRepository.itemInfo(userProfile.getCompanyCode(), userProfile.getPlantNo(), dto.getItemNo());
-                            for (Object[] data : itemInfo) {
-                                dto.setPartNo((String) data[0]);
-                                dto.setItemNo((String) data[1]);
-                                dto.setDescription((String) data[2]);
-                                dto.setLoc((String) data[3]);
-                                dto.setUom((String) data[4]);
-                            }
-                        }
-
-                        if (projectNo != null) {
-                            List<Object[]> objects = bombypjRepository.getPrjNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), projectNo);
-                            for (Object[] data : objects) {
-                                dto.setProjectNo((String) data[0]);
-                            }
-                            if (dto.getProjectNo() == null) {
-                                checkProjectNoIfNull(dto);
-                            } else if (itemType == 0) {
-                                List<Object[]> alternate = bombypjRepository.getAltrnt(userProfile.getCompanyCode(), userProfile.getPlantNo(), dto.getProjectNo(), itemNo);
-                                for (Object[] data : alternate) {
-                                    dto.setItemNo((String) data[0]);
-                                }
-                                if (dto.getItemNo() == null) {
-                                    checkItemNoInProject(dto);
-                                }
-                            }
-                        }
-
-                        if (poNo != null) {
-                            List<Object[]> objects = purRepository.getPoNoAndRecSeq(userProfile.getCompanyCode(), userProfile.getPlantNo(), itemType, itemNo, partNo, poNo);
-                            for (Object[] data : objects) {
-                                BigDecimal seqNo = new BigDecimal(String.valueOf(data[1]));
-                                dto.setPoNo((String) data[0]);
-                                dto.setSeqNo(seqNo.intValue());
-                            }
-                            if (dto.getPoNo() == null) {
-                                checkValidPoNo(dto);
-                            } else if (dto.getSeqNo() == null) {
-                                checkItemNotInPo(dto);
-                            }
-                        }
-
-                        if (recdPrice != null) {
-                            if (recdPrice.intValue() < 0) {
-                                checkValidRecdPrice(dto);
-                            } else if (itemNo != null) {
-                                String source = null;
-                                List<Object[]> objects = itemRepository.getSource(userProfile.getCompanyCode(), userProfile.getPlantNo(), itemNo);
-                                for (Object[] data : objects) {
-                                    source = (String) data[0];
-                                }
-                                if (source == null) {
-                                    checkSourceStockItem(dto);
-                                }
-
-                                if (source.equals("C")) {
-                                    if (recdPrice.intValue() > 0) {
-                                        checkValidRecdPriceForConsignedItem(dto);
-                                    }
-                                }
-                            }
-                        }
-
-                        if (recdQty != null) {
-                            if (recdQty.intValue() <= 0) {
-                                checkRecdQty(dto);
-                            } else if (retnQty.intValue() > 0 && recdQty.intValue() > retnQty.intValue()) {
-                                checkRecdRetnQty(dto, retnQty);
-                            }
-                        }
-
-                        if (labelQty != null) {
-                            if (labelQty.intValue() <= 0) {
-                                checkLabelQty(dto);
-                            } else if (recdQty.intValue() < labelQty.intValue()) {
-                                checkRecdLabelQty(dto, recdQty);
-                            }
-                        }
+//                        if (itemNo != null) {
+//                            List<Object[]> itemType0 = itemRepository.getCountByItemNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), itemNo);
+//                            for (Object[] data : itemType0) {
+//                                BigDecimal count = new BigDecimal(String.valueOf(data[0]));
+//                                countItemNo = count.intValue();
+//                            }
+//                            if (countItemNo == 0) {
+//                                checkValidItemNo(dto);
+//                            } else if (countItemNo > 1) {
+//                                List<Object[]> lovItemPart = itemRepository.lovItemPart(userProfile.getCompanyCode(), userProfile.getPlantNo(), partNo, itemNo);
+//                                for (Object[] data : lovItemPart) {
+//                                    dto.setPartNo((String) data[0]);
+//                                    dto.setItemNo((String) data[1]);
+//                                }
+//                                List<Object[]> itemInfo = itemRepository.itemInfo(userProfile.getCompanyCode(), userProfile.getPlantNo(), dto.getItemNo());
+//                                for (Object[] data : itemInfo) {
+//                                    dto.setPartNo((String) data[0]);
+//                                    dto.setItemNo((String) data[1]);
+//                                    dto.setDescription((String) data[2]);
+//                                    dto.setLoc((String) data[3]);
+//                                    dto.setUom((String) data[4]);
+//                                }
+//                            } else {
+//                                List<Object[]> byItemNo = itemRepository.getItemAndPartNoByItemNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), itemNo);
+//                                for (Object[] data : byItemNo) {
+//                                    dto.setItemNo((String) data[0]);
+//                                    dto.setPartNo((String) data[1]);
+//                                }
+//                            }
+//
+//                            List<Object[]> objects = itemRepository.getCountByPartNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), dto.getPartNo());
+//                            for (Object[] data : objects) {
+//                                BigDecimal count = new BigDecimal(String.valueOf(data[0]));
+//                                countPartNo = count.intValue();
+//                            }
+//                            if (countPartNo == 0) {
+//                                checkValidPartNo(dto);
+//                            } else if (countPartNo > 1) {
+//                                List<Object[]> lovItemPart = itemRepository.lovItemPart(userProfile.getCompanyCode(), userProfile.getPlantNo(), dto.getPartNo(), dto.getItemNo());
+//                                for (Object[] data : lovItemPart) {
+//                                    dto.setPartNo((String) data[0]);
+//                                    dto.setItemNo((String) data[1]);
+//                                }
+//                                List<Object[]> itemInfo = itemRepository.itemInfo(userProfile.getCompanyCode(), userProfile.getPlantNo(), dto.getItemNo());
+//                                for (Object[] data : itemInfo) {
+//                                    dto.setPartNo((String) data[0]);
+//                                    dto.setItemNo((String) data[1]);
+//                                    dto.setDescription((String) data[2]);
+//                                    dto.setLoc((String) data[3]);
+//                                    dto.setUom((String) data[4]);
+//                                }
+//                            } else {
+//                                List<Object[]> byPartNo = itemRepository.getItemAndPartNoByPartNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), dto.getPartNo());
+//                                for (Object[] data : byPartNo) {
+//                                    dto.setItemNo((String) data[0]);
+//                                    dto.setPartNo((String) data[1]);
+//                                }
+//                            }
+//
+//                            List<Object[]> itemInfo = itemRepository.itemInfo(userProfile.getCompanyCode(), userProfile.getPlantNo(), dto.getItemNo());
+//                            for (Object[] data : itemInfo) {
+//                                dto.setPartNo((String) data[0]);
+//                                dto.setItemNo((String) data[1]);
+//                                dto.setDescription((String) data[2]);
+//                                dto.setLoc((String) data[3]);
+//                                dto.setUom((String) data[4]);
+//                            }
+//                        }
+//
+//                        if (projectNo != null) {
+//                            List<Object[]> objects = bombypjRepository.getPrjNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), projectNo);
+//                            for (Object[] data : objects) {
+//                                dto.setProjectNo((String) data[0]);
+//                            }
+//                            if (dto.getProjectNo() == null) {
+//                                checkProjectNoIfNull(dto);
+//                            } else if (itemType == 0) {
+//                                List<Object[]> alternate = bombypjRepository.getAltrnt(userProfile.getCompanyCode(), userProfile.getPlantNo(), dto.getProjectNo(), itemNo);
+//                                for (Object[] data : alternate) {
+//                                    dto.setItemNo((String) data[0]);
+//                                }
+//                                if (dto.getItemNo() == null) {
+//                                    checkItemNoInProject(dto);
+//                                }
+//                            }
+//                        }
+//
+//                        if (poNo != null) {
+//                            List<Object[]> objects = purRepository.getPoNoAndRecSeq(userProfile.getCompanyCode(), userProfile.getPlantNo(), itemType, itemNo, partNo, poNo);
+//                            for (Object[] data : objects) {
+//                                BigDecimal seqNo = new BigDecimal(String.valueOf(data[1]));
+//                                dto.setPoNo((String) data[0]);
+//                                dto.setSeqNo(seqNo.intValue());
+//                            }
+//                            if (dto.getPoNo() == null) {
+//                                checkValidPoNo(dto);
+//                            } else if (dto.getSeqNo() == null) {
+//                                checkItemNotInPo(dto);
+//                            }
+//                        }
+//
+//                        if (recdPrice != null) {
+//                            if (recdPrice.intValue() < 0) {
+//                                checkValidRecdPrice(dto);
+//                            } else if (itemNo != null) {
+//                                String source = null;
+//                                List<Object[]> objects = itemRepository.getSource(userProfile.getCompanyCode(), userProfile.getPlantNo(), itemNo);
+//                                for (Object[] data : objects) {
+//                                    source = (String) data[0];
+//                                }
+//                                if (source == null) {
+//                                    checkSourceStockItem(dto);
+//                                }
+//
+//                                if (source.equals("C")) {
+//                                    if (recdPrice.intValue() > 0) {
+//                                        checkValidRecdPriceForConsignedItem(dto);
+//                                    }
+//                                }
+//                            }
+//                        }
+//
+//                        if (recdQty != null) {
+//                            if (recdQty.intValue() <= 0) {
+//                                checkRecdQty(dto);
+//                            } else if (retnQty.intValue() > 0 && recdQty.intValue() > retnQty.intValue()) {
+//                                checkRecdRetnQty(dto, retnQty);
+//                            }
+//                        }
+//
+//                        if (labelQty != null) {
+//                            if (labelQty.intValue() <= 0) {
+//                                checkLabelQty(dto);
+//                            } else if (recdQty.intValue() < labelQty.intValue()) {
+//                                checkRecdLabelQty(dto, recdQty);
+//                            }
+//                        }
                     }
                 }
             }

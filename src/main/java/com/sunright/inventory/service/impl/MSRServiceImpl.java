@@ -9,11 +9,10 @@ import com.sunright.inventory.dto.search.SearchResult;
 import com.sunright.inventory.entity.enums.Status;
 import com.sunright.inventory.entity.msr.MSR;
 import com.sunright.inventory.entity.msr.MSRDetail;
-import com.sunright.inventory.entity.msr.MSRDetailId;
-import com.sunright.inventory.entity.msr.MSRId;
 import com.sunright.inventory.exception.NotFoundException;
 import com.sunright.inventory.interceptor.UserProfileContext;
 import com.sunright.inventory.repository.MSRRepository;
+import com.sunright.inventory.repository.MsrDetailRepository;
 import com.sunright.inventory.service.MSRService;
 import com.sunright.inventory.util.QueryGenerator;
 import org.springframework.beans.BeanUtils;
@@ -38,35 +37,20 @@ public class MSRServiceImpl implements MSRService {
     private MSRRepository msrRepository;
 
     @Autowired
+    private MsrDetailRepository msrDetailRepository;
+
+    @Autowired
     private QueryGenerator queryGenerator;
 
     @Override
     public MsrDTO createMSR(MsrDTO input) {
         UserProfile userProfile = UserProfileContext.getUserProfile();
 
-        Set<MSRDetail> msrDetails = new HashSet<>();
-
-        if(!CollectionUtils.isEmpty(input.getMsrDetails())) {
-            msrDetails = input.getMsrDetails().stream().map(detail -> {
-                MSRDetailId id = new MSRDetailId();
-                id.setCompanyCode(userProfile.getCompanyCode());
-                id.setPlantNo(userProfile.getPlantNo());
-                id.setMsrNo(detail.getMsrNo());
-                id.setSeqNo(detail.getSeqNo());
-
-                MSRDetail msrDetail = new MSRDetail();
-                msrDetail.setId(id);
-                BeanUtils.copyProperties(detail, msrDetail);
-
-                return msrDetail;
-            }).collect(Collectors.toSet());
-        }
-
         MSR msr = new MSR();
         BeanUtils.copyProperties(input, msr);
 
-        msr.setId(populateId(input.getMsrNo()));
-        msr.setMsrDetails(msrDetails);
+        msr.setCompanyCode(userProfile.getCompanyCode());
+        msr.setPlantNo(userProfile.getPlantNo());
         msr.setStatus(Status.ACTIVE);
         msr.setCreatedBy(userProfile.getUsername());
         msr.setCreatedAt(ZonedDateTime.now());
@@ -74,20 +58,33 @@ public class MSRServiceImpl implements MSRService {
         msr.setUpdatedAt(ZonedDateTime.now());
 
         MSR saved = msrRepository.save(msr);
-        input.setVersion(saved.getVersion());
 
+        if(!CollectionUtils.isEmpty(input.getMsrDetails())) {
+            for (MsrDetailDTO detail : input.getMsrDetails()) {
+                MSRDetail msrDetail = new MSRDetail();
+                BeanUtils.copyProperties(detail, msrDetail);
+                msrDetail.setCompanyCode(userProfile.getCompanyCode());
+                msrDetail.setPlantNo(userProfile.getPlantNo());
+                msrDetail.setMsr(saved);
+
+                msrDetailRepository.save(msrDetail);
+            }
+        }
+
+        input.setId(saved.getId());
+        input.setVersion(saved.getVersion());
         return input;
     }
 
     @Override
-    public MsrDTO findBy(String msrNo) {
-        return convertToMsrDTO(checkIfRecordExist(populateId(msrNo)));
+    public MsrDTO findBy(Long id) {
+        return convertToMsrDTO(checkIfRecordExist(id));
     }
 
 
     @Override
     public SearchResult<MsrDTO> searchBy(SearchRequest searchRequest) {
-        Specification<MSR> specs = where(queryGenerator.createDefaultSpecification());
+        Specification<MSR> specs = where(queryGenerator.createDefaultSpec());
 
         if(!CollectionUtils.isEmpty(searchRequest.getFilters())) {
             for (Filter filter : searchRequest.getFilters()) {
@@ -107,18 +104,7 @@ public class MSRServiceImpl implements MSRService {
         return result;
     }
 
-    private MSRId populateId(String msrNo) {
-        UserProfile userProfile = UserProfileContext.getUserProfile();
-
-        MSRId msrId = new MSRId();
-        msrId.setCompanyCode(userProfile.getCompanyCode());
-        msrId.setPlantNo(userProfile.getPlantNo());
-        msrId.setMsrNo(msrNo);
-
-        return msrId;
-    }
-
-    private MSR checkIfRecordExist(MSRId id) {
+    private MSR checkIfRecordExist(Long id) {
         Optional<MSR> optionalItem = msrRepository.findById(id);
 
         if (optionalItem.isEmpty()) {
@@ -132,8 +118,8 @@ public class MSRServiceImpl implements MSRService {
         if(!CollectionUtils.isEmpty(msr.getMsrDetails())) {
             msrDetails = msr.getMsrDetails().stream().map(detail -> {
                 MsrDetailDTO msrDetail = MsrDetailDTO.builder()
-                        .msrNo(detail.getId().getMsrNo())
-                        .seqNo(detail.getId().getSeqNo())
+                        .msrNo(detail.getMsrNo())
+                        .seqNo(detail.getSeqNo())
                         .build();
 
                 BeanUtils.copyProperties(detail, msrDetail);

@@ -1,7 +1,7 @@
 package com.sunright.inventory.dto.lov;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.sunright.inventory.dto.BaseDTO;
+import com.sunright.inventory.dto.InvBaseDTO;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -10,7 +10,7 @@ import javax.validation.constraints.NotBlank;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Getter
 @Setter
-public class LocationDTO extends BaseDTO {
+public class LocationDTO extends InvBaseDTO {
 
     @NotBlank(message = "Location must not be empty")
     private String loc;
