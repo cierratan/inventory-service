@@ -1,18 +1,28 @@
 package com.sunright.inventory.entity.msr;
 
-import lombok.Data;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
 
 @Entity(name = "MSRDET")
-@Data
+@Setter
+@Getter
+@AllArgsConstructor
 @NoArgsConstructor
 public class MSRDetail {
 
-    @EmbeddedId
-    private MSRDetailId id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String companyCode;
+    private Integer plantNo;
+    private String msrNo;
+    private int seqNo;
 
     private String itemNo;
     private String partNo;
@@ -54,10 +64,6 @@ public class MSRDetail {
     private String remarks;
 
     @ManyToOne
-    @JoinColumns({
-            @JoinColumn(name = "companyCode", referencedColumnName = "companyCode", nullable = false, insertable = false, updatable = false),
-            @JoinColumn(name = "plantNo", referencedColumnName = "plantNo", nullable = false, insertable = false, updatable = false),
-            @JoinColumn(name = "msrNo", referencedColumnName = "msrNo", nullable = false, insertable = false, updatable = false)
-    })
+    @JoinColumn(name = "MSR_ID", nullable = false)
     private MSR msr;
 }

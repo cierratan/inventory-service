@@ -6,6 +6,6 @@ import com.sunright.inventory.dto.search.SearchResult;
 
 public interface MSRService {
     MsrDTO createMSR(MsrDTO input);
-    MsrDTO findBy(String msrNo);
+    MsrDTO findBy(Long id);
     SearchResult<MsrDTO> searchBy(SearchRequest searchRequest);
 }

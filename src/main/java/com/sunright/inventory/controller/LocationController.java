@@ -1,8 +1,8 @@
 package com.sunright.inventory.controller;
 
+import com.sunright.inventory.dto.lov.LocationDTO;
 import com.sunright.inventory.dto.search.SearchRequest;
 import com.sunright.inventory.dto.search.SearchResult;
-import com.sunright.inventory.dto.lov.LocationDTO;
 import com.sunright.inventory.service.LocationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -23,22 +23,22 @@ public class LocationController {
         return new ResponseEntity<>(locationService.createLocation(location), HttpStatus.OK);
     }
 
-    @PutMapping("{loc}")
+    @PutMapping("{id}")
     public ResponseEntity<LocationDTO> edit(@RequestBody LocationDTO location,
-                                            @PathVariable String loc) {
-        location.setLoc(loc);
+                                            @PathVariable Long id) {
+        location.setId(id);
         return new ResponseEntity<>(locationService.editLocation(location), HttpStatus.OK);
     }
 
-    @GetMapping("{loc}")
-    public ResponseEntity<LocationDTO> get(@PathVariable String loc) {
-        return new ResponseEntity<>(locationService.findBy(loc), HttpStatus.OK);
+    @GetMapping("{id}")
+    public ResponseEntity<LocationDTO> get(@PathVariable Long id) {
+        return new ResponseEntity<>(locationService.findBy(id), HttpStatus.OK);
     }
 
-    @DeleteMapping("{loc}")
+    @DeleteMapping("{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable String loc) {
-        locationService.deleteLocation(loc);
+    public void delete(@PathVariable Long id) {
+        locationService.deleteLocation(id);
     }
 
     @PostMapping("search")

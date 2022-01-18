@@ -35,6 +35,12 @@ public class GlobalExceptionHandler {
         return ErrorMessage.builder().message(ex.getMessage()).build();
     }
 
+    @ExceptionHandler(DuplicateException.class)
+    @ResponseStatus(value = HttpStatus.BAD_REQUEST)
+    public ErrorMessage duplicateException(DuplicateException ex) {
+        return ErrorMessage.builder().message(ex.getMessage()).build();
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Map<String, String> handleValidationExceptions(MethodArgumentNotValidException ex) {

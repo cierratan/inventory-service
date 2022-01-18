@@ -1,7 +1,7 @@
 package com.sunright.inventory.dto.msr;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.sunright.inventory.dto.BaseDTO;
+import com.sunright.inventory.dto.InvBaseDTO;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -13,7 +13,7 @@ import java.util.Set;
 @Getter
 @Setter
 @Builder
-public class MsrDTO extends BaseDTO {
+public class MsrDTO extends InvBaseDTO {
     private String msrNo;
     private Long version;
 

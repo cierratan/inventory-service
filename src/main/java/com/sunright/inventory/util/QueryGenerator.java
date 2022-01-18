@@ -27,11 +27,23 @@ public class QueryGenerator {
         return companyCode.and(plantNo).and(status);
     }
 
+    @Deprecated
     public Specification createDefaultSpecification() {
         Specification companyCode = ((root, query, criteriaBuilder) ->
                 criteriaBuilder.equal(root.get("id").get("companyCode"), UserProfileContext.getUserProfile().getCompanyCode()));
         Specification plantNo = ((root, query, criteriaBuilder) ->
                 criteriaBuilder.equal(root.get("id").get("plantNo"), UserProfileContext.getUserProfile().getPlantNo()));
+        Specification status = ((root, query, criteriaBuilder) ->
+                criteriaBuilder.equal(root.get("status"), Status.ACTIVE));
+
+        return companyCode.and(plantNo).and(status);
+    }
+
+    public Specification createDefaultSpec() {
+        Specification companyCode = ((root, query, criteriaBuilder) ->
+                criteriaBuilder.equal(root.get("companyCode"), UserProfileContext.getUserProfile().getCompanyCode()));
+        Specification plantNo = ((root, query, criteriaBuilder) ->
+                criteriaBuilder.equal(root.get("plantNo"), UserProfileContext.getUserProfile().getPlantNo()));
         Specification status = ((root, query, criteriaBuilder) ->
                 criteriaBuilder.equal(root.get("status"), Status.ACTIVE));
 

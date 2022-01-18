@@ -1,7 +1,6 @@
 package com.sunright.inventory.repository;
 
 import com.sunright.inventory.entity.msr.MSR;
-import com.sunright.inventory.entity.msr.MSRId;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -11,7 +10,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface MSRRepository extends JpaRepository<MSR, MSRId>, JpaSpecificationExecutor<MSR> {
+public interface MSRRepository extends JpaRepository<MSR, Long>, JpaSpecificationExecutor<MSR> {
 
     @Query(value = "select seq_no, part_no, item_no from msrdet where company_code = :companyCode " +
             "and plant_no = :plantNo and msr_no = :msrNo and (part_no like '%' || :partNo || '%' " +
@@ -34,5 +33,5 @@ public interface MSRRepository extends JpaRepository<MSR, MSRId>, JpaSpecificati
             "and msr_no = :msrNo and part_no like '%'||:partNo||'%' and nvl(retn_qty,0) > nvl(recd_qty,0)", nativeQuery = true)
     List<Object[]> getCountMsrByPartNo(String companyCode, Integer plantNo, String msrNo, String partNo);
 
-    Optional<MSR> findMSRById_CompanyCodeAndId_PlantNoAndId_MsrNo(String companyCode, Integer plantNo, String msrNo);
+    Optional<MSR> findMSRByCompanyCodeAndPlantNoAndMsrNo(String companyCode, Integer plantNo, String msrNo);
 }

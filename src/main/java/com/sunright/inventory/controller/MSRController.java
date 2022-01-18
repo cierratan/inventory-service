@@ -1,6 +1,5 @@
 package com.sunright.inventory.controller;
 
-import com.sunright.inventory.dto.ItemDTO;
 import com.sunright.inventory.dto.msr.MsrDTO;
 import com.sunright.inventory.dto.search.SearchRequest;
 import com.sunright.inventory.dto.search.SearchResult;
@@ -21,9 +20,9 @@ public class MSRController {
         return new ResponseEntity<>(msrService.createMSR(msr), HttpStatus.OK);
     }
 
-    @GetMapping("{msrNo}")
-    public ResponseEntity<MsrDTO> get(@PathVariable String msrNo) {
-        return new ResponseEntity<>(msrService.findBy(msrNo), HttpStatus.OK);
+    @GetMapping("{id}")
+    public ResponseEntity<MsrDTO> get(@PathVariable Long id) {
+        return new ResponseEntity<>(msrService.findBy(id), HttpStatus.OK);
     }
 
     @PostMapping("search")

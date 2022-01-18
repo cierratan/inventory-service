@@ -1,25 +1,25 @@
 package com.sunright.inventory.entity.lov;
 
-import com.sunright.inventory.entity.BaseEntity;
+import com.sunright.inventory.entity.InvBaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.EmbeddedId;
-import javax.persistence.Entity;
-import javax.persistence.Version;
+import javax.persistence.*;
 
 @Entity(name = "LOC")
 @Data
-@EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
-public class Location extends BaseEntity {
-    @EmbeddedId
-    private LocationId id;
+@EqualsAndHashCode(callSuper = true)
+public class Location extends InvBaseEntity {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Version
     private Long version;
 
+    private String loc;
     private String description;
     private String address1;
     private String address2;

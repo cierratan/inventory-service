@@ -1,6 +1,5 @@
-package com.sunright.inventory.entity.item;
+package com.sunright.inventory.entity;
 
-import com.sunright.inventory.entity.BaseEntity;
 import com.sunright.inventory.entity.enums.Closure;
 import com.sunright.inventory.entity.enums.Obsolete;
 import lombok.Data;
@@ -13,15 +12,17 @@ import java.util.Date;
 
 @Entity(name = "ITEM")
 @Data
-@EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
-public class Item extends BaseEntity {
-    @EmbeddedId
-    private ItemId id;
+@EqualsAndHashCode(callSuper = true)
+public class Item extends InvBaseEntity {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Version
     private Long version;
 
+    private String itemNo;
     private String loc;
     private String partNo;
     private String description;
