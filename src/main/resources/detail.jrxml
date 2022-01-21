@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.8.0.final using JasperReports Library version 6.8.0-2ed8dfabb690ff337a5797129f2cd92902b0c87b  -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="detail" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="34e760c5-501b-44e4-a488-e41c4056f128">
+	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="Sunright"/>
+	<parameter name="GRN_NO" class="java.lang.String"/>
+	<parameter name="SUB_TYPE" class="java.lang.String"/>
+	<parameter name="TYPE" class="java.lang.String"/>
+	<queryString language="SQL">
+		<![CDATA[SELECT DISTINCT
+	gdet."SEQ_NO",
+	gdet."ITEM_NO",
+	gdet."PART_NO",
+	gdet."LOC",
+	gdet."PROJECT_NO",
+	gdet."PO_REC_SEQ",
+	gdet."RECD_QTY",
+	gdet."UOM",
+	gdet."PO_PRICE",
+	gdet."REMARKS"
+FROM "GRNDET" gdet,
+	"COMPANY" c,
+	"DOCM_NO" doc
+WHERE gdet."COMPANY_CODE" = c."COMPANY_CODE"
+	AND gdet."PLANT_NO" = c."PLANT_NO"
+	AND doc."SUB_TYPE" = gdet."SUB_TYPE"   
+	 AND gdet."GRN_NO" = $P{GRN_NO} 
+	 AND gdet."SUB_TYPE" = $P{SUB_TYPE}
+	 AND doc."TYPE" = $P{TYPE}
+	 ORDER BY gdet."SEQ_NO" ASC]]>
+	</queryString>
+	<field name="SEQ_NO" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.label" value="SEQ_NO"/>
+	</field>
+	<field name="ITEM_NO" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="ITEM_NO"/>
+	</field>
+	<field name="PART_NO" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="PART_NO"/>
+	</field>
+	<field name="LOC" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="LOC"/>
+	</field>
+	<field name="PROJECT_NO" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="PROJECT_NO"/>
+	</field>
+	<field name="PO_REC_SEQ" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.label" value="PO_REC_SEQ"/>
+	</field>
+	<field name="RECD_QTY" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.label" value="RECD_QTY"/>
+	</field>
+	<field name="UOM" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="UOM"/>
+	</field>
+	<field name="PO_PRICE" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.label" value="PO_PRICE"/>
+	</field>
+	<field name="REMARKS" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="REMARKS"/>
+	</field>
+	<variable name="TotalPrice" class="java.lang.Double" calculation="Sum"/>
+	<title>
+		<band height="23" splitType="Stretch">
+			<subreport>
+				<reportElement x="0" y="1" width="200" height="20" uuid="1ca45c8b-3dfe-43c6-803c-bcd25900201b"/>
+				<subreportParameter name="GRN_NO">
+					<subreportParameterExpression><![CDATA[$P{GRN_NO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="SUB_TYPE">
+					<subreportParameterExpression><![CDATA[$P{SUB_TYPE}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="TYPE">
+					<subreportParameterExpression><![CDATA[$P{TYPE}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression><![CDATA["header.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+	</title>
+	<columnHeader>
+		<band height="33" splitType="Stretch">
+			<staticText>
+				<reportElement x="0" y="2" width="50" height="30" uuid="99fef9aa-8111-46c5-b4b7-93a80a2b39b3">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="142bbf2a-1db0-4e39-a666-417d1c26d619"/>
+				</reportElement>
+				<text><![CDATA[Seq No]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="50" y="2" width="60" height="30" uuid="1e881840-e8aa-4545-9824-eb260ba0bf7d">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="7483a384-9165-41d2-a564-59e2076f0ba9"/>
+				</reportElement>
+				<text><![CDATA[Item No]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="110" y="2" width="59" height="30" uuid="50995a8f-2d1f-4cf8-a489-1cb08c7f790a">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="8ea9c718-aef4-4879-9769-7fe4e9cf99d1"/>
+				</reportElement>
+				<text><![CDATA[Part No]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="169" y="2" width="40" height="30" uuid="eb5650e2-425b-4376-b00f-e7ffc58f62e0">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="80423595-6390-4e0d-a4a2-0938cd115c13"/>
+				</reportElement>
+				<text><![CDATA[Loc]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="208" y="2" width="62" height="30" uuid="d6fb3b9a-8b7c-40f8-84b0-407dacc3025b">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="1c4a3adf-e98b-4d9c-8ca6-cd7f054250d8"/>
+				</reportElement>
+				<text><![CDATA[Project No]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="270" y="2" width="30" height="30" uuid="7c5767b1-77fb-44d0-aa9c-b211c4e0285b">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="2f0c98c9-52fa-4d31-bbfd-94a933b13b54"/>
+				</reportElement>
+				<text><![CDATA[PO]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="329" y="2" width="40" height="30" uuid="af3a8fb7-c5f2-482f-a9d2-a49b97b7a283">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="a57facae-ecaa-42ee-b12d-9b5cbad45191"/>
+				</reportElement>
+				<text><![CDATA[Qty]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="369" y="2" width="40" height="30" uuid="e6ed4a9e-fdae-494c-b6a4-56f3305ab900">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="f0ad0354-6c2f-485c-82e6-710adebdc90f"/>
+				</reportElement>
+				<text><![CDATA[Uom]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="409" y="2" width="50" height="30" uuid="7537bdad-251e-4502-9cb2-27e41080ebd1">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="bd02b1b7-5ea6-4eaf-ace4-3245bf80d6c2"/>
+				</reportElement>
+				<text><![CDATA[Unit Price]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="460" y="2" width="100" height="30" uuid="55022ba8-1b75-4b64-af2e-56508fa94bf0"/>
+				<text><![CDATA[Total Price]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="78" splitType="Stretch">
+			<textField isBlankWhenNull="true">
+				<reportElement x="0" y="2" width="50" height="30" uuid="c31c2234-e46a-47fd-8061-0029ef58c5a4">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="142bbf2a-1db0-4e39-a666-417d1c26d619"/>
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{SEQ_NO}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="50" y="2" width="60" height="30" uuid="248884c0-a4fd-4d89-bed4-ffcb0a89953c">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="7483a384-9165-41d2-a564-59e2076f0ba9"/>
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{ITEM_NO}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="110" y="2" width="58" height="30" uuid="6dbc1b65-9abb-49c1-b618-6c6945c04578">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="8ea9c718-aef4-4879-9769-7fe4e9cf99d1"/>
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{PART_NO}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="169" y="2" width="39" height="30" uuid="ed535120-fe57-4eaa-adc2-62a459f0809b">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="80423595-6390-4e0d-a4a2-0938cd115c13"/>
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{LOC}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="209" y="2" width="60" height="30" uuid="8ca3ba43-97f9-470d-b02b-d88b38b6f23a">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="1c4a3adf-e98b-4d9c-8ca6-cd7f054250d8"/>
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{PROJECT_NO}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="269" y="2" width="31" height="30" uuid="2d9ff91d-d24f-40ae-becd-ab20b2eabbd7">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="2f0c98c9-52fa-4d31-bbfd-94a933b13b54"/>
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{PO_REC_SEQ}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="329" y="2" width="40" height="30" uuid="d519fc96-e1e6-49b1-8aa5-af4ae6ddc5d9">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="a57facae-ecaa-42ee-b12d-9b5cbad45191"/>
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{RECD_QTY}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="369" y="2" width="40" height="30" uuid="dcd48678-51b6-463d-9493-4eb7b075d40c">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="f0ad0354-6c2f-485c-82e6-710adebdc90f"/>
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{UOM}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="409" y="2" width="51" height="30" uuid="5c08835e-0431-4081-8c97-c63464c8f9e9">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="bd02b1b7-5ea6-4eaf-ace4-3245bf80d6c2"/>
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{PO_PRICE}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="460" y="2" width="100" height="30" uuid="3b233eda-e952-49b2-af42-d3cc48dcf7ea"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{RECD_QTY}.multiply($F{PO_PRICE})]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="50" y="46" width="100" height="30" uuid="08585e66-3861-43dc-8e5a-2ec252a510d6"/>
+				<textFieldExpression><![CDATA[$F{REMARKS}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>
