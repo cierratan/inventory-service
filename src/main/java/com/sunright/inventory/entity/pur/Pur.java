@@ -4,6 +4,7 @@ import com.sunright.inventory.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
@@ -18,9 +19,6 @@ public class Pur extends BaseEntity {
 
     @EmbeddedId
     private PurId id;
-
-    /*@Version
-    private Long version;*/
 
     private String docmType;
     private String poType;

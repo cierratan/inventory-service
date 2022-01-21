@@ -21,9 +21,6 @@ public class DraftPur extends BaseEntity {
     @EmbeddedId
     private DraftPurId id;
 
-    /*@Version
-    private Long version;*/
-
     private String docmType;
     private String poType;
     private String poClass;
@@ -62,10 +59,7 @@ public class DraftPur extends BaseEntity {
     private String shippingTerm;
     private String poInd;
     private String printInd;
-
-    @Enumerated(EnumType.STRING)
-    private Closure openClose;
-
+    private String openClose;
     private String closeType;
     private Date closeDate;
     private String forwarder;

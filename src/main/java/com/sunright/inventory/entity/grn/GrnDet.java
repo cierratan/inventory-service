@@ -16,8 +16,10 @@ public class GrnDet {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Embedded
-    private GrnId grnId;
+    private String companyCode;
+    private Integer plantNo;
+    private String grnNo;
+    private String subType;
 
     private Integer seqNo;
     private String itemNo;
@@ -55,7 +57,7 @@ public class GrnDet {
 
     private String remarks;
 
-    @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    @JoinColumn(name = "GRN_ID")
+    @ManyToOne
+    @JoinColumn(name = "GRN_ID", nullable = false)
     private Grn grn;
 }

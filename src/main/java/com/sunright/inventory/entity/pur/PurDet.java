@@ -17,9 +17,6 @@ public class PurDet {
     @EmbeddedId
     private PurDetId id;
 
-    /*@Version
-    private Long version;*/
-
     private Integer seqNo;
     private String projectNo;
     private String itemNo;
