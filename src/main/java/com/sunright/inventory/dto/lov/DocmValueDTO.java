@@ -11,5 +11,5 @@ import lombok.Setter;
 @Builder
 public class DocmValueDTO {
     private String generatedNo;
-    private String docmNo;
+    private Integer docmNo;
 }

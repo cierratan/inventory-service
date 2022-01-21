@@ -56,7 +56,7 @@ public class DraftPurDTO extends BaseDTO {
     private String shippingTerm;
     private String poInd;
     private String printInd;
-    private Closure openClose;
+    private String openClose;
     private String closeType;
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)

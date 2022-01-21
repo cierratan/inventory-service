@@ -1,6 +1,6 @@
 package com.sunright.inventory.entity.grn;
 
-import com.sunright.inventory.entity.BaseEntity;
+import com.sunright.inventory.entity.InvBaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -8,24 +8,23 @@ import lombok.NoArgsConstructor;
 import javax.persistence.*;
 import java.math.BigDecimal;
 import java.util.Date;
-import java.util.List;
+import java.util.Set;
 
 @Entity(name = "GRN")
 @Data
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
-public class Grn extends BaseEntity {
+public class Grn extends InvBaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Embedded
-    private GrnId ids;
-
     @Version
     private Long version;
 
+    private String grnNo;
+    private String subType;
     private String poNo;
     private String doNo;
     private String supplierCode;
@@ -48,5 +47,5 @@ public class Grn extends BaseEntity {
     private Date reqSubmitDate;
 
     @OneToMany(fetch = FetchType.EAGER, mappedBy = "grn", orphanRemoval = true, cascade = CascadeType.ALL)
-    private List<GrnDet> grnDetList;
+    private Set<GrnDet> grnDetails;
 }

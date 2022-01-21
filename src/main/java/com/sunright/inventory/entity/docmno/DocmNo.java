@@ -17,9 +17,6 @@ public class DocmNo extends BaseEntity {
     @EmbeddedId
     private DocmNoId id;
 
-    /*@Version
-    private Long version;*/
-
     private String description;
     private Integer lastGeneratedNo;
     private String prefix;

@@ -2,17 +2,23 @@ package com.sunright.inventory.service;
 
 import com.sunright.inventory.dto.grn.GrnDTO;
 import com.sunright.inventory.dto.grn.GrnDetDTO;
-import com.sunright.inventory.dto.msr.MsrDTO;
+import com.sunright.inventory.dto.lov.DocmValueDTO;
 import com.sunright.inventory.dto.search.SearchRequest;
 import com.sunright.inventory.dto.search.SearchResult;
+import net.sf.jasperreports.engine.JRException;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.sql.SQLException;
 import java.util.List;
 
 public interface GrnService {
 
     GrnDTO createGrn(GrnDTO input);
 
-    GrnDTO findBy(String grnNo, String subType);
+    GrnDTO findBy(Long id);
 
     SearchResult<GrnDTO> searchBy(SearchRequest searchRequest);
 
@@ -20,7 +26,7 @@ public interface GrnService {
 
     GrnDTO getGrnHeader(String poNo);
 
-    List<GrnDetDTO> getAllPartNo(String poNo);
+    List<GrnDetDTO> getAllPartNo(String poNo, String partNo, String itemNo);
 
     GrnDetDTO getGrnDetail(String poNo, String itemNo, String partNo, Integer poRecSeq);
 
@@ -28,7 +34,13 @@ public interface GrnService {
 
     GrnDTO checkIfGrnExists(String grnNo);
 
-    MsrDTO checkIfMsrNoValid(String msrNo);
+    GrnDTO checkIfMsrNoValid(String msrNo);
 
     GrnDetDTO checkNextItem(GrnDTO input);
+
+    DocmValueDTO getGeneratedNo();
+
+    DocmValueDTO getGeneratedNoManual();
+
+    void generateReportGrn(HttpServletResponse response, String grnNo, String subType, String type) throws IOException, SQLException, JRException;
 }

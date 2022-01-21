@@ -16,17 +16,6 @@ import org.springframework.util.CollectionUtils;
 @Component
 public class QueryGenerator {
 
-    public Specification createDefaultSpecificationWithId() {
-        Specification companyCode = ((root, query, criteriaBuilder) ->
-                criteriaBuilder.equal(root.get("ids").get("companyCode"), UserProfileContext.getUserProfile().getCompanyCode()));
-        Specification plantNo = ((root, query, criteriaBuilder) ->
-                criteriaBuilder.equal(root.get("ids").get("plantNo"), UserProfileContext.getUserProfile().getPlantNo()));
-        Specification status = ((root, query, criteriaBuilder) ->
-                criteriaBuilder.equal(root.get("status"), Status.ACTIVE));
-
-        return companyCode.and(plantNo).and(status);
-    }
-
     @Deprecated
     public Specification createDefaultSpecification() {
         Specification companyCode = ((root, query, criteriaBuilder) ->
@@ -67,7 +56,7 @@ public class QueryGenerator {
     public Pageable constructPageable(SearchRequest searchRequest) {
         Sort sort = Sort.by(Sort.Direction.DESC, "updatedAt");
 
-        if(!CollectionUtils.isEmpty(searchRequest.getSorts())) {
+        if (!CollectionUtils.isEmpty(searchRequest.getSorts())) {
             for (DataSorting dataSort : searchRequest.getSorts()) {
                 sort = sort.and(Sort.by(dataSort.getSort() == SortOption.ASC ? Sort.Direction.ASC : Sort.Direction.DESC, dataSort.getField()));
             }
