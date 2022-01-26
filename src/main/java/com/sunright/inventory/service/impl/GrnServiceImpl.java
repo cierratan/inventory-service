@@ -23,6 +23,7 @@ import com.sunright.inventory.entity.msr.MSRDetail;
 import com.sunright.inventory.entity.pur.Pur;
 import com.sunright.inventory.entity.pur.PurDet;
 import com.sunright.inventory.entity.supplier.Supplier;
+import com.sunright.inventory.entity.supplier.SupplierProjection;
 import com.sunright.inventory.exception.NotFoundException;
 import com.sunright.inventory.interceptor.UserProfileContext;
 import com.sunright.inventory.repository.*;
@@ -881,5 +882,20 @@ public class GrnServiceImpl implements GrnService {
         result.setRows(pgGRN.getContent().stream().map(grn -> convertToGrnDTO(grn)).collect(Collectors.toList()));
 
         return result;
+    }
+
+    @Override
+    public SupplierDTO findSupplierByGrnNo(String grnNo) {
+        SupplierProjection supplier = supplierRepository.getSupplierByGrn(UserProfileContext.getUserProfile().getCompanyCode(),
+                UserProfileContext.getUserProfile().getPlantNo(), grnNo);
+
+        if(supplier == null) {
+            throw new NotFoundException(String.format("GrnNo: %s is not found", grnNo));
+        }
+
+        return SupplierDTO.builder()
+                .supplierCode(supplier.getSupplierCode())
+                .name(supplier.getName())
+                .build();
     }
 }
