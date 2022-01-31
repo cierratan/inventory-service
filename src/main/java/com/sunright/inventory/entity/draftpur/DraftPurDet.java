@@ -1,30 +1,21 @@
 package com.sunright.inventory.entity.draftpur;
 
-import com.sunright.inventory.entity.BaseEntity;
-import lombok.AllArgsConstructor;
+import com.sunright.inventory.entity.pur.Pur;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.Column;
-import javax.persistence.EmbeddedId;
-import javax.persistence.Entity;
+import javax.persistence.*;
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
 
 @Entity(name = "DRAFT_PURDET")
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
-@EqualsAndHashCode(callSuper = true)
-public class DraftPurDet extends BaseEntity {
+public class DraftPurDet implements Serializable {
 
     @EmbeddedId
     private DraftPurDetId id;
-
-    /*@Version
-    private Long version;*/
-
     private Integer seqNo;
     private String projectNo;
     private String itemNo;
@@ -90,4 +81,12 @@ public class DraftPurDet extends BaseEntity {
 
     @Column(name = "AP_RECD_QTY", precision = 16, scale = 4)
     private BigDecimal apRecdQty;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumns({
+            @JoinColumn(name = "companyCode", referencedColumnName = "companyCode", insertable = false, updatable = false),
+            @JoinColumn(name = "plantNo", referencedColumnName = "plantNo", insertable = false, updatable = false),
+            @JoinColumn(name = "poNo", referencedColumnName = "poNo", insertable = false, updatable = false)
+    })
+    private DraftPur draftPur;
 }

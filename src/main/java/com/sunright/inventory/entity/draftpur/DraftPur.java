@@ -1,22 +1,18 @@
 package com.sunright.inventory.entity.draftpur;
 
-import com.sunright.inventory.entity.BaseEntity;
-import com.sunright.inventory.entity.enums.Closure;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.Set;
 
 @Entity(name = "DRAFT_PUR")
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
-@EqualsAndHashCode(callSuper = true)
-public class DraftPur extends BaseEntity {
+public class DraftPur implements Serializable {
 
     @EmbeddedId
     private DraftPurId id;
@@ -120,4 +116,6 @@ public class DraftPur extends BaseEntity {
 
     private String remarks;
 
+    @OneToMany(fetch = FetchType.EAGER, mappedBy = "draftPur", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<DraftPurDet> draftPurDetails;
 }

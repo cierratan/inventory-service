@@ -1,14 +1,16 @@
 package com.sunright.inventory.entity.grn;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.*;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
 import java.util.Date;
 
 @Entity(name = "GRNDET")
-@Data
+@Setter
+@Getter
+@AllArgsConstructor
 @NoArgsConstructor
 public class GrnDet {
 
@@ -17,18 +19,18 @@ public class GrnDet {
     private Long id;
 
     private String companyCode;
-    private Integer plantNo;
+    private int plantNo;
     private String grnNo;
     private String subType;
 
-    private Integer seqNo;
+    private int seqNo;
     private String itemNo;
     private String partNo;
     private String loc;
-    private Integer itemType;
+    private int itemType;
     private String projectNo;
     private String poNo;
-    private Integer poRecSeq;
+    private int poRecSeq;
     private String doNo;
     private String sivNo;
     private String uom;
@@ -59,5 +61,6 @@ public class GrnDet {
 
     @ManyToOne
     @JoinColumn(name = "GRN_ID", nullable = false)
+    @JsonIgnore
     private Grn grn;
 }

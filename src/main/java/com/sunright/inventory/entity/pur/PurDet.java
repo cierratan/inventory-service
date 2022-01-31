@@ -3,16 +3,15 @@ package com.sunright.inventory.entity.pur;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.Column;
-import javax.persistence.EmbeddedId;
-import javax.persistence.Entity;
+import javax.persistence.*;
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
 
 @Entity(name = "PURDET")
 @Data
 @NoArgsConstructor
-public class PurDet {
+public class PurDet implements Serializable {
 
     @EmbeddedId
     private PurDetId id;
@@ -82,4 +81,12 @@ public class PurDet {
 
     @Column(name = "AP_RECD_QTY", precision = 16, scale = 4)
     private BigDecimal apRecdQty;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumns({
+            @JoinColumn(name = "companyCode", referencedColumnName = "companyCode", insertable = false, updatable = false),
+            @JoinColumn(name = "plantNo", referencedColumnName = "plantNo", insertable = false, updatable = false),
+            @JoinColumn(name = "poNo", referencedColumnName = "poNo", insertable = false, updatable = false)
+    })
+    private Pur pur;
 }
