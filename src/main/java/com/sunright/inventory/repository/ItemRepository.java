@@ -1,6 +1,7 @@
 package com.sunright.inventory.repository;
 
 import com.sunright.inventory.entity.Item;
+import com.sunright.inventory.entity.ItemProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
@@ -14,41 +15,41 @@ public interface ItemRepository extends JpaRepository<Item, Long>, JpaSpecificat
 
     @Modifying
     @Query("UPDATE ITEM i set i.alternate = :itemNo " +
-            "WHERE i.companyCode = :companyCode and i.plantNo = :plantNo and i.itemNo = :obsoleteItem ")
+            "WHERE i.companyCode = :companyCode AND i.plantNo = :plantNo AND i.itemNo = :obsoleteItem ")
     void updateAlternate(String itemNo, String companyCode, Integer plantNo, String obsoleteItem);
 
     @Modifying
     @Query("UPDATE ITEM i set i.alternate = null " +
-            "WHERE i.companyCode = :companyCode and i.plantNo = :plantNo and i.itemNo = :qryObsItem ")
+            "WHERE i.companyCode = :companyCode AND i.plantNo = :plantNo AND i.itemNo = :qryObsItem ")
     void updateAlternate(String companyCode, Integer plantNo, String qryObsItem);
 
     List<Item> findByCompanyCodeAndPlantNoAndItemNo(String companyCode, Integer plantNo, String itemNo);
 
-    @Query(value = "select count(i) from ITEM i where company_code = :companyCode and plant_no = :plantNo and item_no like %:itemNo% " +
-            "and source in ('B','C')")
-    Long countByItemNo(String companyCode, Integer plantNo, String itemNo);
+    @Query("SELECT count(i) as countItemNo FROM ITEM i WHERE i.companyCode = :companyCode AND i.plantNo = :plantNo AND i.itemNo LIKE %:itemNo% " +
+            "AND source IN ('B','C')")
+    ItemProjection getCountByItemNo(String companyCode, Integer plantNo, String itemNo);
 
-    @Query(value = "select count(i) from ITEM where company_code = :companyCode and plant_no = :plantNo and part_no like %:partNo% " +
-            "and source in ('B','C')")
-    Long countByPartNo(String companyCode, Integer plantNo, String partNo);
+    @Query("SELECT count(i) as countPartNo FROM ITEM i WHERE i.companyCode = :companyCode AND i.plantNo = :plantNo AND i.partNo LIKE %:partNo% " +
+            "AND source IN ('B','C')")
+    ItemProjection getCountByPartNo(String companyCode, Integer plantNo, String partNo);
 
-    @Query(value = "select partNo, itemNo from ITEM where company_code = :companyCode and plant_no = :plantNo " +
-            "and (part_no like %:partNo% or item_no like %:itemNo%) and source in ('B','C')")
-    List<Item> lovItemPart(String companyCode, Integer plantNo, String partNo, String itemNo);
+    @Query("SELECT i.partNo as partNo, i.itemNo as itemNo FROM ITEM i WHERE i.companyCode = :companyCode AND i.plantNo = :plantNo " +
+            "AND (partNo LIKE %:partNo% or itemNo LIKE %:itemNo%) AND source IN ('B','C')")
+    List<ItemProjection> lovItemPart(String companyCode, Integer plantNo, String partNo, String itemNo);
 
-    @Query(value = "select itemNo, partNo from ITEM where company_code = :companyCode " +
-            "and plant_no = :plantNo and item_no like %:itemNo% and source in ('B','C')")
-    List<Item> getItemAndPartNoByItemNo(String companyCode, Integer plantNo, String itemNo);
+    @Query("SELECT i.itemNo as itemNo, i.partNo as partNo FROM ITEM i WHERE i.companyCode = :companyCode " +
+            "AND i.plantNo = :plantNo AND i.itemNo LIKE %:itemNo% AND i.source IN ('B','C')")
+    List<ItemProjection> getItemAndPartNoByItemNo(String companyCode, Integer plantNo, String itemNo);
 
-    @Query(value = "select itemNo, partNo from ITEM where company_code = :companyCode " +
-            "and plant_no = :plantNo and part_no like %:partNo% and source in ('B','C')")
-    List<Item> getItemAndPartNoByPartNo(String companyCode, Integer plantNo, String partNo);
+    @Query("SELECT i.itemNo as itemNo, i.partNo as partNo FROM ITEM i WHERE i.companyCode = :companyCode " +
+            "AND i.plantNo = :plantNo AND i.partNo LIKE %:partNo% AND i.source IN ('B','C')")
+    List<ItemProjection> getItemAndPartNoByPartNo(String companyCode, Integer plantNo, String partNo);
 
-    @Query(value = "select i.partNo, i.itemNo, substring(i.description, 1, 60), i.loc, i.uom " +
-            "from ITEM i where company_code = :companyCode and plant_no = :plantNo and item_no = :itemNo")
-    List<Item> itemInfo(String companyCode, Integer plantNo, String itemNo);
+    @Query("SELECT i.partNo as partNo, i.itemNo as itemNo, substring(i.description, 1, 60) as description, " +
+            "i.loc as loc, i.uom as uom FROM ITEM i WHERE i.companyCode = :companyCode AND i.plantNo = :plantNo AND i.itemNo = :itemNo")
+    ItemProjection itemInfo(String companyCode, Integer plantNo, String itemNo);
 
-    @Query(value = "select source from ITEM where company_code = :companyCode and plant_no = :plantNo " +
-            "and item_no = :itemNo")
-    Item getSource(String companyCode, Integer plantNo, String itemNo);
+    @Query("SELECT i.source as source FROM ITEM i WHERE i.companyCode = :companyCode AND i.plantNo = :plantNo " +
+            "AND i.itemNo = :itemNo")
+    ItemProjection getSource(String companyCode, Integer plantNo, String itemNo);
 }

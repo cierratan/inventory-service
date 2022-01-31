@@ -127,7 +127,7 @@ public class MSRServiceImpl implements MSRService {
     private MSR checkIfRecordExist(Long id) {
         Optional<MSR> optionalItem = msrRepository.findById(id);
 
-        if (optionalItem.isEmpty()) {
+        if (!optionalItem.isPresent()) {
             throw new NotFoundException("Record is not found");
         }
         return optionalItem.get();

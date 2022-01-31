@@ -1,21 +1,18 @@
 package com.sunright.inventory.entity.pur;
 
-import com.sunright.inventory.entity.BaseEntity;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 import javax.persistence.*;
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.Set;
 
 @Entity(name = "PUR")
 @Data
-@EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
-public class Pur extends BaseEntity {
+public class Pur implements Serializable {
 
     @EmbeddedId
     private PurId id;
@@ -58,9 +55,7 @@ public class Pur extends BaseEntity {
     private String shippingTerm;
     private String poInd;
     private String printInd;
-
     private String openClose;
-
     private String closeType;
     private Date closeDate;
     private String forwarder;
@@ -121,11 +116,6 @@ public class Pur extends BaseEntity {
 
     private String remarks;
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumns({
-            @JoinColumn(referencedColumnName = "companyCode", updatable = false),
-            @JoinColumn(referencedColumnName = "plantNo", updatable = false),
-            @JoinColumn(referencedColumnName = "poNo", updatable = false)
-    })
+    @OneToMany(fetch = FetchType.EAGER, mappedBy = "pur", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<PurDet> purDetails;
 }

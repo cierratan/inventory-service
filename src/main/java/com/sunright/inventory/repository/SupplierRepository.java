@@ -11,9 +11,9 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface SupplierRepository extends JpaRepository<Supplier, SupplierId>, JpaSpecificationExecutor<Supplier> {
 
-    @Query(value = "select name from SUPPLIER where company_code = :companyCode " +
-            "and plant_no = :plantNo and supplier_code = :supplierCode")
-    Supplier getSupplierName(String companyCode, Integer plantNo, String supplierCode);
+    @Query("SELECT s.name as name FROM SUPPLIER s WHERE s.id.companyCode = :companyCode " +
+            "AND s.id.plantNo = :plantNo AND s.id.supplierCode = :supplierCode")
+    SupplierProjection getSupplierName(String companyCode, Integer plantNo, String supplierCode);
 
     @Query("SELECT s.id.supplierCode as supplierCode, s.name as name " +
             "FROM GRN g " +

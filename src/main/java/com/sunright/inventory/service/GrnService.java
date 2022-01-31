@@ -8,6 +8,7 @@ import com.sunright.inventory.dto.search.SearchResult;
 import com.sunright.inventory.dto.supplier.SupplierDTO;
 import net.sf.jasperreports.engine.JRException;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -43,7 +44,11 @@ public interface GrnService {
 
     DocmValueDTO getGeneratedNoManual();
 
-    void generateReportGrn(HttpServletResponse response, String grnNo, String subType, String type) throws IOException, SQLException, JRException;
+    GrnDTO generateReportGrn(HttpServletRequest request, HttpServletResponse response, String grnNo, String subType, String type);
+
+    GrnDTO generatePickListGrn(HttpServletRequest request, HttpServletResponse response, String grnNo, String projectNo, String orderNo);
+
+    GrnDTO generateLabelGrn(HttpServletRequest request, HttpServletResponse response, String grnNo);
 
     SupplierDTO findSupplierByGrnNo(String grnNo);
 }

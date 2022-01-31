@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.OutputStream;
 import java.util.List;
@@ -23,10 +24,23 @@ public class GrnController {
     @Autowired
     private GrnService grnService;
 
-    @GetMapping("print-report-grn")
-    public void generateReport(HttpServletResponse response, @RequestParam String grnNo, @RequestParam String subType, @RequestParam String type) throws Exception {
+    @GetMapping("print-label")
+    public ResponseEntity<GrnDTO> generateLabel(HttpServletRequest request, HttpServletResponse response, @RequestParam String grnNo) {
+        return new ResponseEntity<>(grnService.generateLabelGrn(request, response, grnNo), HttpStatus.OK);
+    }
 
-        grnService.generateReportGrn(response, grnNo, subType, type);
+    @GetMapping("print-pick-list")
+    public ResponseEntity<GrnDTO> generatePickList(HttpServletRequest request, HttpServletResponse response,
+                                                   @RequestParam String grnNo, @RequestParam String projectNo,
+                                                   @RequestParam String orderNo) {
+        return new ResponseEntity<>(grnService.generatePickListGrn(request, response, grnNo, projectNo, orderNo), HttpStatus.OK);
+    }
+
+    @GetMapping("print-report-grn")
+    public ResponseEntity<GrnDTO> generateReport(HttpServletRequest request, HttpServletResponse response,
+                                                 @RequestParam String grnNo, @RequestParam String subType,
+                                                 @RequestParam String type) {
+        return new ResponseEntity<>(grnService.generateReportGrn(request, response, grnNo, subType, type), HttpStatus.OK);
     }
 
     @GetMapping("grn-no-manual")
@@ -65,7 +79,8 @@ public class GrnController {
     }
 
     @GetMapping("partno")
-    public ResponseEntity<List<GrnDetDTO>> partno(@RequestParam String poNo, @RequestParam String partNo, @RequestParam String itemNo) {
+    public ResponseEntity<List<GrnDetDTO>> partno(@RequestParam String poNo,
+                                                  @RequestParam String partNo, @RequestParam String itemNo) {
         return new ResponseEntity<>(grnService.getAllPartNo(poNo, partNo, itemNo), HttpStatus.OK);
     }
 

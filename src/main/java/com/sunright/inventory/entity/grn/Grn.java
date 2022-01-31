@@ -1,9 +1,8 @@
 package com.sunright.inventory.entity.grn;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.sunright.inventory.entity.InvBaseEntity;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
@@ -11,8 +10,9 @@ import java.util.Date;
 import java.util.Set;
 
 @Entity(name = "GRN")
-@Data
-@EqualsAndHashCode(callSuper = true)
+@Setter
+@Getter
+@AllArgsConstructor
 @NoArgsConstructor
 public class Grn extends InvBaseEntity {
 
@@ -47,5 +47,6 @@ public class Grn extends InvBaseEntity {
     private Date reqSubmitDate;
 
     @OneToMany(fetch = FetchType.EAGER, mappedBy = "grn", orphanRemoval = true, cascade = CascadeType.ALL)
+    @JsonIgnore
     private Set<GrnDet> grnDetails;
 }

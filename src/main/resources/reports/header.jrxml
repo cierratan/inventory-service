@@ -60,7 +60,7 @@ WHERE
 		<band splitType="Stretch"/>
 	</background>
 	<title>
-		<band height="196" splitType="Stretch">
+		<band height="184" splitType="Stretch">
 			<textField>
 				<reportElement x="199" y="0" width="200" height="30" uuid="6174eb04-8f95-47c1-9bf3-b3b02eec72d0"/>
 				<textFieldExpression><![CDATA[$F{COMPANY_NAME}]]></textFieldExpression>
@@ -102,7 +102,7 @@ WHERE
 				<textFieldExpression><![CDATA[$F{DO_NO}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement x="150" y="140" width="190" height="18" uuid="084cccf3-3599-4a7f-af4e-1c7798350c2a"/>
+				<reportElement x="114" y="140" width="190" height="18" uuid="084cccf3-3599-4a7f-af4e-1c7798350c2a"/>
 				<textFieldExpression><![CDATA[$F{SUPPLIER_NAME}]]></textFieldExpression>
 			</textField>
 			<staticText>
