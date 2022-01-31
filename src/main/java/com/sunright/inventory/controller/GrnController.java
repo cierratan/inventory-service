@@ -5,6 +5,7 @@ import com.sunright.inventory.dto.grn.GrnDetDTO;
 import com.sunright.inventory.dto.lov.DocmValueDTO;
 import com.sunright.inventory.dto.search.SearchRequest;
 import com.sunright.inventory.dto.search.SearchResult;
+import com.sunright.inventory.dto.supplier.SupplierDTO;
 import com.sunright.inventory.service.GrnService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -78,6 +79,11 @@ public class GrnController {
     @GetMapping("header")
     public ResponseEntity<GrnDTO> header(@RequestParam String poNo) {
         return new ResponseEntity<>(grnService.getGrnHeader(poNo), HttpStatus.OK);
+    }
+
+    @GetMapping("suppliers")
+    public ResponseEntity<SupplierDTO> getSupplierByGrnNo(@RequestParam String grnNo) {
+        return new ResponseEntity<>(grnService.findSupplierByGrnNo(grnNo), HttpStatus.OK);
     }
 
     @PostMapping

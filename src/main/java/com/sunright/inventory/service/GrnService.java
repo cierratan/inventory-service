@@ -5,6 +5,7 @@ import com.sunright.inventory.dto.grn.GrnDetDTO;
 import com.sunright.inventory.dto.lov.DocmValueDTO;
 import com.sunright.inventory.dto.search.SearchRequest;
 import com.sunright.inventory.dto.search.SearchResult;
+import com.sunright.inventory.dto.supplier.SupplierDTO;
 import net.sf.jasperreports.engine.JRException;
 
 import javax.servlet.http.HttpServletResponse;
@@ -43,4 +44,6 @@ public interface GrnService {
     DocmValueDTO getGeneratedNoManual();
 
     void generateReportGrn(HttpServletResponse response, String grnNo, String subType, String type) throws IOException, SQLException, JRException;
+
+    SupplierDTO findSupplierByGrnNo(String grnNo);
 }
