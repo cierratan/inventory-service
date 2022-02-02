@@ -4,6 +4,7 @@ import com.sunright.inventory.dto.UserProfile;
 import com.sunright.inventory.dto.docmno.DocmNoDTO;
 import com.sunright.inventory.dto.grn.GrnDTO;
 import com.sunright.inventory.dto.grn.GrnDetDTO;
+import com.sunright.inventory.dto.grn.GrnSupplierDTO;
 import com.sunright.inventory.dto.lov.DocmValueDTO;
 import com.sunright.inventory.dto.pur.PurDTO;
 import com.sunright.inventory.dto.pur.PurDetDTO;
@@ -17,12 +18,12 @@ import com.sunright.inventory.entity.docmno.DocmNoProjection;
 import com.sunright.inventory.entity.enums.Status;
 import com.sunright.inventory.entity.grn.Grn;
 import com.sunright.inventory.entity.grn.GrnDet;
+import com.sunright.inventory.entity.grn.GrnSupplierProjection;
 import com.sunright.inventory.entity.msr.MSR;
 import com.sunright.inventory.entity.msr.MSRDetailProjection;
 import com.sunright.inventory.entity.pur.DraftPurProjection;
 import com.sunright.inventory.entity.pur.PurDetProjection;
 import com.sunright.inventory.entity.pur.PurProjection;
-import com.sunright.inventory.entity.supplier.SupplierProjection;
 import com.sunright.inventory.exception.DuplicateException;
 import com.sunright.inventory.exception.NotFoundException;
 import com.sunright.inventory.interceptor.UserProfileContext;
@@ -190,7 +191,7 @@ public class GrnServiceImpl implements GrnService {
 
     private SupplierDTO supplierName(String supplierCode, UserProfile userProfile) {
 
-        SupplierProjection supplierNameInfo = supplierRepository.getSupplierName(userProfile.getCompanyCode(), userProfile.getPlantNo(), supplierCode);
+        GrnSupplierProjection supplierNameInfo = supplierRepository.getSupplierName(userProfile.getCompanyCode(), userProfile.getPlantNo(), supplierCode);
         return SupplierDTO.builder().name(supplierNameInfo.getName()).build();
     }
 
@@ -885,17 +886,20 @@ public class GrnServiceImpl implements GrnService {
     }
 
     @Override
-    public SupplierDTO findSupplierByGrnNo(String grnNo) {
-        SupplierProjection supplier = supplierRepository.getSupplierByGrn(UserProfileContext.getUserProfile().getCompanyCode(),
+    public GrnSupplierDTO findSupplierByGrnNo(String grnNo) {
+        GrnSupplierProjection grnSupplier = grnRepository.getSupplierByGrn(UserProfileContext.getUserProfile().getCompanyCode(),
                 UserProfileContext.getUserProfile().getPlantNo(), grnNo);
 
-        if (supplier == null) {
+        if (grnSupplier == null) {
             throw new NotFoundException(String.format("GrnNo: %s is not found", grnNo));
         }
 
-        return SupplierDTO.builder()
-                .supplierCode(supplier.getSupplierCode())
-                .name(supplier.getName())
+        return GrnSupplierDTO.builder()
+                .grnId(grnSupplier.getGrnId())
+                .grnNo(grnSupplier.getGrnNo())
+                .supplierCode(grnSupplier.getSupplierCode())
+                .name(grnSupplier.getName())
+                .grnDetails(new HashSet(grnDetRepository.findGrnDetByGrnNo(grnSupplier.getGrnNo())))
                 .build();
     }
 }
