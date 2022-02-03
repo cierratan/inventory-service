@@ -8,7 +8,6 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.util.Date;
-import java.util.List;
 import java.util.Set;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -41,7 +40,7 @@ public class GrnDTO extends BaseDTO {
     private String supplierName;
     private String buyer;
     private Date rlseDate;
-    private Set<GrnDetDTO> grnDetails;
+    protected Set<GrnDetDTO> grnDetails;
 
     private String msrNo;
     private String message;

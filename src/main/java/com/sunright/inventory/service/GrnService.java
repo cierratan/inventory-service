@@ -2,6 +2,7 @@ package com.sunright.inventory.service;
 
 import com.sunright.inventory.dto.grn.GrnDTO;
 import com.sunright.inventory.dto.grn.GrnDetDTO;
+import com.sunright.inventory.dto.grn.GrnSupplierDTO;
 import com.sunright.inventory.dto.lov.DocmValueDTO;
 import com.sunright.inventory.dto.search.SearchRequest;
 import com.sunright.inventory.dto.search.SearchResult;
@@ -50,5 +51,5 @@ public interface GrnService {
 
     GrnDTO generateLabelGrn(HttpServletRequest request, HttpServletResponse response, String grnNo);
 
-    SupplierDTO findSupplierByGrnNo(String grnNo);
+    GrnSupplierDTO findSupplierByGrnNo(String grnNo);
 }

@@ -2,10 +2,10 @@ package com.sunright.inventory.controller;
 
 import com.sunright.inventory.dto.grn.GrnDTO;
 import com.sunright.inventory.dto.grn.GrnDetDTO;
+import com.sunright.inventory.dto.grn.GrnSupplierDTO;
 import com.sunright.inventory.dto.lov.DocmValueDTO;
 import com.sunright.inventory.dto.search.SearchRequest;
 import com.sunright.inventory.dto.search.SearchResult;
-import com.sunright.inventory.dto.supplier.SupplierDTO;
 import com.sunright.inventory.service.GrnService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.OutputStream;
 import java.util.List;
 
 @RestController
@@ -97,7 +96,7 @@ public class GrnController {
     }
 
     @GetMapping("suppliers")
-    public ResponseEntity<SupplierDTO> getSupplierByGrnNo(@RequestParam String grnNo) {
+    public ResponseEntity<GrnSupplierDTO> getSupplierByGrnNo(@RequestParam String grnNo) {
         return new ResponseEntity<>(grnService.findSupplierByGrnNo(grnNo), HttpStatus.OK);
     }
 

@@ -1,8 +1,8 @@
 package com.sunright.inventory.repository;
 
+import com.sunright.inventory.entity.grn.GrnSupplierProjection;
 import com.sunright.inventory.entity.supplier.Supplier;
 import com.sunright.inventory.entity.supplier.SupplierId;
-import com.sunright.inventory.entity.supplier.SupplierProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -13,14 +13,5 @@ public interface SupplierRepository extends JpaRepository<Supplier, SupplierId>,
 
     @Query("SELECT s.name as name FROM SUPPLIER s WHERE s.id.companyCode = :companyCode " +
             "AND s.id.plantNo = :plantNo AND s.id.supplierCode = :supplierCode")
-    SupplierProjection getSupplierName(String companyCode, Integer plantNo, String supplierCode);
-
-    @Query("SELECT s.id.supplierCode as supplierCode, s.name as name " +
-            "FROM GRN g " +
-            "    JOIN PUR p on g.companyCode = p.id.companyCode and g.plantNo = p.id.plantNo and g.poNo = p.id.poNo " +
-            "    JOIN SUPPLIER s on p.id.companyCode = s.id.companyCode and p.id.plantNo = s.id.plantNo and p.supplierCode = s.id.supplierCode " +
-            "where g.companyCode = :companyCode " +
-            "and g.plantNo = :plantNo " +
-            "and g.grnNo = :grnNo")
-    SupplierProjection getSupplierByGrn(String companyCode, Integer plantNo, String grnNo);
+    GrnSupplierProjection getSupplierName(String companyCode, Integer plantNo, String supplierCode);
 }
