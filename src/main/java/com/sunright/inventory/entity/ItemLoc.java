@@ -30,4 +30,13 @@ public class ItemLoc extends InvBaseEntity {
 
     private String categoryCode;
     private String categorySubCode;
+
+    @Column(name = "PICKED_QTY", precision = 16, scale = 4)
+    private BigDecimal pickedQty;
+
+    @Column(name = "PRODN_RESV", precision = 16, scale = 4)
+    private BigDecimal prodnResv;
+
+    @Column(name = "MRV_RESV", precision = 16, scale = 4)
+    private BigDecimal mrvResv;
 }

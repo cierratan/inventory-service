@@ -15,6 +15,7 @@ import java.util.Set;
 @Setter
 @Builder
 public class MsrDTO extends InvBaseDTO {
+    @NotBlank
     private String msrNo;
     private Long version;
 

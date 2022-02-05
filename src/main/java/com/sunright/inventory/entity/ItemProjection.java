@@ -1,5 +1,7 @@
 package com.sunright.inventory.entity;
 
+import java.math.BigDecimal;
+
 public interface ItemProjection {
 
     long getCountItemNo();
@@ -10,4 +12,8 @@ public interface ItemProjection {
     String getDescription();
     String getLoc();
     String getUom();
+    BigDecimal getPickedQty();
+    BigDecimal getMrvResv();
+    BigDecimal getProdnResv();
+
 }

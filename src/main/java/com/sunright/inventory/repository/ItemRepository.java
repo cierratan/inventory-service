@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Repository
@@ -22,6 +23,11 @@ public interface ItemRepository extends JpaRepository<Item, Long>, JpaSpecificat
     @Query("UPDATE ITEM i set i.alternate = null " +
             "WHERE i.companyCode = :companyCode AND i.plantNo = :plantNo AND i.itemNo = :qryObsItem ")
     void updateAlternate(String companyCode, Integer plantNo, String qryObsItem);
+
+    @Modifying
+    @Query("UPDATE ITEM i set i.pickedQty = :pickedQty, i.mrvResv = :mrvResv, i.prodnResv = :prodnResv " +
+            "WHERE i.companyCode = :companyCode AND i.plantNo = :plantNo AND i.itemNo = :itemNo ")
+    void updatePickedQtyMrvResvProdnResv(BigDecimal pickedQty, BigDecimal mrvResv, BigDecimal prodnResv, String companyCode, Integer plantNo, String itemNo);
 
     List<Item> findByCompanyCodeAndPlantNoAndItemNo(String companyCode, Integer plantNo, String itemNo);
 
@@ -46,7 +52,8 @@ public interface ItemRepository extends JpaRepository<Item, Long>, JpaSpecificat
     List<ItemProjection> getItemAndPartNoByPartNo(String companyCode, Integer plantNo, String partNo);
 
     @Query("SELECT i.partNo as partNo, i.itemNo as itemNo, substring(i.description, 1, 60) as description, " +
-            "i.loc as loc, i.uom as uom FROM ITEM i WHERE i.companyCode = :companyCode AND i.plantNo = :plantNo AND i.itemNo = :itemNo")
+            "i.loc as loc, i.uom as uom, i.pickedQty as pickedQty, i.mrvResv as mrvResv, i.prodnResv as prodnResv " +
+            "FROM ITEM i WHERE i.companyCode = :companyCode AND i.plantNo = :plantNo AND i.itemNo = :itemNo")
     ItemProjection itemInfo(String companyCode, Integer plantNo, String itemNo);
 
     @Query("SELECT i.source as source FROM ITEM i WHERE i.companyCode = :companyCode AND i.plantNo = :plantNo " +
