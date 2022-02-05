@@ -1,6 +1,7 @@
 package com.sunright.inventory.service.impl;
 
 import com.sunright.inventory.dto.UserProfile;
+import com.sunright.inventory.dto.grn.GrnSupplierDTO;
 import com.sunright.inventory.dto.lov.DocmValueDTO;
 import com.sunright.inventory.dto.msr.MsrDTO;
 import com.sunright.inventory.dto.msr.MsrDetailDTO;
@@ -9,13 +10,13 @@ import com.sunright.inventory.dto.search.SearchRequest;
 import com.sunright.inventory.dto.search.SearchResult;
 import com.sunright.inventory.entity.docmno.DocmNoProjection;
 import com.sunright.inventory.entity.enums.Status;
+import com.sunright.inventory.entity.grn.GrnDet;
+import com.sunright.inventory.entity.grn.GrnSupplierProjection;
 import com.sunright.inventory.entity.msr.MSR;
 import com.sunright.inventory.entity.msr.MSRDetail;
 import com.sunright.inventory.exception.NotFoundException;
 import com.sunright.inventory.interceptor.UserProfileContext;
-import com.sunright.inventory.repository.DocmNoRepository;
-import com.sunright.inventory.repository.MSRRepository;
-import com.sunright.inventory.repository.MsrDetailRepository;
+import com.sunright.inventory.repository.*;
 import com.sunright.inventory.service.MSRService;
 import com.sunright.inventory.util.QueryGenerator;
 import org.springframework.beans.BeanUtils;
@@ -27,6 +28,7 @@ import org.springframework.util.CollectionUtils;
 
 import java.time.ZonedDateTime;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -44,6 +46,9 @@ public class MSRServiceImpl implements MSRService {
 
     @Autowired
     private DocmNoRepository docmNoRepository;
+
+    @Autowired
+    private GrnRepository grnRepository;
 
     @Autowired
     private QueryGenerator queryGenerator;
@@ -154,5 +159,46 @@ public class MSRServiceImpl implements MSRService {
         BeanUtils.copyProperties(msr, msrDTO);
         msrDTO.setMsrDetails(msrDetails);
         return msrDTO;
+    }
+
+    @Override
+    public GrnSupplierDTO findSupplierByGrnNo(String grnNo) {
+        GrnSupplierProjection grnSupplier = grnRepository.getSupplierByGrn(UserProfileContext.getUserProfile().getCompanyCode(),
+                UserProfileContext.getUserProfile().getPlantNo(), grnNo);
+
+        if (grnSupplier == null) {
+            throw new NotFoundException(String.format("GrnNo: %s is not found", grnNo));
+        }
+
+        List<MsrDetailDTO> msrDetails = msrDetailRepository.populateMSRDetailBy(UserProfileContext.getUserProfile().getCompanyCode(),
+                UserProfileContext.getUserProfile().getPlantNo(),
+                grnSupplier.getGrnNo()).stream().map(detail -> {
+                    MsrDetailDTO msrDetail = MsrDetailDTO.builder()
+                            .itemType(detail.getItemType())
+                            .itemNo(detail.getItemNo())
+                            .partNo(detail.getPartNo())
+                            .loc(detail.getLoc())
+                            .uom(detail.getUom())
+                            .batchNo(detail.getBatchNo() != null ? String.valueOf(detail.getBatchNo()) : "")
+                            .projectNo(detail.getProjectNo())
+                            .grnType(detail.getGrnType())
+                            .grnNo(detail.getGrnNo())
+                            .grndetSeqNo(detail.getGrndetSeqNo())
+                            .grndetRecdQty(detail.getGrndetRecdQty())
+                            .retnPrice(detail.getRetnPrice())
+                            .retnQty(detail.getRetnQty())
+                            .build();
+
+                    return msrDetail;
+                }
+        ).collect(Collectors.toList());
+
+        return GrnSupplierDTO.builder()
+                .grnId(grnSupplier.getGrnId())
+                .grnNo(grnSupplier.getGrnNo())
+                .supplierCode(grnSupplier.getSupplierCode())
+                .name(grnSupplier.getName())
+                .msrDetails(new HashSet(msrDetails))
+                .build();
     }
 }

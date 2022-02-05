@@ -1,5 +1,7 @@
 package com.sunright.inventory.entity.msr;
 
+import com.sunright.inventory.entity.enums.ReturnAction;
+import com.sunright.inventory.entity.enums.ReturnType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -45,8 +47,12 @@ public class MSRDetail {
     @Column(name = "RETN_PRICE", precision = 16, scale = 4)
     private BigDecimal retnPrice;
 
-    private String retnType;
-    private String retnAction;
+    @Enumerated(EnumType.STRING)
+    private ReturnType retnType;
+
+    @Enumerated(EnumType.STRING)
+    private ReturnAction retnAction;
+
     private String uom;
 
     @Column(name = "RECD_QTY", precision = 16, scale = 4)

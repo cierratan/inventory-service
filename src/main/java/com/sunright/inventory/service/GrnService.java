@@ -50,6 +50,4 @@ public interface GrnService {
     GrnDTO generatePickListGrn(HttpServletRequest request, HttpServletResponse response, String grnNo, String projectNo, String orderNo);
 
     GrnDTO generateLabelGrn(HttpServletRequest request, HttpServletResponse response, String grnNo);
-
-    GrnSupplierDTO findSupplierByGrnNo(String grnNo);
 }

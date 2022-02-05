@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 
 public interface MSRDetailProjection {
 
-    int getSeqNo();
+    Integer getSeqNo();
     String getPartNo();
     String getItemNo();
     String getRemarks();
@@ -13,10 +13,15 @@ public interface MSRDetailProjection {
     String getUom();
     String getProjectNo();
     String getGrnNo();
+    String getGrnType();
+    Integer getGrndetSeqNo();
     BigDecimal getRetnQty();
     BigDecimal getRecdQty();
+    BigDecimal getRecdPrice();
+    BigDecimal getGrndetRecdQty();
     BigDecimal getRetnPrice();
-    long getCountItemNo();
-    long getCountPartNo();
     String getMslCode();
+    Long getBatchNo();
+    Long getCountItemNo();
+    Long getCountPartNo();
 }

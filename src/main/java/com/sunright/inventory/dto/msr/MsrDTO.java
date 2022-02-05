@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
+import javax.validation.constraints.NotBlank;
 import java.math.BigDecimal;
 import java.util.Set;
 
@@ -18,12 +19,17 @@ public class MsrDTO extends InvBaseDTO {
     private Long version;
 
     private String supplierCode;
+
+    @NotBlank
     private String docmNo;
+
     private String batchId;
+
+    @NotBlank
     private String originator;
     private String mrvNo;
-    private String currencyCode;
 
+    private String currencyCode;
     private BigDecimal currencyRate;
 
     private Set<MsrDetailDTO> msrDetails;

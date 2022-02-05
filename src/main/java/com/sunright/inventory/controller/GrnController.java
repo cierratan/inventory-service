@@ -95,11 +95,6 @@ public class GrnController {
         return new ResponseEntity<>(grnService.getGrnHeader(poNo), HttpStatus.OK);
     }
 
-    @GetMapping("suppliers")
-    public ResponseEntity<GrnSupplierDTO> getSupplierByGrnNo(@RequestParam String grnNo) {
-        return new ResponseEntity<>(grnService.findSupplierByGrnNo(grnNo), HttpStatus.OK);
-    }
-
     @PostMapping
     public ResponseEntity<GrnDTO> create(@RequestBody GrnDTO grn) {
         return new ResponseEntity<>(grnService.createGrn(grn), HttpStatus.CREATED);

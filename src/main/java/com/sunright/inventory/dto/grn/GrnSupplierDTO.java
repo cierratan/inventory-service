@@ -1,6 +1,7 @@
 package com.sunright.inventory.dto.grn;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.sunright.inventory.dto.msr.MsrDetailDTO;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -16,5 +17,5 @@ public class GrnSupplierDTO {
     private String name;
     private String grnNo;
     private Long grnId;
-    protected Set<GrnDetDTO> grnDetails;
+    protected Set<MsrDetailDTO> msrDetails;
 }
