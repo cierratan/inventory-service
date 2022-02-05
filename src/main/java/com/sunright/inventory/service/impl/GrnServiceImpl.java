@@ -4,7 +4,6 @@ import com.sunright.inventory.dto.UserProfile;
 import com.sunright.inventory.dto.docmno.DocmNoDTO;
 import com.sunright.inventory.dto.grn.GrnDTO;
 import com.sunright.inventory.dto.grn.GrnDetDTO;
-import com.sunright.inventory.dto.grn.GrnSupplierDTO;
 import com.sunright.inventory.dto.lov.DocmValueDTO;
 import com.sunright.inventory.dto.pur.PurDTO;
 import com.sunright.inventory.dto.pur.PurDetDTO;
@@ -883,23 +882,5 @@ public class GrnServiceImpl implements GrnService {
         result.setRows(pgGRN.getContent().stream().map(grn -> convertToGrnDTO(grn)).collect(Collectors.toList()));
 
         return result;
-    }
-
-    @Override
-    public GrnSupplierDTO findSupplierByGrnNo(String grnNo) {
-        GrnSupplierProjection grnSupplier = grnRepository.getSupplierByGrn(UserProfileContext.getUserProfile().getCompanyCode(),
-                UserProfileContext.getUserProfile().getPlantNo(), grnNo);
-
-        if (grnSupplier == null) {
-            throw new NotFoundException(String.format("GrnNo: %s is not found", grnNo));
-        }
-
-        return GrnSupplierDTO.builder()
-                .grnId(grnSupplier.getGrnId())
-                .grnNo(grnSupplier.getGrnNo())
-                .supplierCode(grnSupplier.getSupplierCode())
-                .name(grnSupplier.getName())
-                .grnDetails(new HashSet(grnDetRepository.findGrnDetByGrnNo(grnSupplier.getGrnNo())))
-                .build();
     }
 }

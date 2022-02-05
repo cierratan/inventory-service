@@ -1,5 +1,6 @@
 package com.sunright.inventory.controller;
 
+import com.sunright.inventory.dto.grn.GrnSupplierDTO;
 import com.sunright.inventory.dto.lov.DocmValueDTO;
 import com.sunright.inventory.dto.msr.MsrDTO;
 import com.sunright.inventory.dto.search.SearchRequest;
@@ -34,5 +35,10 @@ public class MSRController {
     @GetMapping("msr-no")
     public ResponseEntity<DocmValueDTO> getMsrNo() {
         return new ResponseEntity<>(msrService.getGeneratedNo(), HttpStatus.OK);
+    }
+
+    @GetMapping("suppliers")
+    public ResponseEntity<GrnSupplierDTO> getSupplierByGrnNo(@RequestParam String grnNo) {
+        return new ResponseEntity<>(msrService.findSupplierByGrnNo(grnNo), HttpStatus.OK);
     }
 }

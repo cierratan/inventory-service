@@ -33,8 +33,18 @@ public interface MsrDetailRepository extends JpaRepository<MSRDetail, Long> {
             "AND md.msrNo = :msrNo AND md.partNo LIKE %:partNo% AND COALESCE(md.retnQty,0) > COALESCE(md.recdQty,0)")
     MSRDetailProjection getCountMsrByPartNo(String companyCode, Integer plantNo, String msrNo, String partNo);
 
-    /*@Query(value = "SELECT (retnQty - COALESCE(recdQty, 0)) FROM MSRDET " +
-            "WHERE company_code = :companyCode AND plant_no = :plantNo AND msr_no = :msrNo " +
-            "AND COALESCE(item_no, 'X') = COALESCE(:itemNo, 'X') AND seq_no = :seqNo")
-    List<MSRDetail> getRecdQtyByMsrNo(String companyCode, Integer plantNo, String msrNo, String itemNo, int seqNo);*/
+    @Query("SELECT gd.itemType as itemType, gd.itemNo as itemNo, " +
+            "   gd.partNo as partNo, gd.loc as loc, gd.uom as uom," +
+            "   i.id.batchNo as batchNo, i.qoh as retnQty, gd.projectNo as projectNo," +
+            "   gd.subType as grnType, gd.grnNo as grnNo, gd.seqNo as grndetSeqNo," +
+            "   gd.recdQty as grndetRecdQty, gd.recdPrice as retnPrice " +
+            "FROM GRNDET gd " +
+            "   LEFT JOIN ITEMBATC i on gd.companyCode = i.id.companyCode " +
+            "       AND gd.plantNo = i.id.plantNo" +
+            "       AND gd.seqNo = i.grnSeq " +
+            "       AND gd.grnNo = i.grnNo" +
+            "       AND gd.itemNo = i.id.itemNo " +
+            "WHERE gd.companyCode = :companyCode and gd.plantNo = :plantNo and gd.grnNo = :grnNo " +
+            "ORDER BY gd.seqNo ")
+    List<MSRDetailProjection> populateMSRDetailBy(String companyCode, Integer plantNo, String grnNo);
 }
