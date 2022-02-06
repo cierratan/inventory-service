@@ -8,14 +8,21 @@ import com.sunright.inventory.dto.msr.MsrDetailDTO;
 import com.sunright.inventory.dto.search.Filter;
 import com.sunright.inventory.dto.search.SearchRequest;
 import com.sunright.inventory.dto.search.SearchResult;
+import com.sunright.inventory.entity.InAudit;
+import com.sunright.inventory.entity.ItemLoc;
 import com.sunright.inventory.entity.ItemProjection;
 import com.sunright.inventory.entity.bombypj.BombypjProjection;
 import com.sunright.inventory.entity.docmno.DocmNoProjection;
 import com.sunright.inventory.entity.enums.Status;
 import com.sunright.inventory.entity.grn.GrnSupplierProjection;
+import com.sunright.inventory.entity.itembatc.ItemBatc;
+import com.sunright.inventory.entity.itembatc.ItemBatcId;
+import com.sunright.inventory.entity.itembatclog.ItemBatcLog;
+import com.sunright.inventory.entity.itembatclog.ItemBatcLogId;
 import com.sunright.inventory.entity.msr.MSR;
 import com.sunright.inventory.entity.msr.MSRDetail;
 import com.sunright.inventory.exception.NotFoundException;
+import com.sunright.inventory.exception.ServerException;
 import com.sunright.inventory.interceptor.UserProfileContext;
 import com.sunright.inventory.repository.*;
 import com.sunright.inventory.service.MSRService;
@@ -30,11 +37,10 @@ import org.springframework.util.CollectionUtils;
 
 import javax.transaction.Transactional;
 import java.math.BigDecimal;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.springframework.data.jpa.domain.Specification.where;
@@ -62,6 +68,15 @@ public class MSRServiceImpl implements MSRService {
 
     @Autowired
     private ItemLocRepository itemLocRepository;
+
+    @Autowired
+    private ItemBatcRepository itemBatcRepository;
+
+    @Autowired
+    private ItemBatcLogRepository itemBatcLogRepository;
+
+    @Autowired
+    private InAuditRepository inAuditRepository;
 
     @Autowired
     private QueryGenerator queryGenerator;
@@ -94,61 +109,11 @@ public class MSRServiceImpl implements MSRService {
 
                 msrDetailRepository.save(msrDetail);
 
-                // post saving
-                BombypjProjection bombypj = bombypjRepository.getBombypjInfo(userProfile.getCompanyCode(),
-                        userProfile.getPlantNo(), msrDetail.getProjectNo(), msrDetail.getItemNo());
-
-                // FIXME: need to revisit once MRV is done
-                BigDecimal projReturn = BigDecimal.ZERO;
-                BigDecimal returnQty = msrDetail.getRetnQty();
-                BigDecimal pickedQty = bombypj.getPickedQty() == null ? BigDecimal.ZERO : bombypj.getPickedQty();
-                BigDecimal shortQty = bombypj.getShortQty() == null ? BigDecimal.ZERO : bombypj.getShortQty();
-                BigDecimal itemPickQty = BigDecimal.ZERO;
-                BigDecimal itemMrvResv = BigDecimal.ZERO;
-                BigDecimal itemProdnResv = BigDecimal.ZERO;
-
-                if(StringUtils.isNotBlank(msrDetail.getProjectNo())) {
-                    while(returnQty.compareTo(BigDecimal.ZERO) > 0) {
-                        if(pickedQty.compareTo(BigDecimal.ZERO) > 0) {
-                            if(returnQty.compareTo(pickedQty) > 0) {
-                                projReturn = pickedQty;
-                                returnQty = returnQty.subtract(pickedQty);
-                            } else {
-                                projReturn = returnQty;
-                                returnQty = BigDecimal.ZERO;
-                            }
-
-                            shortQty = shortQty.add(projReturn);
-                            pickedQty = pickedQty.subtract(projReturn);
-                            itemPickQty = itemPickQty.subtract(projReturn);
-
-                            bombypjRepository.updatePickedQtyAndShortQty(pickedQty, shortQty,
-                                    userProfile.getCompanyCode(), userProfile.getPlantNo(),
-                                    bombypj.getComponent(), bombypj.getOrderNo(), bombypj.getAlternate(),
-                                    bombypj.getProjectNo(), bombypj.getAssemblyNo());
-                        }
-                    }
-                }
-
-                ItemProjection item = itemRepository.itemInfo(userProfile.getCompanyCode(), userProfile.getPlantNo(), msrDetail.getItemNo());
-                BigDecimal iPickedQty = (item.getPickedQty() == null ? BigDecimal.ZERO : item.getPickedQty()).add(itemPickQty);
-                BigDecimal iMrvResv = (item.getMrvResv() == null ? BigDecimal.ZERO : item.getMrvResv()).add(itemMrvResv);
-                BigDecimal iProdnResv = (item.getProdnResv() == null ? BigDecimal.ZERO : item.getProdnResv()).add(itemProdnResv);
-
-                itemRepository.updatePickedQtyMrvResvProdnResv(iPickedQty, iMrvResv, iProdnResv,
-                        userProfile.getCompanyCode(), userProfile.getPlantNo(), msrDetail.getItemNo());
-
-                itemLocRepository.updatePickedQtyMrvResvProdnResv(iPickedQty, iMrvResv, iProdnResv,
-                        userProfile.getCompanyCode(), userProfile.getPlantNo(), msrDetail.getItemNo());
+                msrDetailPostSaving(msrDetail);
             }
         }
 
-        // post saving
-        String type = "MSR";
-        String subType = "N";
-
-        DocmNoProjection docmNo = docmNoRepository.getLastGeneratedNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), type, subType);
-        docmNoRepository.updateLastGeneratedNo(docmNo.getDocmNo(), userProfile.getCompanyCode(), userProfile.getPlantNo(), subType, type);
+        msrPostSaving(userProfile);
 
         input.setId(saved.getId());
         input.setVersion(saved.getVersion());
@@ -197,38 +162,6 @@ public class MSRServiceImpl implements MSRService {
                 .build();
     }
 
-    private MSR checkIfRecordExist(Long id) {
-        Optional<MSR> optionalItem = msrRepository.findById(id);
-
-        if (!optionalItem.isPresent()) {
-            throw new NotFoundException("Record is not found");
-        }
-        return optionalItem.get();
-    }
-
-    private MsrDTO convertToMsrDTO(MSR msr) {
-        Set<MsrDetailDTO> msrDetails = new HashSet<>();
-        if(!CollectionUtils.isEmpty(msr.getMsrDetails())) {
-            msrDetails = msr.getMsrDetails().stream().map(detail -> {
-                MsrDetailDTO msrDetail = MsrDetailDTO.builder()
-                        .msrNo(detail.getMsrNo())
-                        .seqNo(detail.getSeqNo())
-                        .build();
-
-                BeanUtils.copyProperties(detail, msrDetail);
-
-                return msrDetail;
-            }).collect(Collectors.toSet());
-        }
-
-        MsrDTO msrDTO = MsrDTO.builder().build();
-
-        BeanUtils.copyProperties(msr.getId(), msrDTO);
-        BeanUtils.copyProperties(msr, msrDTO);
-        msrDTO.setMsrDetails(msrDetails);
-        return msrDTO;
-    }
-
     @Override
     public GrnSupplierDTO findSupplierByGrnNo(String grnNo) {
         GrnSupplierProjection grnSupplier = grnRepository.getSupplierByGrn(UserProfileContext.getUserProfile().getCompanyCode(),
@@ -268,5 +201,217 @@ public class MSRServiceImpl implements MSRService {
                 .name(grnSupplier.getName())
                 .msrDetails(new HashSet(msrDetails))
                 .build();
+    }
+
+    private MSR checkIfRecordExist(Long id) {
+        Optional<MSR> optionalItem = msrRepository.findById(id);
+
+        if (!optionalItem.isPresent()) {
+            throw new NotFoundException("Record is not found");
+        }
+        return optionalItem.get();
+    }
+
+    private MsrDTO convertToMsrDTO(MSR msr) {
+        Set<MsrDetailDTO> msrDetails = new HashSet<>();
+        if(!CollectionUtils.isEmpty(msr.getMsrDetails())) {
+            msrDetails = msr.getMsrDetails().stream().map(detail -> {
+                MsrDetailDTO msrDetail = MsrDetailDTO.builder()
+                        .msrNo(detail.getMsrNo())
+                        .seqNo(detail.getSeqNo())
+                        .build();
+
+                BeanUtils.copyProperties(detail, msrDetail);
+
+                return msrDetail;
+            }).collect(Collectors.toSet());
+        }
+
+        MsrDTO msrDTO = MsrDTO.builder().build();
+
+        BeanUtils.copyProperties(msr.getId(), msrDTO);
+        BeanUtils.copyProperties(msr, msrDTO);
+        msrDTO.setMsrDetails(msrDetails);
+        return msrDTO;
+    }
+
+    private void msrPostSaving(UserProfile userProfile) {
+        String type = "MSR";
+        String subType = "N";
+
+        DocmNoProjection docmNo = docmNoRepository.getLastGeneratedNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), type, subType);
+        docmNoRepository.updateLastGeneratedNo(docmNo.getDocmNo(), userProfile.getCompanyCode(), userProfile.getPlantNo(), subType, type);
+    }
+
+    private void msrDetailPostSaving(MSRDetail msrDetail) {
+        UserProfile userProfile = UserProfileContext.getUserProfile();
+
+        BombypjProjection bombypj = bombypjRepository.getBombypjInfo(userProfile.getCompanyCode(),
+                userProfile.getPlantNo(), msrDetail.getProjectNo(), msrDetail.getItemNo());
+
+        // FIXME: need to revisit once MRV is done
+        BigDecimal projReturn = BigDecimal.ZERO;
+        BigDecimal returnQty = msrDetail.getRetnQty();
+        BigDecimal pickedQty = bombypj.getPickedQty() == null ? BigDecimal.ZERO : bombypj.getPickedQty();
+        BigDecimal shortQty = bombypj.getShortQty() == null ? BigDecimal.ZERO : bombypj.getShortQty();
+        BigDecimal itemPickQty = BigDecimal.ZERO;
+        BigDecimal itemMrvResv = BigDecimal.ZERO;
+        BigDecimal itemProdnResv = BigDecimal.ZERO;
+
+        if(StringUtils.isNotBlank(msrDetail.getProjectNo())) {
+            while(returnQty.compareTo(BigDecimal.ZERO) > 0) {
+                if(pickedQty.compareTo(BigDecimal.ZERO) > 0) {
+                    if(returnQty.compareTo(pickedQty) > 0) {
+                        projReturn = pickedQty;
+                        returnQty = returnQty.subtract(pickedQty);
+                    } else {
+                        projReturn = returnQty;
+                        returnQty = BigDecimal.ZERO;
+                    }
+
+                    shortQty = shortQty.add(projReturn);
+                    pickedQty = pickedQty.subtract(projReturn);
+                    itemPickQty = itemPickQty.subtract(projReturn);
+
+                    bombypjRepository.updatePickedQtyAndShortQty(pickedQty, shortQty,
+                            userProfile.getCompanyCode(), userProfile.getPlantNo(),
+                            bombypj.getComponent(), bombypj.getOrderNo(), bombypj.getAlternate(),
+                            bombypj.getProjectNo(), bombypj.getAssemblyNo());
+                }
+            }
+        }
+
+        ItemProjection item = itemRepository.itemInfo(userProfile.getCompanyCode(), userProfile.getPlantNo(), msrDetail.getItemNo());
+        BigDecimal iPickedQty = (item.getPickedQty() == null ? BigDecimal.ZERO : item.getPickedQty()).add(itemPickQty);
+        BigDecimal iMrvResv = (item.getMrvResv() == null ? BigDecimal.ZERO : item.getMrvResv()).add(itemMrvResv);
+        BigDecimal iProdnResv = (item.getProdnResv() == null ? BigDecimal.ZERO : item.getProdnResv()).add(itemProdnResv);
+
+        itemRepository.updatePickedQtyMrvResvProdnResv(iPickedQty, iMrvResv, iProdnResv,
+                userProfile.getCompanyCode(), userProfile.getPlantNo(), msrDetail.getItemNo());
+
+        itemLocRepository.updatePickedQtyMrvResvProdnResv(iPickedQty, iMrvResv, iProdnResv,
+                userProfile.getCompanyCode(), userProfile.getPlantNo(), msrDetail.getItemNo(), msrDetail.getLoc());
+
+        // update itembatc
+        ItemBatcId itemBatcId = new ItemBatcId();
+        itemBatcId.setCompanyCode(userProfile.getCompanyCode());
+        itemBatcId.setPlantNo(userProfile.getPlantNo());
+        itemBatcId.setItemNo(msrDetail.getItemNo());
+        itemBatcId.setBatchNo(Long.parseLong(msrDetail.getBatchNo()));
+        itemBatcId.setLoc(msrDetail.getLoc());
+
+        Optional<ItemBatc> itemBatcFound = itemBatcRepository.findById(itemBatcId);
+
+        if(itemBatcFound.isEmpty()) {
+            throw new NotFoundException(String.format("Itembatc is not found for %s", itemBatcId));
+        }
+
+        ItemBatc itemBatc = itemBatcFound.get();
+        if(itemBatc.getQoh().compareTo(msrDetail.getRetnQty()) < 0) {
+            throw new ServerException(String.format("ItemNo: %s Issued Qty > Batch Qty", msrDetail.getItemNo()));
+        }
+
+        BigDecimal itembatcBal = itemBatc.getQoh().subtract(msrDetail.getRetnQty());
+
+        if(itembatcBal.compareTo(BigDecimal.ZERO) == 0) {
+            itemBatcRepository.deleteById(itemBatcId);
+        } else {
+            itemBatcRepository.updateQoh(itembatcBal, userProfile.getCompanyCode(), userProfile.getPlantNo(),
+                    Long.parseLong(msrDetail.getBatchNo()), msrDetail.getItemNo(), msrDetail.getLoc());
+        }
+
+        ItemBatcLogId itemBatcLogId = new ItemBatcLogId();
+        itemBatcLogId.setCompanyCode(userProfile.getCompanyCode());
+        itemBatcLogId.setPlantNo(userProfile.getPlantNo());
+        itemBatcLogId.setItemNo(msrDetail.getItemNo());
+        itemBatcLogId.setBatchNo(Long.parseLong(msrDetail.getBatchNo()));
+        itemBatcLogId.setSivNo(msrDetail.getMsrNo());
+        itemBatcLogId.setLoc(msrDetail.getLoc());
+
+        ItemBatcLog itemBatcLog = new ItemBatcLog();
+        itemBatcLog.setId(itemBatcLogId);
+        itemBatcLog.setSivQty(msrDetail.getRetnQty());
+        itemBatcLog.setDateCode(itemBatc.getDateCode());
+        itemBatcLog.setPoNo(itemBatc.getPoNo());
+        itemBatcLog.setPoRecSeq(itemBatc.getPoRecSeq());
+        itemBatcLog.setGrnNo(itemBatc.getGrnNo());
+        itemBatcLog.setGrnSeq(itemBatc.getGrnSeq());
+        itemBatcLog.setGrnQty(itemBatc.getOriQoh());
+        itemBatcLog.setStatus(Status.ACTIVE);
+        itemBatcLog.setCreatedBy(userProfile.getUsername());
+        itemBatcLog.setCreatedAt(ZonedDateTime.now());
+        itemBatcLog.setUpdatedBy(userProfile.getUsername());
+        itemBatcLog.setUpdatedAt(ZonedDateTime.now());
+
+        itemBatcLogRepository.save(itemBatcLog);
+
+        // itemloc
+        List<ItemLoc> itemLocs = itemLocRepository.findByCompanyCodeAndPlantNoAndItemNoAndLoc(userProfile.getCompanyCode(),
+                userProfile.getPlantNo(), msrDetail.getItemNo(), msrDetail.getLoc());
+
+        ZonedDateTime now = ZonedDateTime.now();
+        if(!CollectionUtils.isEmpty(itemLocs)) {
+            ItemLoc itemLoc = itemLocs.get(0);
+
+            BigDecimal qoh = itemLoc.getQoh() == null ? BigDecimal.ZERO : itemLoc.getQoh();
+            BigDecimal ytdProd = itemLoc.getYtdProd() == null ? BigDecimal.ZERO : itemLoc.getYtdProd();
+            BigDecimal ytdIssue = itemLoc.getYtdIssue() == null ? BigDecimal.ZERO : itemLoc.getYtdIssue();
+
+            BigDecimal itemLocBal = qoh.subtract(msrDetail.getRetnQty());
+
+            if(itemLocBal.compareTo(BigDecimal.ZERO) < 0) {
+                throw new ServerException(String.format("ItemNo: %s Return Quantity > Quantity on Hand", msrDetail.getItemNo()));
+            }
+
+            BigDecimal ytdProdBal = ytdProd.add(msrDetail.getRetnQty());
+            BigDecimal ytdIssueBal = ytdIssue.add(msrDetail.getRetnQty());
+            Date lastTranDate = new Date(now.toLocalDate().toEpochDay());
+
+            itemLocRepository.updateQohYtdProdYtdIssueLastTranDate(itemLocBal,
+                    ytdProdBal,
+                    ytdIssueBal,
+                    lastTranDate,
+                    userProfile.getCompanyCode(), userProfile.getPlantNo(), msrDetail.getItemNo(), msrDetail.getLoc());
+
+            itemRepository.updateQohYtdProdYtdIssueLastTranDate(itemLocBal, ytdProdBal,
+                    ytdIssueBal,
+                    lastTranDate,
+                    userProfile.getCompanyCode(), userProfile.getPlantNo(), msrDetail.getItemNo());
+
+            // inaudit
+            InAudit inAudit = new InAudit();
+            inAudit.setCompanyCode(userProfile.getCompanyCode());
+            inAudit.setPlantNo(userProfile.getPlantNo());
+            inAudit.setItemlocId(itemLoc.getId());
+            inAudit.setItemNo(msrDetail.getItemNo());
+            inAudit.setTranDate(new Date(now.toLocalDate().toEpochDay()));
+            inAudit.setTranTime("" + now.getHour() + now.getMinute() + now.getSecond());
+            inAudit.setLoc(msrDetail.getLoc());
+            inAudit.setTranType("IS");
+            inAudit.setDocmNo(msrDetail.getMsrNo());
+            inAudit.setOutQty(msrDetail.getRetnQty());
+            inAudit.setOrderQty(msrDetail.getRetnQty());
+            inAudit.setBalQty(itemLocBal);
+            inAudit.setProjectNo(msrDetail.getProjectNo());
+            inAudit.setCurrencyCode("SGD"); // FIXME: this is set at global level
+            inAudit.setCurrencyRate(new BigDecimal(1));
+            inAudit.setActualCost(itemLoc.getStdMaterial());
+            inAudit.setGrnNo(itemBatc.getGrnNo());
+            inAudit.setPoNo(itemBatc.getPoNo());
+            inAudit.setDoNo("");
+            inAudit.setRemarks(msrDetail.getRemarks());
+            inAudit.setCreatedBy(userProfile.getUsername());
+            inAudit.setCreatedAt(ZonedDateTime.now());
+            inAudit.setUpdatedBy(userProfile.getUsername());
+            inAudit.setUpdatedAt(ZonedDateTime.now());
+            inAudit.setStatus(Status.ACTIVE);
+            inAudit.setCreatedBy(userProfile.getUsername());
+            inAudit.setCreatedAt(ZonedDateTime.now());
+            inAudit.setUpdatedBy(userProfile.getUsername());
+            inAudit.setUpdatedAt(ZonedDateTime.now());
+
+            inAuditRepository.save(inAudit);
+        }
+
     }
 }

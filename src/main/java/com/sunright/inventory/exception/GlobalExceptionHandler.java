@@ -35,6 +35,12 @@ public class GlobalExceptionHandler {
         return ErrorMessage.builder().message(ex.getMessage()).build();
     }
 
+    @ExceptionHandler(ServerException.class)
+    @ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorMessage serverException(ServerException ex) {
+        return ErrorMessage.builder().message(ex.getMessage()).build();
+    }
+
     @ExceptionHandler(DuplicateException.class)
     @ResponseStatus(value = HttpStatus.BAD_REQUEST)
     public ErrorMessage duplicateException(DuplicateException ex) {
