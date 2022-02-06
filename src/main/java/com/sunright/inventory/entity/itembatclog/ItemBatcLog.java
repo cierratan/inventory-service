@@ -2,6 +2,7 @@ package com.sunright.inventory.entity.itembatclog;
 
 import com.sunright.inventory.entity.BaseEntity;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.Column;
@@ -12,6 +13,7 @@ import java.math.BigDecimal;
 @Entity(name = "ITEMBATC_LOG")
 @Data
 @NoArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 public class ItemBatcLog extends BaseEntity {
 
     @EmbeddedId
