@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import javax.persistence.LockModeType;
 import javax.persistence.QueryHint;
 import java.math.BigDecimal;
+import java.util.List;
 
 @Repository
 public interface BombypjRepository extends JpaRepository<Bombypj, BombypjId>, JpaSpecificationExecutor<Bombypj> {
@@ -43,4 +44,9 @@ public interface BombypjRepository extends JpaRepository<Bombypj, BombypjId>, Jp
                                     String component, String orderNo,
                                     String alternate, String projectNo,
                                     String assemblyNo);
+
+    @Query("SELECT DISTINCT b.id.projectNo as projectNo FROM BOMBYPJ b WHERE b.id.companyCode = :companyCode " +
+            "AND b.id.plantNo = :plantNo AND (b.statuz IN ('R','B','E','C') OR b.statuz is null) " +
+            "AND COALESCE(b.pickedQty,0) > 0 ORDER BY b.id.projectNo")
+    List<BombypjProjection> getPrjNoByStatus(String companyCode, Integer plantNo);
 }

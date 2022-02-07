@@ -25,6 +25,7 @@ import com.sunright.inventory.entity.pur.PurDetProjection;
 import com.sunright.inventory.entity.pur.PurProjection;
 import com.sunright.inventory.exception.DuplicateException;
 import com.sunright.inventory.exception.NotFoundException;
+import com.sunright.inventory.exception.ServerException;
 import com.sunright.inventory.interceptor.UserProfileContext;
 import com.sunright.inventory.repository.*;
 import com.sunright.inventory.repository.lov.DefaultCodeDetailRepository;
@@ -50,6 +51,7 @@ import java.io.File;
 import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.sql.Connection;
+import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.ZonedDateTime;
@@ -129,7 +131,7 @@ public class GrnServiceImpl implements GrnService {
         PurDTO purInfoList = getPurInfo(poNo, userProfile);
         grnDTO.setGrnNo(prefixGrnNo.getPrefix());
         if (grnDTO.getGrnNo() == null) {
-            throw new DuplicateException("Grn No Can Not be Blank !");
+            throw new ServerException("Grn No Can Not be Blank !");
         } else {
             grnDTO.setSupplierCode(purInfoList.getSupplierCode());
             grnDTO.setCurrencyCode(purInfoList.getCurrencyCode());
@@ -162,19 +164,19 @@ public class GrnServiceImpl implements GrnService {
         PurProjection statusPoNo = purRepository.checkStatusPoNoPur(userProfile.getCompanyCode(), userProfile.getPlantNo(), poNo);
         DraftPurProjection statusPoNo2 = draftPurRepository.checkStatusPoNoDraftPur(userProfile.getCompanyCode(), userProfile.getPlantNo(), poNo);
         if (statusPoNo2.getOpenClose().equalsIgnoreCase("C")) {
-            throw new DuplicateException("PO already Closed, Purchase Receipt not allowed.");
+            throw new ServerException("PO already Closed, Purchase Receipt not allowed.");
         } else if (!statusPoNo2.getOpenClose().equalsIgnoreCase("A")) {
-            throw new DuplicateException("PO is yet to be Approved, Purchase Receipt not allowed.");
+            throw new ServerException("PO is yet to be Approved, Purchase Receipt not allowed.");
         } else if (statusPoNo2.getOpenClose().equalsIgnoreCase("V")) {
-            throw new DuplicateException("PO already Voided, Purchase Receipt not allowed.");
+            throw new ServerException("PO already Voided, Purchase Receipt not allowed.");
         } else if (statusPoNo2.getPoNo() == null) {
-            throw new DuplicateException("Invalid PO No!");
+            throw new ServerException("Invalid PO No!");
         } else {
             if (statusPoNo2.getPoNo() != null && statusPoNo2.getOpenClose() != null) {
                 if (statusPoNo.getOpenClose().equalsIgnoreCase("C")) {
-                    throw new DuplicateException("PO already Closed, Purchase Receipt not allowed.");
+                    throw new ServerException("PO already Closed, Purchase Receipt not allowed.");
                 } else if (!statusPoNo.getOpenClose().equalsIgnoreCase("A")) {
-                    throw new DuplicateException("PO is yet to be Approved, Purchase Receipt not allowed.");
+                    throw new ServerException("PO is yet to be Approved, Purchase Receipt not allowed.");
                 }
             }
         }
@@ -294,7 +296,7 @@ public class GrnServiceImpl implements GrnService {
         GrnDTO dto = GrnDTO.builder().build();
         Optional<MSR> msrOptional = msrRepository.findMSRByMsrNo(msrNo);
         if (!msrOptional.isPresent()) {
-            throw new DuplicateException("Invalid MSR No");
+            throw new ServerException("Invalid MSR No");
         } else {
             dto.setMsrNo(msrOptional.get().getMsrNo());
         }
@@ -579,7 +581,7 @@ public class GrnServiceImpl implements GrnService {
             return GrnDTO.builder().message("Successfully Generate Report !").build();
         } catch (Exception e) {
             e.printStackTrace();
-            throw new RuntimeException(e.getMessage());
+            throw new ServerException(e.getMessage());
         }
     }
 
@@ -610,7 +612,7 @@ public class GrnServiceImpl implements GrnService {
             return GrnDTO.builder().message("Successfully Generate Pick List !").build();
         } catch (Exception e) {
             e.printStackTrace();
-            throw new RuntimeException(e.getMessage());
+            throw new ServerException(e.getMessage());
         }
     }
 
@@ -636,87 +638,87 @@ public class GrnServiceImpl implements GrnService {
             return GrnDTO.builder().message("Successfully Generate Label !").build();
         } catch (Exception e) {
             e.printStackTrace();
-            throw new RuntimeException(e.getMessage());
+            throw new ServerException(e.getMessage());
         }
     }
 
     private void checkItemTypeNotNull() {
-        throw new DuplicateException("Please enter 0-Stock, 1-Non Stock !");
+        throw new ServerException("Please enter 0-Stock, 1-Non Stock !");
     }
 
     private void checkValidRecdPrice() {
-        throw new DuplicateException("Invalid Recd Price");
+        throw new ServerException("Invalid Recd Price");
     }
 
     private void checkRecdLabelQty(BigDecimal recdQty) {
-        throw new DuplicateException("Received Qty only " + recdQty + " units !");
+        throw new ServerException("Received Qty only " + recdQty + " units !");
     }
 
     private void checkLabelQty() {
-        throw new DuplicateException("Qty/Label MUST be > 0 !");
+        throw new ServerException("Qty/Label MUST be > 0 !");
     }
 
     private void checkRecdRetnQty(BigDecimal retnQty) {
-        throw new DuplicateException("Return Qty only " + retnQty + " units !");
+        throw new ServerException("Return Qty only " + retnQty + " units !");
     }
 
     private void checkRecdQty() {
-        throw new DuplicateException("Received Qty MUST be > 0 !");
+        throw new ServerException("Received Qty MUST be > 0 !");
     }
 
     private void checkValidRecdPriceForConsignedItem() {
-        throw new DuplicateException("Invalid Recd Price for Consigned Item");
+        throw new ServerException("Invalid Recd Price for Consigned Item");
     }
 
     private void checkSourceStockItem() {
-        throw new DuplicateException("Unknown source for Stock Item");
+        throw new ServerException("Unknown source for Stock Item");
     }
 
     private void checkItemNotInPo() {
-        throw new DuplicateException("Item not in PO");
+        throw new ServerException("Item not in PO");
     }
 
     private void checkValidPoNo() {
-        throw new DuplicateException("PO No is Invalid / Not found in Master File !");
+        throw new ServerException("PO No is Invalid / Not found in Master File !");
     }
 
     private void checkItemNoInProject() {
-        throw new DuplicateException("Item not found in project");
+        throw new ServerException("Item not found in project");
     }
 
     private void checkProjectNoIfNull() {
-        throw new DuplicateException("Project No is Invalid / Not found in Master File !");
+        throw new ServerException("Project No is Invalid / Not found in Master File !");
     }
 
     private void checkValidPartNo() {
-        throw new DuplicateException("The Part No is invalid!");
+        throw new ServerException("The Part No is invalid!");
     }
 
     private void checkValidItemNo() {
-        throw new DuplicateException("The Item No is invalid!");
+        throw new ServerException("The Item No is invalid!");
     }
 
     private void checkMsrPartNo() {
-        throw new DuplicateException("The Part No is either invalid or qty fully received!");
+        throw new ServerException("The Part No is either invalid or qty fully received!");
     }
 
     private void checkMsrItemNo() {
-        throw new DuplicateException("The Item No is either invalid or qty fully received!");
+        throw new ServerException("The Item No is either invalid or qty fully received!");
     }
 
     private void checkItemType() {
-        throw new DuplicateException("Item Type Can Not be Blank !");
+        throw new ServerException("Item Type Can Not be Blank !");
     }
 
     private void checkItemNo() {
-        throw new DuplicateException("Item No Can Not be Blank !");
+        throw new ServerException("Item No Can Not be Blank !");
     }
 
     private void checkDataFromItemNo(String poNo, String itemNo, UserProfile userProfile) {
 
         PurDetProjection checkItemNo = purDetRepository.countItemNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), poNo, itemNo);
         if (checkItemNo.getCountItemNo() == 0) {
-            throw new DuplicateException("The Part No is either invalid or qty fully received!");
+            throw new ServerException("The Part No is either invalid or qty fully received!");
         }
     }
 
@@ -726,7 +728,7 @@ public class GrnServiceImpl implements GrnService {
         PurDetProjection duplicatePartNo = purDetRepository.checkDuplicatePartNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), poNo, partNo, poRecSeq);
 
         if (checkPartNo.getCountPartNo() == 0) {
-            throw new DuplicateException("The Part No is either invalid or qty fully received!");
+            throw new ServerException("The Part No is either invalid or qty fully received!");
         }
         PurDetDTO dto = PurDetDTO.builder().build();
         dto.setRecSeq(duplicatePartNo.getRecSeq());
@@ -763,7 +765,7 @@ public class GrnServiceImpl implements GrnService {
     }
 
     @Override
-    public GrnDTO createGrn(GrnDTO input) {
+    public GrnDTO createGrn(GrnDTO input) throws ParseException {
         UserProfile userProfile = UserProfileContext.getUserProfile();
         Grn grn = new Grn();
         BeanUtils.copyProperties(input, grn);
@@ -775,11 +777,7 @@ public class GrnServiceImpl implements GrnService {
         grn.setUpdatedBy(userProfile.getUsername());
         grn.setUpdatedAt(ZonedDateTime.now());
 
-        preSaving(input);
         Grn saved = grnRepository.save(grn);
-        populateAfterSaving(input, saved);
-        postSaving(userProfile, input);
-
         if (!CollectionUtils.isEmpty(input.getGrnDetails())) {
             for (GrnDetDTO detail : input.getGrnDetails()) {
                 GrnDet grnDetail = new GrnDet();
@@ -788,21 +786,45 @@ public class GrnServiceImpl implements GrnService {
                 grnDetail.setPlantNo(userProfile.getPlantNo());
                 grnDetail.setGrn(saved);
 
+                preSavingGrnDetail(input);
                 grnDetRepository.save(grnDetail);
+                grnDetailPostSaving(grnDetail);
             }
         }
+
+        postSaving(userProfile, input);
+        closePO(userProfile, input);
+        populateAfterSaving(input, saved);
 
         return input;
     }
 
-    private void preSaving(GrnDTO input) {
+    private void grnDetailPostSaving(GrnDet grnDetail) {
+
+        UserProfile userProfile = UserProfileContext.getUserProfile();
+    }
+
+    private void closePO(UserProfile userProfile, GrnDTO input) throws ParseException {
+        PurDetProjection purDetProjection = purDetRepository.getSumOrderQtyByPoNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), input.getPoNo());
+        if (purDetProjection.getOrderQty() != null && purDetProjection.getOrderQty().compareTo(BigDecimal.ZERO) == 0) {
+            Calendar calendar = Calendar.getInstance();
+            SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+            String strDate = formatter.format(calendar.getTime());
+            DateFormat df = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+            Date closeDate = df.parse(strDate);
+            draftPurRepository.updatePOClose(userProfile.getCompanyCode(), userProfile.getPlantNo(), input.getPoNo(), closeDate);
+            purRepository.updatePOClose(userProfile.getCompanyCode(), userProfile.getPlantNo(), input.getPoNo(), closeDate);
+        }
+    }
+
+    private void preSavingGrnDetail(GrnDTO input) {
 
         if (input.getSubType().equalsIgnoreCase("N")) {
             for (GrnDetDTO detail : input.getGrnDetails()) {
                 BigDecimal poPrice = detail.getPoPrice();
                 BigDecimal recdPrice = detail.getRecdPrice();
-                if (poPrice.intValue() != recdPrice.intValue()) {
-                    throw new DuplicateException("Unit price is not equal to receiving price !");
+                if (!poPrice.equals(recdPrice)) {
+                    throw new ServerException("Unit price is not equal to receiving price !");
                 }
             }
         }
@@ -814,6 +836,7 @@ public class GrnServiceImpl implements GrnService {
     }
 
     private void populateAfterSaving(GrnDTO input, Grn saved) {
+        input.setId(saved.getId());
         input.setVersion(saved.getVersion());
     }
 

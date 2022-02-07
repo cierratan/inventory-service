@@ -2,7 +2,6 @@ package com.sunright.inventory.controller;
 
 import com.sunright.inventory.dto.grn.GrnDTO;
 import com.sunright.inventory.dto.grn.GrnDetDTO;
-import com.sunright.inventory.dto.grn.GrnSupplierDTO;
 import com.sunright.inventory.dto.lov.DocmValueDTO;
 import com.sunright.inventory.dto.search.SearchRequest;
 import com.sunright.inventory.dto.search.SearchResult;
@@ -14,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.text.ParseException;
 import java.util.List;
 
 @RestController
@@ -96,7 +96,7 @@ public class GrnController {
     }
 
     @PostMapping
-    public ResponseEntity<GrnDTO> create(@RequestBody GrnDTO grn) {
+    public ResponseEntity<GrnDTO> create(@RequestBody GrnDTO grn) throws ParseException {
         return new ResponseEntity<>(grnService.createGrn(grn), HttpStatus.CREATED);
     }
 

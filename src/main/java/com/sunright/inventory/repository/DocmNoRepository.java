@@ -20,7 +20,7 @@ public interface DocmNoRepository extends JpaRepository<DocmNo, DocmNoId>, JpaSp
     DocmNoProjection getLastGeneratedNo(String companyCode, Integer plantNo, String type, String subType);
 
     @Modifying
-    @Query(value = "update DOCM_NO set last_generated_no = :lastGeneratedNo where company_code = :companyCode " +
-            "and plant_no = :plantNo and sub_type = :subType and type = :type")
+    @Query(value = "update DOCM_NO d set d.lastGeneratedNo = :lastGeneratedNo where d.id.companyCode = :companyCode " +
+            "and d.id.plantNo = :plantNo and d.id.subType = :subType and d.id.type = :type")
     void updateLastGeneratedNo(Integer lastGeneratedNo, String companyCode, Integer plantNo, String subType, String type);
 }

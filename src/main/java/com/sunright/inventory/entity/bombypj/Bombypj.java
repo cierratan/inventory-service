@@ -1,28 +1,21 @@
 package com.sunright.inventory.entity.bombypj;
 
-import com.sunright.inventory.entity.BaseEntity;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.Column;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
-import javax.persistence.Version;
 import java.math.BigDecimal;
 import java.util.Date;
 
 @Entity(name = "BOMBYPJ")
 @Data
-@EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
-public class Bombypj extends BaseEntity {
+public class Bombypj {
 
     @EmbeddedId
     private BombypjId id;
-
-    @Version
-    private Long version;
 
     private Integer seqNo;
 
@@ -53,7 +46,7 @@ public class Bombypj extends BaseEntity {
     private Date delvDate;
     private String uom;
 
-    @Column(name = "STATUS_1")
+    @Column(name = "STATUS")
     private String statuz;
 
     @Column(name = "PICKED_QTY", precision = 16, scale = 4)

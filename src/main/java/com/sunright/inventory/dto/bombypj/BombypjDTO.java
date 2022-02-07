@@ -1,7 +1,6 @@
 package com.sunright.inventory.dto.bombypj;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.sunright.inventory.dto.BaseDTO;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -13,15 +12,13 @@ import java.util.Date;
 @Getter
 @Setter
 @Builder
-public class BombypjDTO extends BaseDTO {
+public class BombypjDTO {
 
     private String projectNo;
     private String orderNo;
     private String assemblyNo;
     private String component;
     private String alternate;
-
-    private Long version;
 
     private Integer seqNo;
     private BigDecimal recdQty;

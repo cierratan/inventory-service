@@ -5,9 +5,11 @@ import com.sunright.inventory.entity.pur.PurId;
 import com.sunright.inventory.entity.pur.PurProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.Date;
 import java.util.List;
 
 @Repository
@@ -28,4 +30,9 @@ public interface PurRepository extends JpaRepository<Pur, PurId>, JpaSpecificati
     @Query("SELECT pur.id.poNo as poNo FROM PUR pur WHERE pur.id.companyCode=:companyCode " +
             "AND pur.id.plantNo=:plantNo AND COALESCE(pur.openClose,'X') NOT IN ('V','Y') ORDER BY pur.id.poNo")
     List<PurProjection> getAllPoNo(String companyCode, Integer plantNo);
+
+    @Modifying
+    @Query("UPDATE PUR pur set pur.openClose = 'C', pur.closeDate = :closeDate " +
+            "WHERE pur.id.companyCode = :companyCode AND pur.id.plantNo = :plantNo AND pur.id.poNo = :poNo")
+    void updatePOClose(String companyCode, Integer plantNo, String poNo, Date closeDate);
 }

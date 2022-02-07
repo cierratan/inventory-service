@@ -15,11 +15,12 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.sql.SQLException;
+import java.text.ParseException;
 import java.util.List;
 
 public interface GrnService {
 
-    GrnDTO createGrn(GrnDTO input);
+    GrnDTO createGrn(GrnDTO input) throws ParseException;
 
     GrnDTO findBy(Long id);
 
