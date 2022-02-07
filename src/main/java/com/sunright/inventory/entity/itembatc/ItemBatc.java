@@ -24,4 +24,8 @@ public class ItemBatc {
 
     @Column(name = "ORI_QOH", precision = 16, scale = 4)
     private BigDecimal oriQoh;
+
+    private Integer dateCode;
+    private String poNo;
+    private Integer poRecSeq;
 }

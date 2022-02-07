@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
+import java.util.Date;
 
 @Entity(name = "ITEMLOC")
 @Data
@@ -30,4 +31,24 @@ public class ItemLoc extends InvBaseEntity {
 
     private String categoryCode;
     private String categorySubCode;
+
+    @Column(name = "PICKED_QTY", precision = 16, scale = 4)
+    private BigDecimal pickedQty;
+
+    @Column(name = "PRODN_RESV", precision = 16, scale = 4)
+    private BigDecimal prodnResv;
+
+    @Column(name = "MRV_RESV", precision = 16, scale = 4)
+    private BigDecimal mrvResv;
+
+    @Column(name = "YTD_PROD", precision = 16, scale = 4)
+    private BigDecimal ytdProd;
+
+    @Column(name = "YTD_ISSUE", precision = 16, scale = 4)
+    private BigDecimal ytdIssue;
+
+    @Column(name = "STD_MATERIAL", precision = 16, scale = 4)
+    private BigDecimal stdMaterial;
+
+    private Date lastTranDate;
 }
