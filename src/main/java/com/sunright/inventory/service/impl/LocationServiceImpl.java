@@ -132,7 +132,7 @@ public class LocationServiceImpl implements LocationService {
     private Location checkIfRecordExist(Long id) {
         Optional<Location> optionalLocation = locationRepository.findById(id);
 
-        if (optionalLocation.isEmpty()) {
+        if (!optionalLocation.isPresent()) {
             throw new NotFoundException("Record is not found");
         }
         return optionalLocation.get();

@@ -4,8 +4,8 @@ import java.math.BigDecimal;
 
 public interface ItemProjection {
 
-    long getCountItemNo();
-    long getCountPartNo();
+    Long getCountItemNo();
+    Long getCountPartNo();
     String getItemNo();
     String getPartNo();
     String getSource();
@@ -15,5 +15,5 @@ public interface ItemProjection {
     BigDecimal getPickedQty();
     BigDecimal getMrvResv();
     BigDecimal getProdnResv();
-
+    BigDecimal getStdMaterial();
 }

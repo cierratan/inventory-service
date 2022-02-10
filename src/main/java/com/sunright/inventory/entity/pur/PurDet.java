@@ -82,7 +82,7 @@ public class PurDet implements Serializable {
     @Column(name = "AP_RECD_QTY", precision = 16, scale = 4)
     private BigDecimal apRecdQty;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne
     @JoinColumns({
             @JoinColumn(name = "companyCode", referencedColumnName = "companyCode", insertable = false, updatable = false),
             @JoinColumn(name = "plantNo", referencedColumnName = "plantNo", insertable = false, updatable = false),

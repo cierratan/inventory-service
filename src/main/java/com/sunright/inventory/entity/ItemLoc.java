@@ -38,6 +38,9 @@ public class ItemLoc extends InvBaseEntity {
     @Column(name = "PRODN_RESV", precision = 16, scale = 4)
     private BigDecimal prodnResv;
 
+    @Column(name = "RPC_RESV", precision = 16, scale = 4)
+    private BigDecimal rpcResv;
+
     @Column(name = "MRV_RESV", precision = 16, scale = 4)
     private BigDecimal mrvResv;
 

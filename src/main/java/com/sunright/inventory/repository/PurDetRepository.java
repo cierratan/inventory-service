@@ -48,4 +48,8 @@ public interface PurDetRepository extends JpaRepository<PurDet, PurDetId>, JpaSp
             "AND pd.id.plantNo = p.id.plantNo AND pd.id.poNo = p.id.poNo WHERE (:itemType = 0 AND pd.itemNo = :itemNo OR :itemType = 1 AND pd.partNo = :partNo)  " +
             "AND p.id.companyCode = :companyCode AND p.id.plantNo = :plantNo AND p.id.poNo = :poNo")
     PurDetProjection getPoNoAndRecSeq(String companyCode, Integer plantNo, Integer itemType, String itemNo, String partNo, String poNo);
+
+    @Query("select SUM(p.orderQty - coalesce(p.recdQty,0)) as orderQty " +
+            "from PURDET p where p.id.companyCode = :companyCode and p.id.plantNo = :plantNo and p.id.poNo = :poNo")
+    PurDetProjection getSumOrderQtyByPoNo(String companyCode, Integer plantNo, String poNo);
 }
