@@ -27,6 +27,8 @@ public class InAudit extends InvBaseEntity {
     private String loc;
     private String tranType;
     private String docmNo;
+    private String uom;
+    private Date docmDate;
 
     @Column(name = "OUT_QTY", precision = 16, scale = 4)
     private BigDecimal outQty;
@@ -49,5 +51,22 @@ public class InAudit extends InvBaseEntity {
     private String grnNo;
     private String poNo;
     private String doNo;
+    private int seqNo;
+
+    @Column(name = "IN_QTY", precision = 16, scale = 4)
+    private BigDecimal inQty;
+
+    @Column(name = "NEW_STD_MATERIAL", precision = 16, scale = 4)
+    private BigDecimal newStdMaterial;
+
+    @Column(name = "ORI_STD_MATERIAL", precision = 16, scale = 4)
+    private BigDecimal oriStdMaterial;
+
+    @Column(name = "COST_VARIANCE", precision = 16, scale = 4)
+    private BigDecimal costVariance;
+
+    @Column(name = "GRN_VARIANCE", precision = 16, scale = 4)
+    private BigDecimal grnVariance;
+
     private String remarks;
 }

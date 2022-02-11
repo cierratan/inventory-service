@@ -2,21 +2,21 @@ package com.sunright.inventory.entity.bombypj;
 
 import java.math.BigDecimal;
 
-public interface BombypjProjection {
+public interface BombypjDetailProjection {
+
+    String getTranType();
     String getProjectNo();
     String getAlternate();
     String getOrderNo();
     String getAssemblyNo();
+    String getGrnNo();
     String getComponent();
     BigDecimal getResvQty();
+    BigDecimal getAccumRecdQty();
+    BigDecimal getBalQty();
+    BigDecimal getRecdQty();
     BigDecimal getShortQty();
-    BigDecimal getPickedQty();
-    BigDecimal getDelvQty();
-    String getPartNo();
-    String getSource();
-    String getDescription();
-    String getLoc();
-    String getUom();
-    BigDecimal getStdMaterial();
     BigDecimal getInTransitQty();
+    BigDecimal getDelvQty();
+    BigDecimal getPickedQty();
 }

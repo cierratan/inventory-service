@@ -30,5 +30,61 @@ public interface ItemLocRepository extends JpaRepository<ItemLoc, Long> {
             "from ITEMLOC i where i.companyCode = :companyCode and i.plantNo = :plantNo " +
             "and i.itemNo = :itemNo and i.loc = (select c.stockLoc from COMPANY c " +
             "where c.id.companyCode = :companyCode and c.id.plantNo = :plantNo)")
-    ItemLocProjection getAvailQtyByItemNo(String companyCode, Integer plantNo, String itemNo);
+    ItemLocProjection getItemAvailQohL(String companyCode, Integer plantNo, String itemNo);
+
+    @Query("select sum(coalesce(i.qoh,0)) as availQty from ITEMLOC i where i.companyCode = :companyCode " +
+            "and i.plantNo = :plantNo and i.itemNo = :itemNo and i.loc <> (select c.stockLoc from COMPANY c " +
+            "where c.id.companyCode = :companyCode and c.id.plantNo = :plantNo)")
+    ItemLocProjection getItemAvailQohF(String companyCode, Integer plantNo, String itemNo);
+
+    @Query("select distinct coalesce(l.qoh,0) as qoh, l.stdMaterial as stdMaterial, " +
+            "(coalesce(l.qoh, 0) - (coalesce(l.prodnResv, 0) - " +
+            "coalesce((select sum(d.resvQty - coalesce(d.accumRecdQty,0)) from BOMBYPJ_DET d " +
+            "where d.id.projectNo = d.id.assemblyNo and d.resvQty <> coalesce(d.accumRecdQty,0) " +
+            "and coalesce(d.status,'O') not in ('C') and d.tranType = 'PRJ'), 0)) - coalesce(l.rpcResv, 0) - coalesce(l.mrvResv, 0)) as eoh " +
+            "from ITEMLOC l left join BOMBYPJ_DET b " +
+            "on b.id.companyCode = l.companyCode and b.id.plantNo = l.plantNo and b.id.alternate = l.itemNo " +
+            "where l.companyCode = :companyCode and l.plantNo = :plantNo and l.itemNo = :itemNo and l.loc = :loc")
+    ItemLocProjection getQohCur(String companyCode, Integer plantNo, String itemNo, String loc);
+
+    @Query("select count(l) as recCnt, l.loc as loc from ITEMLOC l where l.loc = :loc " +
+            "and l.companyCode = :companyCode and l.plantNo = :plantNo and l.itemNo = :itemNo group by l.loc")
+    ItemLocProjection getItemLocByItemNo(String companyCode, Integer plantNo, String loc, String itemNo);
+
+    @Query("select l.batchNo as batchNo, sum(coalesce(l.costVariance,0)) as costVariance, " +
+            "sum(coalesce(l.qoh,0)) as qoh, sum(coalesce(l.orderQty,0)) as orderQty, coalesce(l.stdMaterial,0) as stdMaterial " +
+            "from ITEMLOC l where l.companyCode = :companyCode and l.plantNo = :plantNo " +
+            "and l.itemNo = :itemNo group by l.batchNo, l.stdMaterial")
+    ItemLocProjection getItemLocSumByItemNo(String companyCode, Integer plantNo, String itemNo);
+
+    @Modifying
+    @Query("UPDATE ITEMLOC i set i.orderQty = :qoh, i.costVariance = :newCostVar, i.stdMaterial = :newStdMat, " +
+            "i.ytdReceipt = coalesce(i.ytdReceipt,0) + coalesce(:convQty,0), i.batchNo = :newBatchNo, i.lastTranDate = :lastTranDate, " +
+            "i.lastPurPrice = :convCost WHERE i.companyCode = :companyCode " +
+            "AND i.plantNo = :plantNo AND i.itemNo = :itemNo AND i.loc = :loc")
+    void updateQohVarianceStdMatYtdRecBatchNoLTranDateLPurPrice(BigDecimal qoh, BigDecimal newCostVar, BigDecimal newStdMat,
+                                                                BigDecimal convQty, BigDecimal newBatchNo,
+                                                                Date lastTranDate, BigDecimal convCost, String companyCode,
+                                                                Integer plantNo, String itemNo, String loc);
+
+    @Modifying
+    @Query("UPDATE ITEMLOC i set i.stdMaterial = :newStdMat, i.ytdReceipt = coalesce(i.ytdReceipt,0) + coalesce(:convQty,0), " +
+            "i.batchNo = :newBatchNo, i.lastTranDate = :lastTranDate, " +
+            "i.lastPurPrice = :convCost WHERE i.companyCode = :companyCode " +
+            "AND i.plantNo = :plantNo AND i.itemNo = :itemNo AND i.loc <> :loc")
+    void updateStdMatYtdRecBatchNoLTranDateLPurPrice(BigDecimal newStdMat, BigDecimal convQty, BigDecimal newBatchNo,
+                                                     Date lastTranDate, BigDecimal convCost, String companyCode,
+                                                     Integer plantNo, String itemNo, String loc);
+
+    @Modifying
+    @Query("UPDATE ITEMLOC i set i.qoh = coalesce(i.qoh,0) + coalesce(:convQty,0) WHERE i.companyCode = :companyCode " +
+            "AND i.plantNo = :plantNo AND i.itemNo = :itemNo")
+    void updateQoh(BigDecimal convQty, String companyCode, Integer plantNo, String itemNo);
+
+    @Modifying
+    @Query("UPDATE ITEMLOC i set i.pickedQty = (coalesce(i.pickedQty,0) - :itemPickQty), " +
+            "i.prodnResv = (coalesce(i.prodnResv,0) - :itemProdnResv) WHERE i.companyCode = :companyCode " +
+            "AND i.plantNo = :plantNo AND i.itemNo = :itemNo AND i.loc = :loc")
+    void updatePickedQtyProdnResv(BigDecimal itemPickQty, BigDecimal itemProdnResv, String companyCode,
+                                  Integer plantNo, String itemNo, String loc);
 }

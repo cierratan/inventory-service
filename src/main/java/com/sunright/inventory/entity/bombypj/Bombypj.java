@@ -17,6 +17,7 @@ public class Bombypj {
     @EmbeddedId
     private BombypjId id;
 
+    private String tranType;
     private Integer seqNo;
 
     @Column(name = "REQD_QTY", precision = 16, scale = 4)

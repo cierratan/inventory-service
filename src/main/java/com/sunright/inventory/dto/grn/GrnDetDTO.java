@@ -65,4 +65,5 @@ public class GrnDetDTO extends BaseDTO {
     private BigDecimal retnPrice;
 
     private String message;
+    private Integer dateCode;
 }

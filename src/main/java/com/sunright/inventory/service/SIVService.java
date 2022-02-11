@@ -17,7 +17,7 @@ public interface SIVService {
 
     SearchResult<SIVDTO> searchBy(SearchRequest searchRequest);
 
-    DocmValueDTO getGeneratedNo(SIVDTO input);
+    DocmValueDTO getGeneratedNoSIV(SIVDTO input);
 
     List<SIVDTO> getProjectNoByStatus();
 
@@ -25,5 +25,7 @@ public interface SIVService {
 
     List<ItemDTO> getItemNo();
 
-    SIVDetailDTO checkNextItem(SIVDTO input);
+    List<SIVDetailDTO> checkNextItem(SIVDTO input);
+
+    SIVDetailDTO checkValidIssuedQty(SIVDetailDTO input);
 }

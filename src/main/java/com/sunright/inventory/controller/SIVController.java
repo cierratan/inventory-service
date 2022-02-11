@@ -1,8 +1,6 @@
 package com.sunright.inventory.controller;
 
 import com.sunright.inventory.dto.ItemDTO;
-import com.sunright.inventory.dto.grn.GrnDTO;
-import com.sunright.inventory.dto.grn.GrnDetDTO;
 import com.sunright.inventory.dto.lov.DocmValueDTO;
 import com.sunright.inventory.dto.lov.LocationDTO;
 import com.sunright.inventory.dto.search.SearchRequest;
@@ -24,8 +22,13 @@ public class SIVController {
     @Autowired
     private SIVService sivService;
 
+    @PostMapping("check-valid-issued-qty")
+    public ResponseEntity<SIVDetailDTO> checkValid(@RequestBody SIVDetailDTO input) {
+        return new ResponseEntity<>(sivService.checkValidIssuedQty(input), HttpStatus.OK);
+    }
+
     @PostMapping("check-next-item")
-    public ResponseEntity<SIVDetailDTO> nextItem(@RequestBody SIVDTO input) {
+    public ResponseEntity<List<SIVDetailDTO>> nextItem(@RequestBody SIVDTO input) {
         return new ResponseEntity<>(sivService.checkNextItem(input), HttpStatus.OK);
     }
 
@@ -61,6 +64,6 @@ public class SIVController {
 
     @PostMapping("siv-no")
     public ResponseEntity<DocmValueDTO> getSivNo(@RequestBody SIVDTO siv) {
-        return new ResponseEntity<>(sivService.getGeneratedNo(siv), HttpStatus.OK);
+        return new ResponseEntity<>(sivService.getGeneratedNoSIV(siv), HttpStatus.OK);
     }
 }
