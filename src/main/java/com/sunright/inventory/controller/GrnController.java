@@ -24,22 +24,22 @@ public class GrnController {
     private GrnService grnService;
 
     @GetMapping("print-label")
-    public ResponseEntity<GrnDTO> generateLabel(HttpServletRequest request, HttpServletResponse response, @RequestParam String grnNo) {
-        return new ResponseEntity<>(grnService.generateLabelGrn(request, response, grnNo), HttpStatus.OK);
+    public void generateLabel(HttpServletRequest request, HttpServletResponse response, @RequestParam String grnNo) {
+        grnService.generateLabelGrn(request, response, grnNo);
     }
 
     @GetMapping("print-pick-list")
-    public ResponseEntity<GrnDTO> generatePickList(HttpServletRequest request, HttpServletResponse response,
+    public void generatePickList(HttpServletRequest request, HttpServletResponse response,
                                                    @RequestParam String grnNo, @RequestParam String projectNo,
                                                    @RequestParam String orderNo) {
-        return new ResponseEntity<>(grnService.generatePickListGrn(request, response, grnNo, projectNo, orderNo), HttpStatus.OK);
+        grnService.generatePickListGrn(request, response, grnNo, projectNo, orderNo);
     }
 
     @GetMapping("print-report-grn")
-    public ResponseEntity<GrnDTO> generateReport(HttpServletRequest request, HttpServletResponse response,
+    public void generateReport(HttpServletRequest request, HttpServletResponse response,
                                                  @RequestParam String grnNo, @RequestParam String subType,
                                                  @RequestParam String type) {
-        return new ResponseEntity<>(grnService.generateReportGrn(request, response, grnNo, subType, type), HttpStatus.OK);
+        grnService.generateReportGrn(request, response, grnNo, subType, type);
     }
 
     @GetMapping("grn-no-manual")

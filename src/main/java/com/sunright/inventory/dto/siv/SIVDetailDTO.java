@@ -22,7 +22,7 @@ public class SIVDetailDTO extends InvBaseDTO {
     private String loc;
     private Integer itemType;
     private String uom;
-    private Integer batchNo;
+    private Long batchNo;
     private String poNo;
     private String prNo;
     private String grnNo;
@@ -34,4 +34,13 @@ public class SIVDetailDTO extends InvBaseDTO {
     private String docmNo;
     private BigDecimal extraQty;
     private String remarks;
+
+    private String batchLoc;
+    private BigDecimal batchQty;
+    private BigDecimal bomPickQty;
+    private BigDecimal bomShortQtyL;
+    private BigDecimal bomShortQtyF;
+
+    private String batchDesc;
+    private String batchNoLoc;
 }

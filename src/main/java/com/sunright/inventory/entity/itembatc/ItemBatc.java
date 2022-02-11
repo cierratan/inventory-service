@@ -7,6 +7,7 @@ import javax.persistence.Column;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import java.math.BigDecimal;
+import java.util.Date;
 
 @Entity(name = "ITEMBATC")
 @Data
@@ -28,4 +29,8 @@ public class ItemBatc {
     private Integer dateCode;
     private String poNo;
     private Integer poRecSeq;
+    private Date tranDate;
+
+    @Column(name = "STD_MATERIAL", precision = 16, scale = 4)
+    private BigDecimal stdMaterial;
 }

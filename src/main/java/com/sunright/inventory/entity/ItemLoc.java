@@ -53,5 +53,23 @@ public class ItemLoc extends InvBaseEntity {
     @Column(name = "STD_MATERIAL", precision = 16, scale = 4)
     private BigDecimal stdMaterial;
 
+    @Column(name = "BATCH_NO", precision = 8)
+    private BigDecimal batchNo;
+
+    @Column(name = "COST_VARIANCE", precision = 16, scale = 4)
+    private BigDecimal costVariance;
+
+    @Column(name = "ORDER_QTY", precision = 16, scale = 4)
+    private BigDecimal orderQty;
+
+    @Column(name = "BALBF_QTY", precision = 16, scale = 4)
+    private BigDecimal balbfQty;
+
+    @Column(name = "YTD_RECEIPT", precision = 16, scale = 4)
+    private BigDecimal ytdReceipt;
+
+    @Column(name = "LAST_PUR_PRICE", precision = 16, scale = 4)
+    private BigDecimal lastPurPrice;
+
     private Date lastTranDate;
 }

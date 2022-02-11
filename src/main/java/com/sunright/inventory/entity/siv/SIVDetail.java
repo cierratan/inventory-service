@@ -30,7 +30,7 @@ public class SIVDetail {
     private String loc;
     private Integer itemType;
     private String uom;
-    private Integer batchNo;
+    private Long batchNo;
     private String poNo;
     private String prNo;
     private String grnNo;

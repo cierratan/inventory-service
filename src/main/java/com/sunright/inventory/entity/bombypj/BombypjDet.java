@@ -16,6 +16,7 @@ public class BombypjDet {
     @EmbeddedId
     private BombypjId id;
 
+    private String tranType;
     private String poNo;
     private Integer seqNo;
 

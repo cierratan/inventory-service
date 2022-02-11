@@ -46,9 +46,9 @@ public interface GrnService {
 
     DocmValueDTO getGeneratedNoManual();
 
-    GrnDTO generateReportGrn(HttpServletRequest request, HttpServletResponse response, String grnNo, String subType, String type);
+    void generateReportGrn(HttpServletRequest request, HttpServletResponse response, String grnNo, String subType, String type);
 
-    GrnDTO generatePickListGrn(HttpServletRequest request, HttpServletResponse response, String grnNo, String projectNo, String orderNo);
+    void generatePickListGrn(HttpServletRequest request, HttpServletResponse response, String grnNo, String projectNo, String orderNo);
 
-    GrnDTO generateLabelGrn(HttpServletRequest request, HttpServletResponse response, String grnNo);
+    void generateLabelGrn(HttpServletRequest request, HttpServletResponse response, String grnNo);
 }
