@@ -28,7 +28,7 @@ public interface BombypjRepository extends JpaRepository<Bombypj, BombypjId>, Jp
     @QueryHints({@QueryHint(name = "javax.persistence.lock.timeout", value = "3000")})
     @Query("SELECT b.mrvResv as mrvResv, b.id.orderNo as orderNo, " +
             "b.id.assemblyNo as assemblyNo, b.id.component as component, b.id.alternate as alternate, b.id.projectNo as projectNo, " +
-            "b.resvQty as resvQty, b.shortQty as shortQty, b.pickedQty as pickedQty " +
+            "b.resvQty as resvQty, b.shortQty as shortQty, b.pickedQty as pickedQty, b.issuedQty as issuedQty " +
             "FROM BOMBYPJ b " +
             "WHERE b.id.companyCode = :companyCode AND b.id.plantNo = :plantNo" +
             "   AND b.id.projectNo = :projectNo AND b.id.alternate = :alternate ")
@@ -66,12 +66,41 @@ public interface BombypjRepository extends JpaRepository<Bombypj, BombypjId>, Jp
             "coalesce(b.delvQty,0) as delvQty, coalesce(b.pickedQty,0) as pickedQty FROM BOMBYPJ b WHERE b.id.companyCode = :companyCode " +
             "AND b.id.plantNo = :plantNo AND b.tranType = :tranType AND b.id.projectNo = :projectNo AND b.id.orderNo = :orderNo " +
             "AND b.id.assemblyNo = :assemblyNo AND b.id.alternate = :itemNo AND b.resvQty > 0 AND b.inTransitQty > 0")
-    BombypjProjection getBombypjCur(String companyCode, Integer plantNo, String tranType, String projectNo,
-                                    String orderNo, String assemblyNo, String itemNo);
+    List<BombypjProjection> getBombypjCur(String companyCode, Integer plantNo, String tranType, String projectNo,
+                                          String orderNo, String assemblyNo, String itemNo);
 
     @Modifying
     @Query("UPDATE BOMBYPJ b set b.shortQty = :shortQty, b.inTransitQty = :inTransitQty, b.delvQty = :delvQty, " +
-            "b.pickedQty = :pickedQty, b.delvDate = :delvDate WHERE b.id.alternate = :itemNo")
-    boolean updateShortInTransitDelvPickedDelvDateQty(BigDecimal shortQty, BigDecimal inTransitQty, BigDecimal delvQty,
-                                                      BigDecimal pickedQty, Date delvDate, String itemNo);
+            "b.pickedQty = :pickedQty, b.delvDate = :delvDate WHERE b.id.companyCode = :companyCode AND b.id.plantNo = :plantNo " +
+            "AND b.id.projectNo = :projectNo AND b.id.alternate = :itemNo")
+    void updateShortInTransitDelvPickedQtyDelvDate(BigDecimal shortQty, BigDecimal inTransitQty, BigDecimal delvQty,
+                                                   BigDecimal pickedQty, Date delvDate, String companyCode, Integer plantNo,
+                                                   String projectNo, String itemNo);
+
+    @Query("SELECT coalesce(b.resvQty,0) as resvQty, coalesce(b.issuedQty,0) as issuedQty, " +
+            "coalesce(b.pickedQty,0) as pickedQty, coalesce(b.shortQty,0) as shortQty FROM BOMBYPJ b " +
+            "WHERE b.id.companyCode = :companyCode AND b.id.plantNo = :plantNo AND b.id.projectNo = :projectNo " +
+            "AND b.id.alternate = :itemNo AND ((b.pickedQty > 0) OR ((coalesce(:shortQty,0) > 0) AND coalesce(b.shortQty,0) > 0)) " +
+            "AND COALESCE(b.statuz, 'R') NOT IN ('D', 'X') ORDER BY b.id.assemblyNo, b.id.alternate")
+    List<BombypjProjection> getBombypjInfoByStatus(String companyCode, Integer plantNo, String projectNo, String itemNo, BigDecimal shortQty);
+
+    @Modifying
+    @Query("UPDATE BOMBYPJ b set b.resvQty = :resvQty, b.issuedQty = :issuedQty, b.pickedQty = :pickedQty, " +
+            "b.shortQty = :shortQty WHERE b.id.companyCode = :companyCode AND b.id.plantNo = :plantNo " +
+            "AND b.id.projectNo = :projectNo AND b.id.alternate = :itemNo")
+    void updateResvIssuedPickedShortQty(BigDecimal resvQty, BigDecimal issuedQty, BigDecimal pickedQty,
+                                        BigDecimal shortQty, String companyCode, Integer plantNo, String projectNo, String itemNo);
+
+    @Modifying
+    @Query("UPDATE BOMBYPJ b set b.issuedQty = :issuedQty WHERE b.id.companyCode = :companyCode AND b.id.plantNo = :plantNo " +
+            "AND b.id.orderNo = :orderNo AND b.id.projectNo = :projectNo AND b.id.alternate = :itemNo")
+    void updateIssuedQty(BigDecimal issuedQty, String companyCode, Integer plantNo, String orderNo, String projectNo, String itemNo);
+
+    @Query("select i.partNo as partNo, i.loc as loc, i.uom as uom, i.source as source, l.stdMaterial as stdMaterial, " +
+            "sum(coalesce(b.pickedQty, 0)) as pickedQty " +
+            "from BOMBYPJ b join ITEM i on i.companyCode = b.id.companyCode and i.plantNo = b.id.plantNo and i.itemNo = b.id.alternate join ITEMLOC l " +
+            "on l.loc = i.loc and l.companyCode = i.companyCode and l.plantNo = i.plantNo and l.itemNo = i.itemNo " +
+            "where b.id.companyCode = :companyCode and b.id.plantNo = :plantNo and coalesce(b.statuz, 'R') NOT IN ('D', 'X') " +
+            "and b.id.projectNo = :projectNo and b.id.alternate = :itemNo group by i.partNo,i.loc,i.uom,i.source,l.stdMaterial")
+    BombypjProjection bombypjCur(String companyCode, Integer plantNo, String projectNo, String itemNo);
 }

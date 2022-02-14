@@ -57,14 +57,19 @@ public interface PurDetRepository extends JpaRepository<PurDet, PurDetId>, JpaSp
     PurDetProjection getSumOrderQtyByPoNo(String companyCode, Integer plantNo, String poNo);
 
     @Modifying
-    @Query("UPDATE PURDET p set p.resvQty = (p.resvQty - :poResvQty) WHERE p.id.companyCode = :companyCode AND p.id.plantNo = :plantNo " +
+    @Query("UPDATE PURDET p set p.resvQty = :resvQty WHERE p.id.companyCode = :companyCode AND p.id.plantNo = :plantNo " +
             "AND p.id.poNo = :poNo AND p.itemNo = :itemNo AND p.id.recSeq = :seqNo")
-    void updateResvQty(BigDecimal poResvQty, String companyCode, Integer plantNo, String poNo, String itemNo, Integer seqNo);
+    void updateResvQty(BigDecimal resvQty, String companyCode, Integer plantNo, String poNo, String itemNo, Integer seqNo);
 
     @Modifying
-    @Query("UPDATE PURDET d set d.rlseDate = :rlseDate, d.recdDate = :recdDate, d.rlseQty = (coalesce(d.rlseQty,0) + :recdQty1), " +
-            "d.recdQty = (coalesce(d.recdQty,0) + :recdQty2), d.recdPrice = :poPrice WHERE d.id.companyCode = :companyCode " +
+    @Query("UPDATE PURDET d set d.rlseDate = :rlseDate, d.recdDate = :recdDate, d.rlseQty = :rlseQty, " +
+            "d.recdQty = :recdQty, d.recdPrice = :poPrice WHERE d.id.companyCode = :companyCode " +
             "AND d.id.plantNo = :plantNo AND d.id.poNo = :poNo AND d.id.recSeq = :poRecSeq")
-    void updateRlseRecdDateRlseRecdQtyRecdPrice(Date rlseDate, Date recdDate, BigDecimal recdQty1, BigDecimal recdQty2, BigDecimal poPrice,
+    void updateRlseRecdDateRlseRecdQtyRecdPrice(Date rlseDate, Date recdDate, BigDecimal rlseQty, BigDecimal recdQty, BigDecimal poPrice,
                                                 String companyCode, Integer plantNo, String poNo, Integer poRecSeq);
+
+    @Query("select coalesce(p.resvQty,0) as resvQty, coalesce(p.rlseQty,0) as rlseQty, coalesce(p.recdQty,0) as recdQty " +
+            "from PURDET p where p.id.companyCode = :companyCode and p.id.plantNo = :plantNo " +
+            "and p.id.poNo = :poNo and p.id.recSeq = :recSeq")
+    PurDetProjection purDetInfo(String companyCode, Integer plantNo, String poNo, Integer recSeq);
 }

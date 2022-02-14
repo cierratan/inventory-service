@@ -1,4 +1,4 @@
-package com.sunright.inventory.entity.pur;
+package com.sunright.inventory.entity.draftpur;
 
 public interface DraftPurProjection {
     String getPoNo();

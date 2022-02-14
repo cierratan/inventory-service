@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Repository
 public interface BombypjDetailRepository extends JpaRepository<BombypjDet, BombypjId>, JpaSpecificationExecutor<BombypjDet> {
@@ -20,7 +21,7 @@ public interface BombypjDetailRepository extends JpaRepository<BombypjDet, Bomby
             "FROM BOMBYPJ_DET b WHERE b.id.companyCode = :companyCode AND b.id.plantNo = :plantNo AND b.poNo = :poNo " +
             "AND b.id.alternate = :itemNo AND b.seqNo = :seqNo AND coalesce(b.status,'O') not in ('C', 'V') " +
             "AND (b.tranType <> 'APP' or b.tranType = 'APP')")
-    BombypjDetailProjection getBombypjDetCur(String companyCode, Integer plantNo, String poNo, String itemNo, Integer seqNo);
+    List<BombypjDetailProjection> getBombypjDetCur(String companyCode, Integer plantNo, String poNo, String itemNo, Integer seqNo);
 
     @Modifying
     @Query("UPDATE BOMBYPJ_DET b set b.accumRecdQty = :accumRecdQty, b.recdQty = :recdQty, b.status = :status, " +

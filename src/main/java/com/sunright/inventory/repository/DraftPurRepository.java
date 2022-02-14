@@ -2,7 +2,7 @@ package com.sunright.inventory.repository;
 
 import com.sunright.inventory.entity.draftpur.DraftPur;
 import com.sunright.inventory.entity.draftpur.DraftPurId;
-import com.sunright.inventory.entity.pur.DraftPurProjection;
+import com.sunright.inventory.entity.draftpur.DraftPurProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;

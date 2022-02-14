@@ -19,6 +19,8 @@ import com.sunright.inventory.entity.bombypj.BombypjDetailProjection;
 import com.sunright.inventory.entity.bombypj.BombypjProjection;
 import com.sunright.inventory.entity.company.CompanyProjection;
 import com.sunright.inventory.entity.docmno.DocmNoProjection;
+import com.sunright.inventory.entity.draftpur.DraftPurDetProjection;
+import com.sunright.inventory.entity.draftpur.DraftPurProjection;
 import com.sunright.inventory.entity.enums.Status;
 import com.sunright.inventory.entity.grn.Grn;
 import com.sunright.inventory.entity.grn.GrnDet;
@@ -28,7 +30,6 @@ import com.sunright.inventory.entity.itembatc.ItemBatcId;
 import com.sunright.inventory.entity.msr.MSR;
 import com.sunright.inventory.entity.msr.MSRDetailProjection;
 import com.sunright.inventory.entity.nlctl.NLCTLProjection;
-import com.sunright.inventory.entity.pur.DraftPurProjection;
 import com.sunright.inventory.entity.pur.PurDetProjection;
 import com.sunright.inventory.entity.pur.PurProjection;
 import com.sunright.inventory.exception.DuplicateException;
@@ -555,6 +556,45 @@ public class GrnServiceImpl implements GrnService {
                         }
                     }
                 }
+
+                if (StringUtils.isNotBlank(partNo)) {
+                    if (recdQty.compareTo(BigDecimal.ZERO) == 0) {
+                        throw new ServerException("Received Qty cannot be empty or zero!");
+                    } else if (detail.getRecdQty().compareTo(BigDecimal.ZERO) > 0 &&
+                            detail.getRecdQty().compareTo(BigDecimal.ZERO) > detail.getOrderQty().compareTo(BigDecimal.ZERO)) {
+                        throw new ServerException("Received more than Ordered is not allowed");
+                    }
+                    Integer poRecSeq = detail.getPoRecSeq();
+                    BigDecimal recQty = detail.getRecdQty();
+                    boolean isSuccess = true;
+                    if (!poRecSeq.equals(detail.getPoRecSeq())) {
+                        recQty = recQty.add(detail.getRecdQty());
+                        if (recQty.compareTo(BigDecimal.ZERO) > detail.getOrderQty().compareTo(BigDecimal.ZERO)) {
+                            isSuccess = false;
+                        }
+                    }
+
+                    if (!isSuccess) {
+                        throw new ServerException("Receiving more than Ordered is not allowed!");
+                    }
+                }
+
+                if (StringUtils.isNotBlank(partNo)) {
+                    if (detail.getLabelQty().compareTo(BigDecimal.ZERO) == 0) {
+                        throw new ServerException("Qty per label cannot be empty or zero");
+                    } else if (detail.getLabelQty().compareTo(BigDecimal.ZERO) > 0 &&
+                            detail.getLabelQty().compareTo(BigDecimal.ZERO) > detail.getRecdQty().compareTo(BigDecimal.ZERO)) {
+                        throw new ServerException("Qty per label is more than Received Qty !");
+                    }
+                }
+
+                if (detail.getDateCode() != 0) {
+                    int dateCode = detail.getDateCode();
+                    int lengthOfDateCode = String.valueOf(dateCode).length();
+                    if (lengthOfDateCode < 4) {
+                        throw new ServerException("Invalid Date Code! Please provide in YYWW format.");
+                    }
+                }
             }
         }
 
@@ -802,41 +842,60 @@ public class GrnServiceImpl implements GrnService {
         grn.setCreatedAt(ZonedDateTime.now());
         grn.setUpdatedBy(userProfile.getUsername());
         grn.setUpdatedAt(ZonedDateTime.now());
-
+        preSavingGrn(input);
         Grn saved = grnRepository.save(grn);
         if (!CollectionUtils.isEmpty(input.getGrnDetails())) {
             for (GrnDetDTO detail : input.getGrnDetails()) {
                 GrnDet grnDetail = new GrnDet();
+                checkRecdQtyBeforeSaving(detail);
                 BeanUtils.copyProperties(detail, grnDetail);
                 grnDetail.setCompanyCode(userProfile.getCompanyCode());
                 grnDetail.setPlantNo(userProfile.getPlantNo());
                 grnDetail.setGrn(saved);
-
-                preSavingGrnDetail(input);
                 grnDetRepository.save(grnDetail);
-                grnDetailPostSaving(input, detail);
+                grnDetailPostSaving(saved, grnDetail, detail);
             }
         }
 
-        postSaving(userProfile, input);
-        closePO(userProfile, input);
+        grnPostSaving(userProfile, saved);
+        closePO(userProfile, saved);
         populateAfterSaving(input, saved);
 
         return input;
     }
 
-    private void grnDetailPostSaving(GrnDTO input, GrnDetDTO grnDetail) {
+    private void checkRecdQtyBeforeSaving(GrnDetDTO detail) {
+        Integer poRecSeq = 0;
+        boolean isSuccess = true;
+        if (!poRecSeq.equals(detail.getPoRecSeq())) {
+            poRecSeq = detail.getPoRecSeq();
+            BigDecimal recQty = detail.getRecdQty();
+            if (detail.getPoRecSeq().equals(poRecSeq)) {
+                recQty = recQty.add(detail.getRecdQty());
+                if (recQty.compareTo(BigDecimal.ZERO) > detail.getOrderQty().compareTo(BigDecimal.ZERO)) {
+                    isSuccess = false;
+                }
+            }
+        }
+
+        if (!isSuccess) {
+            throw new ServerException("Receiving more than Ordered is not allowed!");
+        }
+    }
+
+    private void grnDetailPostSaving(Grn input, GrnDet grnDetail, GrnDetDTO detail) {
 
         UserProfile userProfile = UserProfileContext.getUserProfile();
         ItemProjection itemCur = itemRepository.getDataItemCur(userProfile.getCompanyCode(), userProfile.getPlantNo(), grnDetail.getItemNo());
         CompanyProjection stkLoc = companyRepository.getStockLoc(userProfile.getCompanyCode(), userProfile.getPlantNo());
         ItemLocProjection itemLc = itemLocRepository.getItemLocByItemNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), grnDetail.getLoc(), grnDetail.getItemNo());
-        ItemLocProjection itemLocSum = itemLocRepository.getItemLocSumByItemNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), grnDetail.getItemNo());
         ItemProjection itemUom = itemRepository.getItemUomByItemNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), grnDetail.getItemNo());
+        ItemLocProjection itemLocInfo = itemLocRepository.itemLocInfo(userProfile.getCompanyCode(),
+                userProfile.getPlantNo(), grnDetail.getItemNo(), grnDetail.getLoc());
 
         if (grnDetail.getItemType() == 0) {
             String iUom = itemUom.getUom();
-            BigDecimal costVar = new BigDecimal(0);
+            BigDecimal costVar = BigDecimal.ZERO;
             BigDecimal convQty = null;
             if (!iUom.equals(grnDetail.getUom())) {
                 throw new ServerException("Resv UOM does not match Inv UOM. Inform MIS.");
@@ -862,7 +921,7 @@ public class GrnServiceImpl implements GrnService {
             BigDecimal finalGrnVar = BigDecimal.valueOf(grnVar);
 
             NLCTLProjection batchYear = nlctlRepository.getBatchYear(userProfile.getCompanyCode(), userProfile.getPlantNo());
-            BigDecimal newBatchNo = new BigDecimal(0);
+            BigDecimal newBatchNo = BigDecimal.ZERO;
             if (itemCur.getBatchNo() == null) {
                 newBatchNo = (batchYear.getBatchNo().multiply(BigDecimal.valueOf(10000))).add(BigDecimal.valueOf(1));
             } else {
@@ -873,7 +932,7 @@ public class GrnServiceImpl implements GrnService {
 
                 if (BigDecimal.valueOf(Double.parseDouble(batchYr)).intValue() < batchYear.getBatchNo().intValue()) {
                     btchYr = batchYear.getBatchNo();
-                    btchNo = new BigDecimal(0);
+                    btchNo = BigDecimal.ZERO;
                 }
 
                 newBatchNo = (btchYr.multiply(BigDecimal.valueOf(10000))).add(btchNo);
@@ -884,7 +943,7 @@ public class GrnServiceImpl implements GrnService {
             }
 
             BigDecimal itemValue = (itemCur.getQoh().multiply(itemCur.getStdMaterial())).add(itemCur.getCostVariance()).add(convQty.multiply(convCost));
-            BigDecimal newStdMat = new BigDecimal(0);
+            BigDecimal newStdMat = BigDecimal.ZERO;
             if (itemCur.getQoh().compareTo(BigDecimal.ZERO) <= 0) {
                 newStdMat = (itemValue.subtract(itemCur.getCostVariance())).divide(convQty.add(itemCur.getQoh()));
             } else {
@@ -898,7 +957,10 @@ public class GrnServiceImpl implements GrnService {
             ZonedDateTime now = ZonedDateTime.now();
             Date lastTranDate = new Date(now.toLocalDate().toEpochDay());
 
-            itemRepository.updateDataItems(newQoh, itemOrderQty, newStdMat, newCostVar, convQty, lastTranDate, convCost, newBatchNo,
+            BigDecimal ytdReceipt = (itemLocInfo.getYtdReceipt() == null ? BigDecimal.ZERO : itemLocInfo.getYtdReceipt()).add(convQty);
+            BigDecimal qoh = (itemLocInfo.getQoh() == null ? BigDecimal.ZERO : itemLocInfo.getQoh()).add(convQty);
+
+            itemRepository.updateDataItems(newQoh, itemOrderQty, newStdMat, newCostVar, ytdReceipt, lastTranDate, convCost, newBatchNo,
                     userProfile.getCompanyCode(), userProfile.getPlantNo(), grnDetail.getItemNo());
 
             ItemLoc itemLoc = new ItemLoc();
@@ -926,25 +988,25 @@ public class GrnServiceImpl implements GrnService {
                     itemLoc.setPartNo(grnDetail.getPartNo());
                     itemLoc.setDescription(grnDetail.getRemarks());
                     itemLoc.setCategoryCode(grnDetail.getItemNo().substring(0, 3));
-                    itemLoc.setQoh(new BigDecimal(0));
+                    itemLoc.setQoh(BigDecimal.ZERO);
                     itemLoc.setBalbfQty(convQty);
                     itemLoc.setYtdReceipt(convQty);
                     itemLoc.setStdMaterial(newStdMat);
-                    itemLoc.setCostVariance(new BigDecimal(0));
+                    itemLoc.setCostVariance(BigDecimal.ZERO);
                     itemLoc.setBatchNo(newBatchNo);
                     itemLoc.setLastTranDate(lastTranDate);
                 }
                 itemLocRepository.save(itemLoc);
             } else if (itemLc.getRecCnt() > 0) {
                 itemLocRepository.updateQohVarianceStdMatYtdRecBatchNoLTranDateLPurPrice(convQty, newCostVar, newStdMat,
-                        convQty, newBatchNo, lastTranDate, convCost, userProfile.getCompanyCode(),
+                        ytdReceipt, newBatchNo, lastTranDate, convCost, userProfile.getCompanyCode(),
                         userProfile.getPlantNo(), grnDetail.getItemNo(), stkLoc.getStockLoc());
 
                 if (StringUtils.isBlank(stkLoc.getStockLoc())) {
                     throw new NotFoundException("Company Stock Loc not found!");
                 }
                 itemLocRepository.updateStdMatYtdRecBatchNoLTranDateLPurPrice(newStdMat,
-                        convQty, newBatchNo, lastTranDate, convCost, userProfile.getCompanyCode(),
+                        ytdReceipt, newBatchNo, lastTranDate, convCost, userProfile.getCompanyCode(),
                         userProfile.getPlantNo(), grnDetail.getItemNo(), stkLoc.getStockLoc());
 
                 if (StringUtils.isBlank(itemLc.getLoc())) {
@@ -959,12 +1021,12 @@ public class GrnServiceImpl implements GrnService {
                     itemLoc.setBalbfQty(convQty);
                     itemLoc.setYtdReceipt(convQty);
                     itemLoc.setStdMaterial(newStdMat);
-                    itemLoc.setCostVariance(new BigDecimal(0));
+                    itemLoc.setCostVariance(BigDecimal.ZERO);
                     itemLoc.setBatchNo(newBatchNo);
                     itemLoc.setLastTranDate(lastTranDate);
                     itemLocRepository.save(itemLoc);
                 } else {
-                    itemLocRepository.updateQoh(convQty, userProfile.getCompanyCode(), userProfile.getPlantNo(), grnDetail.getItemNo());
+                    itemLocRepository.updateQoh(qoh, userProfile.getCompanyCode(), userProfile.getPlantNo(), grnDetail.getItemNo());
                 }
             }
 
@@ -983,7 +1045,7 @@ public class GrnServiceImpl implements GrnService {
             itemBatc.setPoRecSeq(grnDetail.getPoRecSeq());
             itemBatc.setGrnNo(input.getGrnNo());
             itemBatc.setGrnSeq(grnDetail.getSeqNo());
-            itemBatc.setDateCode(grnDetail.getDateCode());
+            itemBatc.setDateCode(detail.getDateCode());
             itemBatc.setId(itemBatcId);
             itemBatcRepository.save(itemBatc);
 
@@ -1025,123 +1087,173 @@ public class GrnServiceImpl implements GrnService {
             Date rlseDate = new Date(now.toLocalDate().toEpochDay());
             Date recdDate = new Date(now.toLocalDate().toEpochDay());
             /**PURDET UPDATE*/
-            draftPurDetRepository.updateRlseRecdDateRlseRecdQtyRecdPrice(rlseDate, recdDate, grnDetail.getRecdQty(), grnDetail.getRecdQty(),
+            PurDetProjection purDetInfo = purDetRepository.purDetInfo(userProfile.getCompanyCode(), userProfile.getPlantNo(), input.getPoNo(), grnDetail.getSeqNo());
+            BigDecimal rlseQty = (purDetInfo.getRlseQty() == null ? BigDecimal.ZERO : purDetInfo.getRlseQty()).add(grnDetail.getRecdQty());
+            BigDecimal recdQty = (purDetInfo.getRecdQty() == null ? BigDecimal.ZERO : purDetInfo.getRecdQty()).add(grnDetail.getRecdQty());
+
+            DraftPurDetProjection dPurDetInfo = draftPurDetRepository.draftPurDetInfo(userProfile.getCompanyCode(),
+                    userProfile.getPlantNo(), grnDetail.getPoNo(), grnDetail.getSeqNo());
+
+            BigDecimal rlseQtyDP = (dPurDetInfo.getRlseQty() == null ? BigDecimal.ZERO : dPurDetInfo.getRlseQty()).add(grnDetail.getRecdQty());
+            BigDecimal recdQtyDP = (dPurDetInfo.getRecdQty() == null ? BigDecimal.ZERO : dPurDetInfo.getRecdQty()).add(grnDetail.getRecdQty());
+
+            draftPurDetRepository.updateRlseRecdDateRlseRecdQtyRecdPrice(rlseDate, recdDate, rlseQtyDP, recdQtyDP,
                     grnDetail.getPoPrice(), userProfile.getCompanyCode(), userProfile.getPlantNo(),
                     grnDetail.getPoNo(), grnDetail.getSeqNo());
-            purDetRepository.updateRlseRecdDateRlseRecdQtyRecdPrice(rlseDate, recdDate, grnDetail.getRecdQty(), grnDetail.getRecdQty(),
+            purDetRepository.updateRlseRecdDateRlseRecdQtyRecdPrice(rlseDate, recdDate, rlseQty, recdQty,
                     grnDetail.getPoPrice(), userProfile.getCompanyCode(), userProfile.getPlantNo(),
                     grnDetail.getPoNo(), grnDetail.getPoRecSeq());
         }
     }
 
-    private void procBomUpdate(UserProfile userProfile, GrnDetDTO grnDetail, String stockLoc, BigDecimal convQty) {
-        BombypjDetailProjection bombypjDetCur = bombypjDetailRepository.getBombypjDetCur(userProfile.getCompanyCode(),
+    private void procBomUpdate(UserProfile userProfile, GrnDet grnDetail, String stockLoc, BigDecimal convQty) {
+        List<BombypjDetailProjection> bombypjDetCurs = bombypjDetailRepository.getBombypjDetCur(userProfile.getCompanyCode(),
                 userProfile.getPlantNo(), grnDetail.getPoNo(), grnDetail.getItemNo(), grnDetail.getPoRecSeq());
-        BombypjProjection bombypjCur = bombypjRepository.getBombypjCur(userProfile.getCompanyCode(), userProfile.getPlantNo(),
-                bombypjDetCur.getTranType(), bombypjDetCur.getProjectNo(), bombypjDetCur.getOrderNo(),
-                bombypjDetCur.getAssemblyNo(), grnDetail.getItemNo());
+        ItemLocProjection itemLocInfo = itemLocRepository.itemLocInfo(userProfile.getCompanyCode(),
+                userProfile.getPlantNo(), grnDetail.getItemNo(), grnDetail.getLoc());
+        PurDetProjection purDetInfo = purDetRepository.purDetInfo(userProfile.getCompanyCode(), userProfile.getPlantNo(),
+                grnDetail.getPoNo(), grnDetail.getSeqNo());
+        ItemProjection itemInfo = itemRepository.itemInfo(userProfile.getCompanyCode(), userProfile.getPlantNo(), grnDetail.getItemNo());
 
-        BigDecimal orgDetRecdQty = bombypjDetCur.getRecdQty();
+        boolean isSuccess = false;
         BigDecimal recdQty = convQty;
-        BigDecimal itemPickQty = new BigDecimal(0);
-        BigDecimal itemProdnResv = new BigDecimal(0);
-        BigDecimal poResvQty = new BigDecimal(0);
-        BigDecimal inTransitQty = new BigDecimal(0);
-        BigDecimal delvQty = new BigDecimal(0);
-        BigDecimal pickedQty = new BigDecimal(0);
-        BigDecimal shortQty = new BigDecimal(0);
-        BigDecimal accumRecdQty = new BigDecimal(0);
-        BigDecimal detRecdQty = new BigDecimal(0);
-        BigDecimal detBalQty = new BigDecimal(0);
+        BigDecimal itemPickQty = BigDecimal.ZERO;
+        BigDecimal itemProdnResv = BigDecimal.ZERO;
+        BigDecimal poResvQty = BigDecimal.ZERO;
 
-        if (bombypjDetCur.getBalQty().compareTo(BigDecimal.ZERO) < bombypjDetCur.getRecdQty().compareTo(BigDecimal.ZERO)) {
-            inTransitQty = bombypjCur.getInTransitQty().subtract(bombypjDetCur.getBalQty());
-            delvQty = bombypjCur.getDelvQty().add(bombypjDetCur.getBalQty());
-            if (stockLoc.equals(grnDetail.getLoc())) {
-                pickedQty = bombypjCur.getPickedQty().add(bombypjDetCur.getBalQty());
-                itemPickQty = itemPickQty.add(bombypjDetCur.getBalQty());
-            } else {
-                shortQty = bombypjCur.getShortQty().add(bombypjDetCur.getBalQty());
-            }
+        for (BombypjDetailProjection bombypjDetCur : bombypjDetCurs) {
+            List<BombypjProjection> bombypjCurs = bombypjRepository.getBombypjCur(userProfile.getCompanyCode(), userProfile.getPlantNo(),
+                    bombypjDetCur.getTranType(), bombypjDetCur.getProjectNo(), bombypjDetCur.getOrderNo(),
+                    bombypjDetCur.getAssemblyNo(), grnDetail.getItemNo());
 
-            recdQty = recdQty.subtract(bombypjDetCur.getBalQty());
-            accumRecdQty = bombypjDetCur.getAccumRecdQty().add(bombypjDetCur.getBalQty());
-            detRecdQty = bombypjDetCur.getBalQty();
-            poResvQty = poResvQty.add(bombypjDetCur.getBalQty());
-            detBalQty = new BigDecimal(0);
-        } else {
-            inTransitQty = bombypjCur.getInTransitQty().subtract(bombypjDetCur.getRecdQty());
-            delvQty = bombypjCur.getDelvQty().add(bombypjDetCur.getRecdQty());
-            if (stockLoc.equals(grnDetail.getLoc())) {
-                pickedQty = bombypjCur.getPickedQty().add(bombypjDetCur.getRecdQty());
-                itemPickQty = itemPickQty.add(bombypjDetCur.getRecdQty());
-            } else {
-                shortQty = bombypjCur.getShortQty().add(bombypjDetCur.getRecdQty());
-            }
+            BigDecimal orgDetRecdQty = bombypjDetCur.getRecdQty();
+            BigDecimal accumRecdQty = bombypjDetCur.getAccumRecdQty();
+            BigDecimal detRecdQty = bombypjDetCur.getRecdQty();
+            BigDecimal detBalQty = bombypjDetCur.getBalQty();
 
-            detBalQty = bombypjDetCur.getBalQty().subtract(bombypjDetCur.getRecdQty());
-            accumRecdQty = accumRecdQty.add(recdQty);
-            detRecdQty = recdQty;
-            poResvQty = poResvQty.add(recdQty);
-            recdQty = new BigDecimal(0);
-        }
+            /***************************************** For Print Picked List *****************************************/
+            String projectNoPickList = bombypjDetCur.getProjectNo();
+            String orderNoPickList = bombypjDetCur.getOrderNo();
 
-        if (inTransitQty.compareTo(BigDecimal.ZERO) < 0) {
-            inTransitQty = new BigDecimal(0);
-        }
+            /***************************************** UPDATE BOMBYPJ *****************************************/
 
-        ZonedDateTime now = ZonedDateTime.now();
-        Date delvDate = new Date(now.toLocalDate().toEpochDay());
+            for (BombypjProjection bombypjCur : bombypjCurs) {
+                BigDecimal inTransitQty = bombypjCur.getInTransitQty();
+                BigDecimal delvQty = bombypjCur.getDelvQty();
+                BigDecimal pickedQty = bombypjCur.getPickedQty();
+                BigDecimal shortQty = bombypjCur.getShortQty();
 
-        /** update/delete the BOMBYPJ_DET Table**/
-        boolean successUpdateBomb = bombypjRepository.updateShortInTransitDelvPickedDelvDateQty(shortQty, inTransitQty, delvQty, pickedQty, delvDate, grnDetail.getItemNo());
-        if (!successUpdateBomb) {
-            if (bombypjDetCur.getProjectNo().equals(bombypjDetCur.getAssemblyNo())) {
-                if (detBalQty.compareTo(BigDecimal.ZERO) < recdQty.compareTo(BigDecimal.ZERO)) {
-                    accumRecdQty = accumRecdQty.add(detBalQty);
-                    poResvQty = poResvQty.add(detBalQty);
-                    detRecdQty = detBalQty;
-                    itemProdnResv = detBalQty;
-                    recdQty = recdQty.subtract(detBalQty);
-                    detBalQty = new BigDecimal(0);
+                if (bombypjDetCur.getBalQty().compareTo(BigDecimal.ZERO) < bombypjDetCur.getRecdQty().compareTo(BigDecimal.ZERO)) {
+                    inTransitQty = bombypjCur.getInTransitQty().subtract(bombypjDetCur.getBalQty());
+                    delvQty = bombypjCur.getDelvQty().add(bombypjDetCur.getBalQty());
+                    if (stockLoc.equals(grnDetail.getLoc())) {
+                        pickedQty = bombypjCur.getPickedQty().add(bombypjDetCur.getBalQty());
+                        itemPickQty = itemPickQty.add(bombypjDetCur.getBalQty());
+                    } else {
+                        shortQty = bombypjCur.getShortQty().add(bombypjDetCur.getBalQty());
+                    }
+
+                    recdQty = recdQty.subtract(bombypjDetCur.getBalQty());
+                    accumRecdQty = bombypjDetCur.getAccumRecdQty().add(bombypjDetCur.getBalQty());
+                    detRecdQty = bombypjDetCur.getBalQty();
+                    poResvQty = poResvQty.add(bombypjDetCur.getBalQty());
+                    detBalQty = BigDecimal.ZERO;
                 } else {
-                    detBalQty = detBalQty.subtract(recdQty);
+                    inTransitQty = bombypjCur.getInTransitQty().subtract(bombypjDetCur.getRecdQty());
+                    delvQty = bombypjCur.getDelvQty().add(bombypjDetCur.getRecdQty());
+                    if (stockLoc.equals(grnDetail.getLoc())) {
+                        pickedQty = bombypjCur.getPickedQty().add(bombypjDetCur.getRecdQty());
+                        itemPickQty = itemPickQty.add(bombypjDetCur.getRecdQty());
+                    } else {
+                        shortQty = bombypjCur.getShortQty().add(bombypjDetCur.getRecdQty());
+                    }
+
+                    detBalQty = bombypjDetCur.getBalQty().subtract(bombypjDetCur.getRecdQty());
                     accumRecdQty = accumRecdQty.add(recdQty);
                     detRecdQty = recdQty;
-                    itemProdnResv = recdQty;
                     poResvQty = poResvQty.add(recdQty);
-                    recdQty = new BigDecimal(0);
+                    recdQty = BigDecimal.ZERO;
                 }
-                throw new ServerException("" + bombypjDetCur.getProjectNo() + " has not being reserved! Qty "
-                        + itemProdnResv + " of " + grnDetail.getItemNo() + " will be open for reservation.");
-            } else {
-                throw new ServerException("No record found for " + grnDetail.getItemNo() + " of " + bombypjDetCur.getProjectNo() +
-                        " Qty " + itemProdnResv + " of " + grnDetail.getItemNo() + " will be open for reservation.");
+
+                if (inTransitQty.compareTo(BigDecimal.ZERO) < 0) {
+                    inTransitQty = BigDecimal.ZERO;
+                }
+
+                ZonedDateTime now = ZonedDateTime.now();
+                Date delvDate = new Date(now.toLocalDate().toEpochDay());
+
+                bombypjRepository.updateShortInTransitDelvPickedQtyDelvDate(shortQty, inTransitQty,
+                        delvQty, pickedQty, delvDate, userProfile.getCompanyCode(), userProfile.getPlantNo(),
+                        grnDetail.getProjectNo(), grnDetail.getItemNo());
+
+                isSuccess = true;
             }
+
+            /*********************************** update/delete the BOMBYPJ_DET ***********************************/
+
+            if (!isSuccess) {
+                if (bombypjDetCur.getProjectNo().equals(bombypjDetCur.getAssemblyNo())) {
+                    if (detBalQty.compareTo(BigDecimal.ZERO) < recdQty.compareTo(BigDecimal.ZERO)) {
+                        accumRecdQty = accumRecdQty.add(detBalQty);
+                        poResvQty = poResvQty.add(detBalQty);
+                        detRecdQty = detBalQty;
+                        itemProdnResv = detBalQty;
+                        recdQty = recdQty.subtract(detBalQty);
+                        detBalQty = BigDecimal.ZERO;
+                    } else {
+                        detBalQty = detBalQty.subtract(recdQty);
+                        accumRecdQty = accumRecdQty.add(recdQty);
+                        detRecdQty = recdQty;
+                        itemProdnResv = recdQty;
+                        poResvQty = poResvQty.add(recdQty);
+                        recdQty = BigDecimal.ZERO;
+                    }
+                    throw new ServerException("" + bombypjDetCur.getProjectNo() + " has not being reserved! Qty "
+                            + itemProdnResv + " of " + grnDetail.getItemNo() + " will be open for reservation.");
+                } else {
+                    throw new ServerException("No record found for " + grnDetail.getItemNo() + " of " + bombypjDetCur.getProjectNo() +
+                            " Qty " + itemProdnResv + " of " + grnDetail.getItemNo() + " will be open for reservation.");
+                }
+            }
+
+            String status = null;
+            if (bombypjDetCur.getResvQty().compareTo(BigDecimal.ZERO) == accumRecdQty.compareTo(BigDecimal.ZERO)) {
+                status = "C";
+            }
+
+            /**accumulate BOMBYPJ_DET recdQty when under same GRN No**/
+            if (bombypjDetCur.getGrnNo().equals(grnDetail.getGrnNo())) {
+                detRecdQty = detRecdQty.add(orgDetRecdQty);
+            }
+
+            bombypjDetailRepository.updateAccRecdStatusGrnNo(accumRecdQty, recdQty, status, grnDetail.getGrnNo(), grnDetail.getItemNo());
         }
 
-        String status = null;
-        if (bombypjDetCur.getResvQty().compareTo(BigDecimal.ZERO) == accumRecdQty.compareTo(BigDecimal.ZERO)) {
-            status = "C";
-        }
+        BigDecimal pickedQtyUpdate = (itemLocInfo.getPickedQty() == null ? BigDecimal.ZERO : itemLocInfo.getPickedQty()).subtract(itemPickQty);
+        BigDecimal prodnResvUpdate = (itemLocInfo.getProdnResv() == null ? BigDecimal.ZERO : itemLocInfo.getProdnResv()).subtract(itemProdnResv);
+        BigDecimal resvQty = (purDetInfo.getResvQty() == null ? BigDecimal.ZERO : purDetInfo.getResvQty()).subtract(poResvQty);
 
-        /**accumulate BOMBYPJ_DET recdQty when under same GRN No**/
-        if (bombypjDetCur.getGrnNo().equals(grnDetail.getGrnNo())) {
-            detRecdQty = detRecdQty.add(orgDetRecdQty);
-        }
+        DraftPurDetProjection dPurDetInfo = draftPurDetRepository.draftPurDetInfo(userProfile.getCompanyCode(),
+                userProfile.getPlantNo(), grnDetail.getPoNo(), grnDetail.getSeqNo());
 
-        bombypjDetailRepository.updateAccRecdStatusGrnNo(accumRecdQty, recdQty, status, grnDetail.getGrnNo(), grnDetail.getItemNo());
+        BigDecimal resvQtyDP = (dPurDetInfo.getResvQty() == null ? BigDecimal.ZERO : dPurDetInfo.getResvQty()).subtract(poResvQty);
+        BigDecimal pickedQtyItem = (itemInfo.getPickedQty() == null ? BigDecimal.ZERO : itemInfo.getPickedQty()).add(itemPickQty);
+        BigDecimal prodnResvItem = (itemInfo.getProdnResv() == null ? BigDecimal.ZERO : itemInfo.getProdnResv()).subtract(itemProdnResv);
 
         /**update PO ResvQty**/
-        purDetRepository.updateResvQty(poResvQty, userProfile.getCompanyCode(), userProfile.getPlantNo(), grnDetail.getPoNo(), grnDetail.getItemNo(), grnDetail.getSeqNo());
-        draftPurDetRepository.updateResvQty(poResvQty, userProfile.getCompanyCode(), userProfile.getPlantNo(), grnDetail.getPoNo(), grnDetail.getItemNo(), grnDetail.getSeqNo());
+        purDetRepository.updateResvQty(resvQty, userProfile.getCompanyCode(), userProfile.getPlantNo(),
+                grnDetail.getPoNo(), grnDetail.getItemNo(), grnDetail.getSeqNo());
+        draftPurDetRepository.updateResvQty(resvQtyDP, userProfile.getCompanyCode(), userProfile.getPlantNo(),
+                grnDetail.getPoNo(), grnDetail.getItemNo(), grnDetail.getSeqNo());
 
         /**update ITEM & ITEMLOC PICKEDQTY**/
-        itemRepository.updatePickedQtyProdnResv(itemPickQty, itemProdnResv, userProfile.getCompanyCode(), userProfile.getPlantNo(), grnDetail.getItemNo());
-        itemLocRepository.updatePickedQtyProdnResv(itemPickQty, itemProdnResv, userProfile.getCompanyCode(), userProfile.getPlantNo(), grnDetail.getItemNo(), grnDetail.getLoc());
+        itemRepository.updatePickedQtyProdnResv(pickedQtyItem, prodnResvItem, userProfile.getCompanyCode(),
+                userProfile.getPlantNo(), grnDetail.getItemNo());
+        itemLocRepository.updatePickedQtyProdnResv(pickedQtyUpdate, prodnResvUpdate, userProfile.getCompanyCode(),
+                userProfile.getPlantNo(), grnDetail.getItemNo(), grnDetail.getLoc());
     }
 
-    private void closePO(UserProfile userProfile, GrnDTO input) throws ParseException {
+    private void closePO(UserProfile userProfile, Grn input) throws ParseException {
         PurDetProjection purDetProjection = purDetRepository.getSumOrderQtyByPoNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), input.getPoNo());
         if (purDetProjection.getOrderQty() != null && purDetProjection.getOrderQty().compareTo(BigDecimal.ZERO) == 0) {
             Calendar calendar = Calendar.getInstance();
@@ -1154,7 +1266,7 @@ public class GrnServiceImpl implements GrnService {
         }
     }
 
-    private void preSavingGrnDetail(GrnDTO input) {
+    private void preSavingGrn(GrnDTO input) {
 
         if (input.getSubType().equalsIgnoreCase("N")) {
             for (GrnDetDTO detail : input.getGrnDetails()) {
@@ -1177,7 +1289,7 @@ public class GrnServiceImpl implements GrnService {
         input.setVersion(saved.getVersion());
     }
 
-    private void postSaving(UserProfile userProfile, GrnDTO input) {
+    private void grnPostSaving(UserProfile userProfile, Grn input) {
 
         String type = "GRN";
         DocmNoProjection docmNo = docmNoRepository.getLastGeneratedNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), type, input.getSubType());

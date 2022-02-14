@@ -1,6 +1,7 @@
 package com.sunright.inventory.controller;
 
 import com.sunright.inventory.dto.ItemDTO;
+import com.sunright.inventory.dto.grn.GrnDTO;
 import com.sunright.inventory.dto.lov.DocmValueDTO;
 import com.sunright.inventory.dto.lov.LocationDTO;
 import com.sunright.inventory.dto.search.SearchRequest;
@@ -13,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.text.ParseException;
 import java.util.List;
 
 @RestController
@@ -21,6 +23,11 @@ public class SIVController {
 
     @Autowired
     private SIVService sivService;
+
+    @GetMapping("default-value")
+    public ResponseEntity<SIVDTO> defValue() throws ParseException {
+        return new ResponseEntity<>(sivService.getDefaultValueSIVEntry(), HttpStatus.OK);
+    }
 
     @PostMapping("check-valid-issued-qty")
     public ResponseEntity<SIVDetailDTO> checkValid(@RequestBody SIVDetailDTO input) {

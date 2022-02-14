@@ -8,6 +8,8 @@ import lombok.Setter;
 
 import javax.validation.constraints.NotBlank;
 import java.math.BigDecimal;
+import java.time.ZonedDateTime;
+import java.util.Date;
 import java.util.Set;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -29,4 +31,7 @@ public class SIVDTO extends InvBaseDTO {
     private String tranType;
     private String docmNo;
     private Set<SIVDetailDTO> sivDetails;
+
+    private String entryUser;
+    private ZonedDateTime entryDate;
 }

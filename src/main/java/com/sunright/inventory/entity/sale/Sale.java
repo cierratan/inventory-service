@@ -34,6 +34,10 @@ public class Sale {
     private String Address2;
     private String Address3;
     private String Address4;
+    private String coqCatCode;
+    private String coqReasonCode;
+    private String coqDivCode;
+    private String coqDeptCode;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "sale")
     private Set<SaleDetail> saleDetails;
