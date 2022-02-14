@@ -57,7 +57,8 @@ public interface ItemRepository extends JpaRepository<Item, Long>, JpaSpecificat
     List<ItemProjection> getItemAndPartNoByPartNo(String companyCode, Integer plantNo, String partNo);
 
     @Query("SELECT i.partNo as partNo, i.itemNo as itemNo, substring(i.description, 1, 60) as description, " +
-            "i.loc as loc, i.uom as uom, i.pickedQty as pickedQty, i.mrvResv as mrvResv, i.prodnResv as prodnResv " +
+            "i.loc as loc, i.uom as uom, COALESCE(i.pickedQty,0) as pickedQty, i.mrvResv as mrvResv, COALESCE(i.prodnResv,0) as prodnResv, " +
+            "COALESCE(i.qoh,0) as qoh, COALESCE(i.ytdProd,0) as ytdProd, COALESCE(i.ytdIssue,0) as ytdIssue " +
             "FROM ITEM i WHERE i.companyCode = :companyCode AND i.plantNo = :plantNo AND i.itemNo = :itemNo")
     ItemProjection itemInfo(String companyCode, Integer plantNo, String itemNo);
 
@@ -89,15 +90,30 @@ public interface ItemRepository extends JpaRepository<Item, Long>, JpaSpecificat
 
     @Modifying
     @Query("UPDATE ITEM i set i.qoh = :qoh, i.orderQty = :itemOrderQty, i.stdMaterial = :newStdMat, i.costVariance = :newCostVar, " +
-            "i.ytdReceipt = coalesce(i.ytdReceipt,0) + coalesce(:convQty,0), i.lastTranDate = :lastTranDate, i.lastPurPrice = :convCost, i.batchNo = :newBatchNo " +
+            "i.ytdReceipt = :ytdReceipt, i.lastTranDate = :lastTranDate, i.lastPurPrice = :convCost, i.batchNo = :newBatchNo " +
             "WHERE i.companyCode = :companyCode AND i.plantNo = :plantNo AND i.itemNo = :itemNo")
     void updateDataItems(BigDecimal qoh, BigDecimal itemOrderQty, BigDecimal newStdMat, BigDecimal newCostVar,
-                         BigDecimal convQty, Date lastTranDate, BigDecimal convCost, BigDecimal newBatchNo,
+                         BigDecimal ytdReceipt, Date lastTranDate, BigDecimal convCost, BigDecimal newBatchNo,
                          String companyCode, Integer plantNo, String itemNo);
 
     @Modifying
-    @Query("UPDATE ITEM i set i.pickedQty = (coalesce(i.pickedQty,0) + :itemPickQty), " +
-            "i.prodnResv = (coalesce(i.prodnResv,0) - :itemProdnResv) WHERE i.companyCode = :companyCode " +
+    @Query("UPDATE ITEM i set i.pickedQty = :pickedQty, i.prodnResv = :prodnResv WHERE i.companyCode = :companyCode " +
             "AND i.plantNo = :plantNo AND i.itemNo = :itemNo")
-    void updatePickedQtyProdnResv(BigDecimal itemPickQty, BigDecimal itemProdnResv, String companyCode, Integer plantNo, String itemNo);
+    void updatePickedQtyProdnResv(BigDecimal pickedQty, BigDecimal prodnResv, String companyCode, Integer plantNo, String itemNo);
+
+    @Query("SELECT i.qoh as qoh FROM ITEM i WHERE i.companyCode = :companyCode AND i.plantNo = :plantNo " +
+            "AND i.itemNo = :itemNo AND i.loc = :loc")
+    ItemProjection getQohByItemNo(String companyCode, Integer plantNo, String itemNo, String loc);
+
+    @Modifying
+    @Query("UPDATE ITEM i set i.prodnResv = :prodnResv, i.pickedQty = :pickedQty, i.qoh = :qoh, i.ytdProd = :ytdProd, " +
+            "i.ytdIssue = :ytdIssue, i.lastTranDate = :lastTranDate WHERE i.companyCode = :companyCode " +
+            "AND i.plantNo = :plantNo AND i.itemNo = :itemNo AND i.loc = :loc")
+    void updateProdnResvPickedQtyQohYtdProdTydIssueLTranDate(BigDecimal prodnResv, BigDecimal pickedQty, BigDecimal qoh,
+                                                             BigDecimal ytdProd, BigDecimal ytdIssue, Date lastTranDate, String companyCode,
+                                                             Integer plantNo, String itemNo, String loc);
+
+    @Query("SELECT i.categoryCode as categoryCode, i.partNo as partNo FROM ITEM i WHERE i.companyCode = :companyCode " +
+            "AND i.plantNo = :plantNo AND i.itemNo = :itemNo")
+    ItemProjection itemCatCodePartNo(String companyCode, Integer plantNo, String itemNo);
 }

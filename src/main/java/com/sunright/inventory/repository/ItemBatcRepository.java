@@ -40,4 +40,17 @@ public interface ItemBatcRepository extends JpaRepository<ItemBatc, ItemBatcId> 
             "and ib.id.plantNo = :plantNo and ib.id.itemNo = :itemNo and ib.id.loc <> (select c.stockLoc from COMPANY c " +
             "where c.id.companyCode = :companyCode and c.id.plantNo = :plantNo)")
     List<ItemBatchProjection> getItemBatchFLocByItemNo(String companyCode, Integer plantNo, String itemNo);
+
+    @Query("select ib.qoh as qoh, ib.dateCode as dateCode, ib.poNo as poNo, ib.poRecSeq as poRecSeq, ib.grnNo as grnNo, " +
+            "ib.grnSeq as grnSeq, ib.oriQoh as oriQoh from ITEMBATC ib where ib.id.companyCode = :companyCode " +
+            "and ib.id.plantNo = :plantNo and ib.id.itemNo = :itemNo and ib.id.batchNo = :batchNo and ib.id.loc = :loc")
+    List<ItemBatchProjection> getItemBatchByBatchNo(String companyCode, Integer plantNo, String itemNo, Long batchNo, String loc);
+
+    @Modifying
+    @Query("DELETE FROM ITEMBATC i WHERE i.id.itemNo = :itemNo AND i.id.batchNo = :batchNo")
+    void deleteItemBatcBal(String itemNo, Long batchNo);
+
+    @Modifying
+    @Query("UPDATE ITEMBATC i SET i.qoh = :itemBatcBal WHERE i.id.itemNo = :itemNo and i.id.batchNo = :batchNo")
+    void updateItemBatcBal(BigDecimal itemBatcBal, Long batchNo);
 }

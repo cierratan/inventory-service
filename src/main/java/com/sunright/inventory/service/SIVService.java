@@ -8,6 +8,7 @@ import com.sunright.inventory.dto.search.SearchResult;
 import com.sunright.inventory.dto.siv.SIVDTO;
 import com.sunright.inventory.dto.siv.SIVDetailDTO;
 
+import java.text.ParseException;
 import java.util.List;
 
 public interface SIVService {
@@ -28,4 +29,6 @@ public interface SIVService {
     List<SIVDetailDTO> checkNextItem(SIVDTO input);
 
     SIVDetailDTO checkValidIssuedQty(SIVDetailDTO input);
+
+    SIVDTO getDefaultValueSIVEntry() throws ParseException;
 }

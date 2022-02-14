@@ -16,9 +16,11 @@ public interface ItemProjection {
     BigDecimal getMrvResv();
     BigDecimal getProdnResv();
     BigDecimal getStdMaterial();
-    BigDecimal getShortQty();
     BigDecimal getCostVariance();
     BigDecimal getBatchNo();
     BigDecimal getQoh();
     BigDecimal getOrderQty();
+    BigDecimal getYtdProd();
+    BigDecimal getYtdIssue();
+    String getCategoryCode();
 }

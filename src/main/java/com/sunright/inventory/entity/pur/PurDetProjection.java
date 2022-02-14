@@ -25,4 +25,5 @@ public interface PurDetProjection {
     long getCountPartNo();
     String getDescription();
     String getMslCode();
+    BigDecimal getRlseQty();
 }
