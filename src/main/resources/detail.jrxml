@@ -5,48 +5,77 @@
 	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="Sunright"/>
 	<parameter name="GRN_NO" class="java.lang.String"/>
 	<parameter name="SUB_TYPE" class="java.lang.String"/>
-	<parameter name="TYPE" class="java.lang.String"/>
-	<parameter name="SUB_REPORT" class="java.lang.String"/>
+	<parameter name="COMPANY_CODE" class="java.lang.String"/>
+	<parameter name="PLANT_NO" class="java.lang.Integer"/>
 	<queryString language="SQL">
-		<![CDATA[SELECT DISTINCT
-	gdet."SEQ_NO",
-	gdet."ITEM_NO",
-	gdet."PART_NO",
-	gdet."LOC",
-	gdet."PROJECT_NO",
-	gdet."PO_REC_SEQ",
-	gdet."RECD_QTY",
-	gdet."UOM",
-	gdet."PO_PRICE",
-	gdet."REMARKS"
-FROM "GRNDET" gdet,
-	"COMPANY" c,
-	"DOCM_NO" doc
-WHERE gdet."COMPANY_CODE" = c."COMPANY_CODE"
-	AND gdet."PLANT_NO" = c."PLANT_NO"
-	AND doc."SUB_TYPE" = gdet."SUB_TYPE"   
-	 AND gdet."GRN_NO" = $P{GRN_NO} 
-	 AND gdet."SUB_TYPE" = $P{SUB_TYPE}
-	 AND doc."TYPE" = $P{TYPE}
-	 ORDER BY gdet."SEQ_NO" ASC]]>
+		<![CDATA[select grndet.item_type,
+       grndet.grn_no,
+       grndet.seq_no,
+       grndet.item_no,
+       grndet.loc,
+       item.part_no,
+       grndet.project_no,
+       p.SEQ_NO as po_seq,
+       c.batch_no,
+       grndet.siv_no,
+       grndet.recd_qty,
+       grndet.uom,
+       grndet.recd_price,
+       decode(cd.sub_type, null, ' ', 'MSL: ' || cd.sub_type || ' - ' || cd.subtype_desc) msl_code,
+       grndet.remarks
+from grndet GRNDET,
+     item ITEM,
+     itembatc c,
+     purdet p,
+     code_desc cd
+where cd.type(+) = 'INMSL'
+  and cd.sub_type(+) = item.msl_code
+  and p.company_code = '050'
+  and p.plant_no = 0
+  and p.po_no = GRNDET.PO_NO
+  and p.rec_seq = GRNDET.Po_Rec_Seq
+  and c.company_code(+) = $P{COMPANY_CODE}
+  and c.plant_no(+) = $P{PLANT_NO}
+  and c.grn_seq(+) = grndet.seq_no
+  and c.grn_no(+) = grndet.grn_no
+  and c.item_no(+) = grndet.item_no
+  and item.company_code(+) = $P{COMPANY_CODE}
+  and item.plant_no(+) = $P{PLANT_NO}
+  and item.item_no(+) = grndet.item_no
+  and grndet.company_code = '050'
+  and grndet.plant_no = 0
+  and grndet.grn_no = $P{GRN_NO}
+order by seq_no]]>
 	</queryString>
+	<field name="ITEM_TYPE" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.label" value="ITEM_TYPE"/>
+	</field>
+	<field name="GRN_NO" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="GRN_NO"/>
+	</field>
 	<field name="SEQ_NO" class="java.math.BigDecimal">
 		<property name="com.jaspersoft.studio.field.label" value="SEQ_NO"/>
 	</field>
 	<field name="ITEM_NO" class="java.lang.String">
 		<property name="com.jaspersoft.studio.field.label" value="ITEM_NO"/>
 	</field>
-	<field name="PART_NO" class="java.lang.String">
-		<property name="com.jaspersoft.studio.field.label" value="PART_NO"/>
-	</field>
 	<field name="LOC" class="java.lang.String">
 		<property name="com.jaspersoft.studio.field.label" value="LOC"/>
+	</field>
+	<field name="PART_NO" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="PART_NO"/>
 	</field>
 	<field name="PROJECT_NO" class="java.lang.String">
 		<property name="com.jaspersoft.studio.field.label" value="PROJECT_NO"/>
 	</field>
-	<field name="PO_REC_SEQ" class="java.math.BigDecimal">
-		<property name="com.jaspersoft.studio.field.label" value="PO_REC_SEQ"/>
+	<field name="PO_SEQ" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.label" value="PO_SEQ"/>
+	</field>
+	<field name="BATCH_NO" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.label" value="BATCH_NO"/>
+	</field>
+	<field name="SIV_NO" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="SIV_NO"/>
 	</field>
 	<field name="RECD_QTY" class="java.math.BigDecimal">
 		<property name="com.jaspersoft.studio.field.label" value="RECD_QTY"/>
@@ -54,35 +83,20 @@ WHERE gdet."COMPANY_CODE" = c."COMPANY_CODE"
 	<field name="UOM" class="java.lang.String">
 		<property name="com.jaspersoft.studio.field.label" value="UOM"/>
 	</field>
-	<field name="PO_PRICE" class="java.math.BigDecimal">
-		<property name="com.jaspersoft.studio.field.label" value="PO_PRICE"/>
+	<field name="RECD_PRICE" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.label" value="RECD_PRICE"/>
+	</field>
+	<field name="MSL_CODE" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="MSL_CODE"/>
 	</field>
 	<field name="REMARKS" class="java.lang.String">
 		<property name="com.jaspersoft.studio.field.label" value="REMARKS"/>
 	</field>
 	<variable name="TotalPrice" class="java.lang.Double" calculation="Sum">
-		<variableExpression><![CDATA[$F{RECD_QTY}.multiply($F{PO_PRICE})]]></variableExpression>
+		<variableExpression><![CDATA[$F{RECD_QTY}.multiply($F{RECD_PRICE})]]></variableExpression>
 	</variable>
-	<title>
-		<band height="21" splitType="Stretch">
-			<subreport>
-				<reportElement x="0" y="1" width="200" height="20" uuid="1ca45c8b-3dfe-43c6-803c-bcd25900201b"/>
-				<subreportParameter name="GRN_NO">
-					<subreportParameterExpression><![CDATA[$P{GRN_NO}]]></subreportParameterExpression>
-				</subreportParameter>
-				<subreportParameter name="SUB_TYPE">
-					<subreportParameterExpression><![CDATA[$P{SUB_TYPE}]]></subreportParameterExpression>
-				</subreportParameter>
-				<subreportParameter name="TYPE">
-					<subreportParameterExpression><![CDATA[$P{TYPE}]]></subreportParameterExpression>
-				</subreportParameter>
-				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
-				<subreportExpression><![CDATA[$P{SUB_REPORT}]]></subreportExpression>
-			</subreport>
-		</band>
-	</title>
 	<columnHeader>
-		<band height="36" splitType="Stretch">
+		<band height="31" splitType="Stretch">
 			<staticText>
 				<reportElement x="0" y="1" width="30" height="30" uuid="99fef9aa-8111-46c5-b4b7-93a80a2b39b3">
 					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="142bbf2a-1db0-4e39-a666-417d1c26d619"/>
@@ -176,7 +190,7 @@ WHERE gdet."COMPANY_CODE" = c."COMPANY_CODE"
 				<reportElement x="256" y="2" width="31" height="30" uuid="2d9ff91d-d24f-40ae-becd-ab20b2eabbd7">
 					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="2f0c98c9-52fa-4d31-bbfd-94a933b13b54"/>
 				</reportElement>
-				<textFieldExpression><![CDATA[$F{PO_REC_SEQ}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{PO_SEQ}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
 				<reportElement x="354" y="2" width="40" height="30" uuid="d519fc96-e1e6-49b1-8aa5-af4ae6ddc5d9">
@@ -194,11 +208,11 @@ WHERE gdet."COMPANY_CODE" = c."COMPANY_CODE"
 				<reportElement x="438" y="2" width="51" height="30" uuid="5c08835e-0431-4081-8c97-c63464c8f9e9">
 					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="bd02b1b7-5ea6-4eaf-ace4-3245bf80d6c2"/>
 				</reportElement>
-				<textFieldExpression><![CDATA[$F{PO_PRICE}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{RECD_PRICE}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
 				<reportElement x="490" y="2" width="58" height="30" uuid="3b233eda-e952-49b2-af42-d3cc48dcf7ea"/>
-				<textFieldExpression><![CDATA[$F{RECD_QTY}.multiply($F{PO_PRICE})]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{RECD_QTY}.multiply($F{RECD_PRICE})]]></textFieldExpression>
 			</textField>
 			<textField>
 				<reportElement x="30" y="60" width="224" height="40" uuid="08585e66-3861-43dc-8e5a-2ec252a510d6"/>

@@ -12,7 +12,7 @@ import java.util.Date;
 @Getter
 @Setter
 @Builder
-public class PurDTO extends BaseDTO {
+public class PurDTO {
 
     private String poNo;
     private String docmType;

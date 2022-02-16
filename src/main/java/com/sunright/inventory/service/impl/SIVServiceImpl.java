@@ -9,6 +9,7 @@ import com.sunright.inventory.dto.search.SearchRequest;
 import com.sunright.inventory.dto.search.SearchResult;
 import com.sunright.inventory.dto.siv.SIVDTO;
 import com.sunright.inventory.dto.siv.SIVDetailDTO;
+import com.sunright.inventory.dto.wip.WipProjDTO;
 import com.sunright.inventory.entity.InAudit;
 import com.sunright.inventory.entity.ItemLocProjection;
 import com.sunright.inventory.entity.ItemProjection;
@@ -32,6 +33,8 @@ import com.sunright.inventory.entity.sfcwip.SfcWipId;
 import com.sunright.inventory.entity.sfcwip.SfcWipProjection;
 import com.sunright.inventory.entity.siv.SIV;
 import com.sunright.inventory.entity.siv.SIVDetail;
+import com.sunright.inventory.entity.wip.WipDirsProjection;
+import com.sunright.inventory.entity.wip.WipProjProjection;
 import com.sunright.inventory.exception.DuplicateException;
 import com.sunright.inventory.exception.NotFoundException;
 import com.sunright.inventory.exception.ServerException;
@@ -120,6 +123,12 @@ public class SIVServiceImpl implements SIVService {
     private SfcWipRepository sfcWipRepository;
 
     @Autowired
+    private WipProjRepository wipProjRepository;
+
+    @Autowired
+    private WipDirsRepository wipDirsRepository;
+
+    @Autowired
     private QueryGenerator queryGenerator;
 
     @Override
@@ -152,9 +161,9 @@ public class SIVServiceImpl implements SIVService {
                 sivDetail.setPlantNo(userProfile.getPlantNo());
                 sivDetail.setSiv(saved);
                 sivDetailRepository.save(sivDetail);
+                sivDetailPostSaving(userProfile, saved, sivDetail, detail, input);
                 procBatchConsolidate(sivDetail, detail);
                 procUpdateSfcWip(userProfile, sivDetail, detail, input);
-                sivDetailPostSaving(userProfile, saved, sivDetail, detail);
             }
         }
 
@@ -216,10 +225,17 @@ public class SIVServiceImpl implements SIVService {
         return detail;
     }
 
-    private void sivDetailPostSaving(UserProfile userProfile, SIV siv, SIVDetail sivDetail, SIVDetailDTO detail) {
+    private void sivDetailPostSaving(UserProfile userProfile, SIV siv, SIVDetail sivDetail, SIVDetailDTO detail, SIVDTO input) {
 
-        postBombypj(userProfile, siv, sivDetail, detail);
-        postCoq(userProfile, siv, sivDetail, detail);
+        if (detail.getSubType().equals("M")) {
+            if (detail.getItemType() == 0) {
+                reduceItemInv(userProfile, input, detail);
+                postBombypj(userProfile, siv, sivDetail, detail);
+            }
+        } else {
+            postBombypj(userProfile, siv, sivDetail, detail);
+            postCoq(userProfile, siv, sivDetail, detail);
+        }
     }
 
     private void postBombypj(UserProfile userProfile, SIV siv, SIVDetail sivDetail, SIVDetailDTO detail) {
@@ -234,20 +250,36 @@ public class SIVServiceImpl implements SIVService {
             BigDecimal resvQty = bProj.getResvQty() == null ? BigDecimal.ZERO : bProj.getResvQty();
             BigDecimal issuedQty = bProj.getIssuedQty() == null ? BigDecimal.ZERO : bProj.getIssuedQty();
             BigDecimal pickedQty = bProj.getPickedQty() == null ? BigDecimal.ZERO : bProj.getPickedQty();
-            BigDecimal shortQtyB = bProj.getShortQty() == null ? BigDecimal.ZERO : bProj.getShortQty();
+            BigDecimal vShortQty = bProj.getShortQty() == null ? BigDecimal.ZERO : bProj.getShortQty();
             if (shortIss.compareTo(BigDecimal.ZERO) > 0) {
-                if (shortIss.compareTo(BigDecimal.ZERO) > shortQtyB.compareTo(BigDecimal.ZERO)) {
-                    resvQty = resvQty.subtract(shortQtyB);
-                    issuedQty = issuedQty.add(shortQtyB);
-                    shortIss = shortIss.subtract(shortQtyB);
-                    pickIss = pickIss.subtract(shortQtyB);
-                    shortQtyB = BigDecimal.ZERO;
+                if (detail.getSubType().equals("M")) {
+                    if (pickIss.compareTo(BigDecimal.ZERO) > vShortQty.compareTo(BigDecimal.ZERO)) {
+                        resvQty = resvQty.subtract(vShortQty);
+                        issuedQty = issuedQty.add(vShortQty);
+                        shortIss = shortIss.subtract(vShortQty);
+                        pickIss = pickIss.subtract(vShortQty);
+                        vShortQty = BigDecimal.ZERO;
+                    } else {
+                        resvQty = resvQty.subtract(pickIss);
+                        issuedQty = issuedQty.add(pickIss);
+                        vShortQty = vShortQty.subtract(pickIss);
+                        shortIss = shortIss.subtract(pickIss);
+                        pickIss = BigDecimal.ZERO;
+                    }
                 } else {
-                    resvQty = resvQty.subtract(shortIss);
-                    issuedQty = issuedQty.add(shortIss);
-                    shortQtyB = shortQtyB.subtract(shortIss);
-                    pickIss = BigDecimal.ZERO;
-                    shortIss = BigDecimal.ZERO;
+                    if (shortIss.compareTo(BigDecimal.ZERO) > vShortQty.compareTo(BigDecimal.ZERO)) {
+                        resvQty = resvQty.subtract(vShortQty);
+                        issuedQty = issuedQty.add(vShortQty);
+                        shortIss = shortIss.subtract(vShortQty);
+                        pickIss = pickIss.subtract(vShortQty);
+                        vShortQty = BigDecimal.ZERO;
+                    } else {
+                        resvQty = resvQty.subtract(shortIss);
+                        issuedQty = issuedQty.add(shortIss);
+                        vShortQty = vShortQty.subtract(shortIss);
+                        pickIss = BigDecimal.ZERO;
+                        shortIss = BigDecimal.ZERO;
+                    }
                 }
             } else {
                 if (pickIss.compareTo(BigDecimal.ZERO) > pickedQty.compareTo(BigDecimal.ZERO)) {
@@ -267,7 +299,7 @@ public class SIVServiceImpl implements SIVService {
                 resvQty = BigDecimal.ZERO;
             }
 
-            bombypjRepository.updateResvIssuedPickedShortQty(resvQty, issuedQty, pickedQty, shortQtyB,
+            bombypjRepository.updateResvIssuedPickedShortQty(resvQty, issuedQty, pickedQty, vShortQty,
                     userProfile.getCompanyCode(), userProfile.getPlantNo(), siv.getProjectNo(), sivDetail.getItemNo());
         }
 
@@ -363,21 +395,124 @@ public class SIVServiceImpl implements SIVService {
 
     private SIVDetailDTO preSavingDetail(UserProfile userProfile, SIVDTO input, SIVDetailDTO detail) {
 
-        List<GrnDetailProjection> grnDetCur = grnDetRepository.getGrndetCur(userProfile.getCompanyCode(),
-                userProfile.getPlantNo(), detail.getBatchNo(), detail.getItemNo());
-        for (GrnDetailProjection prj : grnDetCur) {
-            detail.setGrnNo(prj.getGrnNo());
-            detail.setUom(prj.getUom());
-            detail.setGrnDetSeqNo(prj.getSeqNo());
-            if (prj.getIssuedQty().compareTo(BigDecimal.ZERO) == 0) {
-                BigDecimal issuedQty = (prj.getIssuedQty() == null ? BigDecimal.ZERO : prj.getIssuedQty()).add(detail.getIssuedQty());
-                grnDetRepository.updateSivNoIssuedQty(input.getSivNo(), issuedQty, prj.getGrnNo(), prj.getSeqNo());
+        if (input.getSubType().equals("M")) {
+            detail.setSivNo(input.getSivNo());
+            detail.setSubType("M");
+            if (!input.getTranType().equals("OTHER")) {
+                computeIssuedQtyTotal(detail);
+            }
+
+            if (detail.getItemType() == 0) {
+                if (input.getTranType().equals("PR") && input.getTranType().equals("WK")) {
+                    String recValidSub;
+                    if (detail.getSaleType().equals("P")) {
+                        recValidSub = "PROJECT_NO";
+                        if (StringUtils.isBlank(detail.getProjectNo1())) {
+                            throw new ServerException("A Project No is needed!");
+                        } else {
+                            checkRecValidSub(userProfile, detail, detail.getProjectNo1(), recValidSub);
+                        }
+
+                        if (StringUtils.isNotBlank(detail.getProjectNo2())) {
+                            checkRecValidSub(userProfile, detail, detail.getProjectNo2(), recValidSub);
+                        }
+
+                        if (StringUtils.isNotBlank(detail.getProjectNo3())) {
+                            checkRecValidSub(userProfile, detail, detail.getProjectNo3(), recValidSub);
+                        }
+
+                        if (StringUtils.isNotBlank(detail.getProjectNo4())) {
+                            checkRecValidSub(userProfile, detail, detail.getProjectNo4(), recValidSub);
+                        }
+
+                        if (StringUtils.isNotBlank(detail.getProjectNo5())) {
+                            checkRecValidSub(userProfile, detail, detail.getProjectNo5(), recValidSub);
+                        }
+                    } else {
+                        recValidSub = "ORDER_NO";
+                        if (StringUtils.isNotBlank(detail.getProjectNo1())) {
+                            checkRecValidSub(userProfile, detail, detail.getProjectNo1(), recValidSub);
+                        }
+
+                        if (StringUtils.isNotBlank(detail.getProjectNo2())) {
+                            checkRecValidSub(userProfile, detail, detail.getProjectNo2(), recValidSub);
+                        }
+
+                        if (StringUtils.isNotBlank(detail.getProjectNo3())) {
+                            checkRecValidSub(userProfile, detail, detail.getProjectNo3(), recValidSub);
+                        }
+
+                        if (StringUtils.isNotBlank(detail.getProjectNo4())) {
+                            checkRecValidSub(userProfile, detail, detail.getProjectNo4(), recValidSub);
+                        }
+
+                        if (StringUtils.isNotBlank(detail.getProjectNo5())) {
+                            checkRecValidSub(userProfile, detail, detail.getProjectNo5(), recValidSub);
+                        }
+                    }
+                } else if (input.getTranType().equals("DS") && input.getTranType().equals("WD")) {
+                    if (detail.getItemType() == 0) {
+                        List<ItemProjection> itemCur = itemRepository.itemCur(input.getDocmNo(), detail.getCompanyCode(), detail.getPlantNo(), detail.getItemNo());
+                        ItemDTO dto = ItemDTO.builder().build();
+                        for (ItemProjection rec : itemCur) {
+                            dto.setItemNo(rec.getItemNo());
+                            dto.setLoc(rec.getLoc());
+                            dto.setUom(rec.getUom());
+                        }
+                        if (StringUtils.isBlank(dto.getItemNo())) {
+                            throw new ServerException("Item No : " + detail.getItemNo() + " is invalid or not found in SALEDET/ITEM Table !");
+                        }
+                    } else {
+                        throw new ServerException("Please Enter Only Stock Item!");
+                    }
+                }
+            }
+        } else {
+            List<GrnDetailProjection> grnDetCur = grnDetRepository.getGrndetCur(userProfile.getCompanyCode(),
+                    userProfile.getPlantNo(), detail.getBatchNo(), detail.getItemNo());
+            for (GrnDetailProjection prj : grnDetCur) {
+                detail.setGrnNo(prj.getGrnNo());
+                detail.setUom(prj.getUom());
+                detail.setGrnDetSeqNo(prj.getSeqNo());
+                if (prj.getIssuedQty().compareTo(BigDecimal.ZERO) == 0) {
+                    BigDecimal issuedQty = (prj.getIssuedQty() == null ? BigDecimal.ZERO : prj.getIssuedQty()).add(detail.getIssuedQty());
+                    grnDetRepository.updateSivNoIssuedQty(input.getSivNo(), issuedQty, prj.getGrnNo(), prj.getSeqNo());
+                }
+            }
+
+            reduceItemInv(userProfile, input, detail);
+        }
+
+        return detail;
+    }
+
+    private void checkRecValidSub(UserProfile userProfile, SIVDetailDTO detail, String projectNo, String recValidSub) {
+
+        if (recValidSub.equals("PROJECT_NO")) {
+            List<WipProjProjection> projectCurs = wipProjRepository.projectCur(userProfile.getCompanyCode(), userProfile.getPlantNo(), detail.getDocmNo(), projectNo);
+            WipProjDTO dto = WipProjDTO.builder().build();
+            for (WipProjProjection prjCur : projectCurs) {
+                dto.setProjectNoSub(prjCur.getProjectNoSub());
+            }
+            if (StringUtils.isBlank(dto.getProjectNoSub())) {
+                throw new ServerException("Project No is Invalid or not found in WIPPROJ/SALEDET Table !");
             }
         }
 
-        reduceItemInv(userProfile, input, detail);
+        if (recValidSub.equals("ORDER_NO")) {
+            List<WipDirsProjection> orderCurs = wipDirsRepository.orderCur(userProfile.getCompanyCode(), userProfile.getPlantNo(), projectNo);
+            WipProjDTO dto = WipProjDTO.builder().build();
+            for (WipDirsProjection orderCur : orderCurs) {
+                dto.setProjectNoSub(orderCur.getOrderNo());
+            }
+            if (StringUtils.isBlank(dto.getProjectNoSub())) {
+                throw new ServerException("Project No is Invalid or not found in WIPPROJ/SALEDET Table !");
+            }
+        }
+    }
 
-        return detail;
+    private void computeIssuedQtyTotal(SIVDetailDTO detail) {
+        detail.setIssuedQty(detail.getIssuedQty1().add(detail.getIssuedQty2().add(detail.getIssuedQty3().add(detail.getIssuedQty4().add(detail.getIssuedQty5())))));
     }
 
     private SIVDetailDTO reduceItemInv(UserProfile userProfile, SIVDTO input, SIVDetailDTO detail) {
@@ -496,7 +631,11 @@ public class SIVServiceImpl implements SIVService {
         inAudit.setGrnNo(detail.getGrnNo());
         inAudit.setPoNo(detail.getPoNo());
         inAudit.setDoNo(null);
-        inAudit.setRemarks("Issued Thru SIV-N, Prg : INM00004");
+        if (detail.getSubType().equals("M")) {
+            inAudit.setRemarks("Issued Thru SIV-M, Prg : INM00005");
+        } else {
+            inAudit.setRemarks("Issued Thru SIV-N, Prg : INM00004");
+        }
         inAudit.setStatus(Status.ACTIVE);
         inAudit.setCreatedBy(userProfile.getUsername());
         inAudit.setCreatedAt(ZonedDateTime.now());
@@ -627,7 +766,12 @@ public class SIVServiceImpl implements SIVService {
         }
 
         String type = "SIV";
-        String subType = input.getProjectNo().substring(0, 1);
+        String subType;
+        if (input.getSubType().equals("M")) {
+            subType = "M";
+        } else {
+            subType = input.getProjectNo().substring(0, 1);
+        }
         DocmNoProjection docmNo = docmNoRepository.getLastGeneratedNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), type, subType);
         docmNoRepository.updateLastGeneratedNo(docmNo.getDocmNo(), userProfile.getCompanyCode(), userProfile.getPlantNo(), subType, type);
     }
@@ -772,12 +916,13 @@ public class SIVServiceImpl implements SIVService {
     }
 
     @Override
-    public SIVDTO getDefaultValueSIVEntry() {
+    public SIVDTO getDefaultValueSIVEntry(String subType) {
         UserProfile userProfile = UserProfileContext.getUserProfile();
         String entryTime = FastDateFormat.getInstance("kkmmss").format(System.currentTimeMillis());
         ZonedDateTime now = ZonedDateTime.now();
+        // subType (N : for Entry, M : for Manual)
         return SIVDTO.builder().currencyCode("USD").currencyRate(BigDecimal.ONE)
-                .entryUser(userProfile.getUsername()).subType("N").statuz("O")
+                .entryUser(userProfile.getUsername()).subType(subType).statuz("O")
                 .entryDate(now).entryTime(entryTime).build();
     }
 
@@ -787,9 +932,9 @@ public class SIVServiceImpl implements SIVService {
 
         for (SIVDetailDTO dto : sivDetailDTOList) {
             if (StringUtils.isNotBlank(dto.getItemNo())) {
-                List<ItemBatchProjection> itemBatch = itemBatcRepository.getItemBatchByItemNo(userProfile.getCompanyCode(),
-                        userProfile.getPlantNo(), dto.getItemNo());
                 List<ItemBatchProjection> itemBatchFLoc = itemBatcRepository.getItemBatchFLocByItemNo(userProfile.getCompanyCode(),
+                        userProfile.getPlantNo(), dto.getItemNo());
+                List<ItemBatchProjection> itemBatch = itemBatcRepository.getItemBatchByItemNo(userProfile.getCompanyCode(),
                         userProfile.getPlantNo(), dto.getItemNo());
 
                 if (itemBatch == null) {
@@ -800,12 +945,12 @@ public class SIVServiceImpl implements SIVService {
                     throw new ServerException("No Such Item : " + dto.getItemNo());
                 }
                 if (dto.getBomShortQtyF().compareTo(BigDecimal.ZERO) > 0) {
-                    for (ItemBatchProjection ib : itemBatch) {
+                    for (ItemBatchProjection ib : itemBatchFLoc) {
                         dto.setBatchDesc(ib.getBatchDesc());
                         dto.setBatchNoLoc(ib.getBatchNoLoc());
                     }
                 } else {
-                    for (ItemBatchProjection ib : itemBatchFLoc) {
+                    for (ItemBatchProjection ib : itemBatch) {
                         dto.setBatchDesc(ib.getBatchDesc());
                         dto.setBatchNoLoc(ib.getBatchNoLoc());
                     }
@@ -875,35 +1020,37 @@ public class SIVServiceImpl implements SIVService {
         List<BombypjProjection> bombProjections = bombypjRepository.getDataByProjectNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), input.getProjectNo());
         // bombypj loop
         for (BombypjProjection bombRec : bombProjections) {
-            ItemLocProjection itemAvailQohL = itemLocRepository.getItemAvailQohL(userProfile.getCompanyCode(), userProfile.getPlantNo(), bombRec.getAlternate());
-            ItemLocProjection ItemAvailQohF = itemLocRepository.getItemAvailQohF(userProfile.getCompanyCode(), userProfile.getPlantNo(), bombRec.getAlternate());
             List<ItemBatchProjection> batchProjection = itemBatcRepository.getBatchNoByItemNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), bombRec.getAlternate());
-            BigDecimal projShortQtyL = BigDecimal.valueOf(0);
-            BigDecimal projShortQtyF = BigDecimal.valueOf(0);
             BigDecimal projPickQty = bombRec.getPickedQty();
+            BigDecimal projShortQtyL = BigDecimal.ZERO;
+            BigDecimal projShortQtyF = BigDecimal.ZERO;
             if (bombRec.getShortQty().compareTo(BigDecimal.ZERO) > 0) {
                 BigDecimal projShortQty = bombRec.getShortQty();
-                BigDecimal itemAvailQty = BigDecimal.valueOf(0);
-                if (itemAvailQohL.getAvailQty().compareTo(BigDecimal.ZERO) > 0) {
-                    if (itemAvailQohL.getAvailQty().intValue() > bombRec.getShortQty().intValue()) {
+                BigDecimal itemAvailQty = BigDecimal.ZERO;
+                ItemLocProjection itemAvailQohL = itemLocRepository.getItemAvailQohL(userProfile.getCompanyCode(), userProfile.getPlantNo(), bombRec.getAlternate());
+                itemAvailQty = itemAvailQohL.getAvailQty();
+                if (itemAvailQty.compareTo(BigDecimal.ZERO) > 0) {
+                    if (itemAvailQty.compareTo(BigDecimal.ZERO) > bombRec.getShortQty().compareTo(BigDecimal.ZERO)) {
                         projShortQtyL = bombRec.getShortQty();
-                        projShortQty = BigDecimal.valueOf(0);
+                        projShortQty = BigDecimal.ZERO;
                     } else {
-                        projShortQtyL = itemAvailQohL.getAvailQty();
-                        projShortQty = BigDecimal.valueOf(projShortQty.intValue() - itemAvailQty.intValue());
+                        projShortQtyL = itemAvailQty;
+                        projShortQty = projShortQty.subtract(itemAvailQty);
                     }
+                }
 
-                    if (projShortQty.compareTo(BigDecimal.ZERO) > 0) {
-                        if (ItemAvailQohF != null) {
-                            itemAvailQty = ItemAvailQohF.getAvailQty();
-                            if (itemAvailQty.compareTo(BigDecimal.ZERO) > 0) {
-                                if (itemAvailQty.intValue() > bombRec.getShortQty().intValue()) {
-                                    projShortQtyF = bombRec.getShortQty();
-                                    projShortQty = BigDecimal.valueOf(0);
-                                } else {
-                                    projShortQtyF = itemAvailQty;
-                                    projShortQty = projShortQty.subtract(itemAvailQty);
-                                }
+                if (projShortQty.compareTo(BigDecimal.ZERO) > 0) {
+                    itemAvailQty = BigDecimal.ZERO;
+                    ItemLocProjection itemAvailQohF = itemLocRepository.getItemAvailQohF(userProfile.getCompanyCode(), userProfile.getPlantNo(), bombRec.getAlternate());
+                    if (itemAvailQohF != null) {
+                        itemAvailQty = itemAvailQohF.getAvailQty();
+                        if (itemAvailQty.compareTo(BigDecimal.ZERO) > 0) {
+                            if (itemAvailQty.compareTo(BigDecimal.ZERO) > bombRec.getShortQty().compareTo(BigDecimal.ZERO)) {
+                                projShortQtyF = bombRec.getShortQty();
+                                projShortQty = BigDecimal.ZERO;
+                            } else {
+                                projShortQtyF = itemAvailQty;
+                                projShortQty = projShortQty.subtract(itemAvailQty);
                             }
                         }
                     }
@@ -916,14 +1063,14 @@ public class SIVServiceImpl implements SIVService {
                 BigDecimal pickQty = bombRec.getPickedQty();
                 BigDecimal shortQty = bombRec.getShortQty();
                 if (projPickQty.compareTo(BigDecimal.ZERO) > 0) {
-                    if (projPickQty.intValue() > batchQty.intValue()) {
+                    if (projPickQty.compareTo(BigDecimal.ZERO) > batchQty.compareTo(BigDecimal.ZERO)) {
                         pickQty = batchQty;
                         projPickQty = projPickQty.subtract(batchQty);
-                        batchQty = BigDecimal.valueOf(0);
+                        batchQty = BigDecimal.ZERO;
                     } else {
                         pickQty = projPickQty;
                         batchQty = batchQty.subtract(projPickQty);
-                        projPickQty = BigDecimal.valueOf(0);
+                        projPickQty = BigDecimal.ZERO;
                     }
 
                     list.add(SIVDetailDTO.builder()
@@ -946,16 +1093,16 @@ public class SIVServiceImpl implements SIVService {
                 }
 
                 if (projShortQtyL.compareTo(BigDecimal.ZERO) > 0 && batchQty.compareTo(BigDecimal.ZERO) > 0) {
-                    if (projShortQtyL.intValue() > batchQty.intValue()) {
+                    if (projShortQtyL.compareTo(BigDecimal.ZERO) > batchQty.compareTo(BigDecimal.ZERO)) {
                         pickQty = batchQty;
                         shortQty = batchQty;
-                        projShortQtyL = projShortQtyF.subtract(batchQty);
-                        batchQty = BigDecimal.valueOf(0);
+                        projShortQtyL = projShortQtyL.subtract(batchQty);
+                        batchQty = BigDecimal.ZERO;
                     } else {
                         pickQty = projShortQtyL;
                         shortQty = projShortQtyL;
                         batchQty = batchQty.subtract(projShortQtyL);
-                        projShortQtyL = BigDecimal.valueOf(0);
+                        projShortQtyL = BigDecimal.ZERO;
                     }
 
                     list.add(SIVDetailDTO.builder()
@@ -977,10 +1124,9 @@ public class SIVServiceImpl implements SIVService {
                             .build());
                 }
 
-
                 CompanyProjection companyStockLoc = companyRepository.getStockLoc(userProfile.getCompanyCode(), userProfile.getPlantNo()); // get stock loc company
                 if (projShortQtyF.compareTo(BigDecimal.ZERO) > 0 && batchQty.compareTo(BigDecimal.ZERO) > 0 && !batRec.getLoc().equals(companyStockLoc.getStockLoc())) {
-                    if (projShortQtyF.intValue() > batchQty.intValue()) {
+                    if (projShortQtyF.compareTo(BigDecimal.ZERO) > batchQty.compareTo(BigDecimal.ZERO)) {
                         pickQty = batchQty;
                         shortQty = batchQty;
                         projShortQtyF = projShortQtyF.subtract(batchQty);

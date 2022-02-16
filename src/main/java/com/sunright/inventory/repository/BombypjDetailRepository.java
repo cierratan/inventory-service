@@ -25,6 +25,8 @@ public interface BombypjDetailRepository extends JpaRepository<BombypjDet, Bomby
 
     @Modifying
     @Query("UPDATE BOMBYPJ_DET b set b.accumRecdQty = :accumRecdQty, b.recdQty = :recdQty, b.status = :status, " +
-            "b.grnNo = :grnNo WHERE b.id.alternate = :itemNo")
-    void updateAccRecdStatusGrnNo(BigDecimal accumRecdQty, BigDecimal recdQty, String status, String grnNo, String itemNo);
+            "b.grnNo = :grnNo WHERE b.id.companyCode = :companyCode AND b.id.plantNo = :plantNo AND b.id.projectNo = :projectNo " +
+            "AND b.poNo = :poNo AND b.id.alternate = :itemNo")
+    void updateAccRecdStatusGrnNo(BigDecimal accumRecdQty, BigDecimal recdQty, String status, String grnNo,
+                                  String companyCode, Integer plantNo, String projectNo, String poNo, String itemNo);
 }

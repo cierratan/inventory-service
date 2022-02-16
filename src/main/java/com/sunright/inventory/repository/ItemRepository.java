@@ -52,13 +52,15 @@ public interface ItemRepository extends JpaRepository<Item, Long>, JpaSpecificat
             "AND i.plantNo = :plantNo AND i.itemNo LIKE %:itemNo% AND i.source IN ('B','C')")
     List<ItemProjection> getItemAndPartNoByItemNo(String companyCode, Integer plantNo, String itemNo);
 
-    @Query("SELECT i.itemNo as itemNo, i.partNo as partNo FROM ITEM i WHERE i.companyCode = :companyCode " +
-            "AND i.plantNo = :plantNo AND i.partNo LIKE %:partNo% AND i.source IN ('B','C')")
-    List<ItemProjection> getItemAndPartNoByPartNo(String companyCode, Integer plantNo, String partNo);
+    @Query("SELECT i.itemNo as itemNo, i.loc as loc, i.uom as uom, i.partNo as partNo, i.description as description, " +
+            "COALESCE(i.stdMaterial,0) as stdMaterial FROM ITEM i WHERE i.companyCode = :companyCode " +
+            "AND i.plantNo = :plantNo AND (i.partNo LIKE %:partNo% OR i.itemNo LIKE %:itemNo%) AND i.source IN ('B','C')")
+    List<ItemProjection> getItemAndPartNoByPartNo(String companyCode, Integer plantNo, String partNo, String itemNo);
 
-    @Query("SELECT i.partNo as partNo, i.itemNo as itemNo, substring(i.description, 1, 60) as description, " +
+    @Query("SELECT i.partNo as partNo, i.itemNo as itemNo, i.description as description, " +
             "i.loc as loc, i.uom as uom, COALESCE(i.pickedQty,0) as pickedQty, i.mrvResv as mrvResv, COALESCE(i.prodnResv,0) as prodnResv, " +
-            "COALESCE(i.qoh,0) as qoh, COALESCE(i.ytdProd,0) as ytdProd, COALESCE(i.ytdIssue,0) as ytdIssue " +
+            "COALESCE(i.qoh,0) as qoh, COALESCE(i.ytdProd,0) as ytdProd, COALESCE(i.ytdIssue,0) as ytdIssue, " +
+            "COALESCE(i.stdMaterial,0) as stdMaterial " +
             "FROM ITEM i WHERE i.companyCode = :companyCode AND i.plantNo = :plantNo AND i.itemNo = :itemNo")
     ItemProjection itemInfo(String companyCode, Integer plantNo, String itemNo);
 
@@ -116,4 +118,9 @@ public interface ItemRepository extends JpaRepository<Item, Long>, JpaSpecificat
     @Query("SELECT i.categoryCode as categoryCode, i.partNo as partNo FROM ITEM i WHERE i.companyCode = :companyCode " +
             "AND i.plantNo = :plantNo AND i.itemNo = :itemNo")
     ItemProjection itemCatCodePartNo(String companyCode, Integer plantNo, String itemNo);
+
+    @Query("SELECT s.itemNo as itemNo, i.loc as loc, i.uom as uom FROM ITEM i join SALEDET s on s.id.companyCode = i.companyCode " +
+            "AND s.id.plantNo = i.plantNo AND s.itemNo = i.itemNo WHERE s.id.orderNo =:docmNo AND i.companyCode = :companyCode " +
+            "AND i.plantNo = :plantNo AND i.itemNo = :itemNo")
+    List<ItemProjection> itemCur(String docmNo, String companyCode, Integer plantNo, String itemNo);
 }

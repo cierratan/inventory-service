@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
+import javax.validation.constraints.NotBlank;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.Set;
@@ -17,7 +18,10 @@ import java.util.Set;
 public class GrnDTO extends BaseDTO {
 
     private Long id;
+
+    @NotBlank(message = "Grn No Can Not be Blank !")
     private String grnNo;
+
     private String subType;
 
     private String poNo;

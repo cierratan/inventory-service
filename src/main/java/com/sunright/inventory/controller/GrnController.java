@@ -30,16 +30,15 @@ public class GrnController {
 
     @GetMapping("print-pick-list")
     public void generatePickList(HttpServletRequest request, HttpServletResponse response,
-                                                   @RequestParam String grnNo, @RequestParam String projectNo,
-                                                   @RequestParam String orderNo) {
+                                 @RequestParam String grnNo, @RequestParam String projectNo,
+                                 @RequestParam String orderNo) {
         grnService.generatePickListGrn(request, response, grnNo, projectNo, orderNo);
     }
 
     @GetMapping("print-report-grn")
-    public void generateReport(HttpServletRequest request, HttpServletResponse response,
-                                                 @RequestParam String grnNo, @RequestParam String subType,
-                                                 @RequestParam String type) {
-        grnService.generateReportGrn(request, response, grnNo, subType, type);
+    public void generateReport(HttpServletResponse response,
+                               @RequestParam String grnNo, @RequestParam String subType) {
+        grnService.generateReportGrn(response, grnNo, subType);
     }
 
     @GetMapping("grn-no-manual")
