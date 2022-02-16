@@ -11,12 +11,12 @@ import java.util.List;
 @Repository
 public interface MsrDetailRepository extends JpaRepository<MSRDetail, Long> {
 
-    @Query(value = "SELECT mdet.seqNo as seqNo, mdet.partNo as partNo, mdet.itemNo as itemNo FROM MSRDET mdet WHERE mdet.companyCode = :companyCode " +
+    @Query("SELECT mdet.seqNo as seqNo, mdet.partNo as partNo, mdet.itemNo as itemNo FROM MSRDET mdet WHERE mdet.companyCode = :companyCode " +
             "AND mdet.plantNo = :plantNo AND mdet.msrNo = :msrNo AND (mdet.partNo LIKE %:partNo% " +
             "or mdet.itemNo LIKE %:itemNo%) AND COALESCE(mdet.retnQty,0) > COALESCE(mdet.recdQty,0)")
     MSRDetailProjection showLovPartNo(String companyCode, Integer plantNo, String msrNo, String partNo, String itemNo);
 
-    @Query(value = "SELECT sd.partNo as partNo, sd.seqNo as seqNo, sd.itemNo as itemNo, substring(COALESCE(i.description, sd.remarks), 1, 60) as description, " +
+    @Query("SELECT sd.partNo as partNo, sd.seqNo as seqNo, sd.itemNo as itemNo, substring(COALESCE(i.description, sd.remarks), 1, 60) as description, " +
             "i.mslCode as mslCode, sd.itemType as itemType, sd.loc as loc, sd.uom as uom, sd.projectNo as projectNo, sd.grnNo as grnNo, " +
             "(COALESCE(sd.retnQty, 0) - COALESCE(sd.recdQty, 0)) as retnQty, sd.retnPrice as retnPrice " +
             "FROM MSRDET sd join ITEM i on i.companyCode = :companyCode AND i.plantNo = :plantNo AND i.itemNo = sd.itemNo WHERE " +
@@ -25,11 +25,11 @@ public interface MsrDetailRepository extends JpaRepository<MSRDetail, Long> {
             "OR sd.itemNo LIKE %:itemNo%) AND COALESCE(sd.retnQty, 0) > COALESCE(sd.recdQty, 0)")
     MSRDetailProjection itemInfo(String companyCode, Integer plantNo, String msrNo, String partNo, String itemNo, Integer msrSeqNo);
 
-    @Query(value = "SELECT COUNT(md) as countItemNo FROM MSRDET md WHERE md.companyCode = :companyCode AND md.plantNo = :plantNo " +
+    @Query("SELECT COUNT(md) as countItemNo FROM MSRDET md WHERE md.companyCode = :companyCode AND md.plantNo = :plantNo " +
             "AND md.msrNo = :msrNo AND md.itemNo LIKE %:itemNo% AND COALESCE(md.retnQty,0) > COALESCE(md.recdQty,0)")
     MSRDetailProjection getCountMsrByItemNo(String companyCode, Integer plantNo, String msrNo, String itemNo);
 
-    @Query(value = "SELECT COUNT(md) as countPartNo FROM MSRDET md WHERE md.companyCode = :companyCode AND md.plantNo = :plantNo " +
+    @Query("SELECT COUNT(md) as countPartNo FROM MSRDET md WHERE md.companyCode = :companyCode AND md.plantNo = :plantNo " +
             "AND md.msrNo = :msrNo AND md.partNo LIKE %:partNo% AND COALESCE(md.retnQty,0) > COALESCE(md.recdQty,0)")
     MSRDetailProjection getCountMsrByPartNo(String companyCode, Integer plantNo, String msrNo, String partNo);
 
@@ -47,4 +47,9 @@ public interface MsrDetailRepository extends JpaRepository<MSRDetail, Long> {
             "WHERE gd.companyCode = :companyCode and gd.plantNo = :plantNo and gd.grnNo = :grnNo " +
             "ORDER BY gd.seqNo ")
     List<MSRDetailProjection> populateMSRDetailBy(String companyCode, Integer plantNo, String grnNo);
+
+    @Query("SELECT (md.retnQty - coalesce(md.recdQty,0)) as recdQty " +
+            "FROM MSRDET md WHERE md.companyCode = :companyCode AND md.plantNo = :plantNo AND md.msrNo = :msrNo " +
+            "AND coalesce(md.itemNo,'X') = coalesce(:itemNo,'X') AND md.seqNo = :seqNo")
+    MSRDetailProjection getRecdQtyByMsrNo(String companyCode, Integer plantNo, String msrNo, String itemNo, Integer seqNo);
 }

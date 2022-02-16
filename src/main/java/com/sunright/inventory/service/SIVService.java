@@ -30,5 +30,5 @@ public interface SIVService {
 
     SIVDetailDTO checkValidIssuedQty(SIVDetailDTO input);
 
-    SIVDTO getDefaultValueSIVEntry() throws ParseException;
+    SIVDTO getDefaultValueSIVEntry(String subType) throws ParseException;
 }

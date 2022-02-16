@@ -43,4 +43,16 @@ public class SIVDetailDTO extends InvBaseDTO {
 
     private String batchDesc;
     private String batchNoLoc;
+
+    private BigDecimal issuedQty1;
+    private BigDecimal issuedQty2;
+    private BigDecimal issuedQty3;
+    private BigDecimal issuedQty4;
+    private BigDecimal issuedQty5;
+
+    private String projectNo1;
+    private String projectNo2;
+    private String projectNo3;
+    private String projectNo4;
+    private String projectNo5;
 }

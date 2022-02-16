@@ -2,19 +2,12 @@ package com.sunright.inventory.service;
 
 import com.sunright.inventory.dto.grn.GrnDTO;
 import com.sunright.inventory.dto.grn.GrnDetDTO;
-import com.sunright.inventory.dto.grn.GrnSupplierDTO;
 import com.sunright.inventory.dto.lov.DocmValueDTO;
 import com.sunright.inventory.dto.search.SearchRequest;
 import com.sunright.inventory.dto.search.SearchResult;
-import com.sunright.inventory.dto.supplier.SupplierDTO;
-import net.sf.jasperreports.engine.JRException;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.List;
 
@@ -46,7 +39,7 @@ public interface GrnService {
 
     DocmValueDTO getGeneratedNoManual();
 
-    void generateReportGrn(HttpServletRequest request, HttpServletResponse response, String grnNo, String subType, String type);
+    void generateReportGrn(HttpServletResponse response, String grnNo, String subType);
 
     void generatePickListGrn(HttpServletRequest request, HttpServletResponse response, String grnNo, String projectNo, String orderNo);
 

@@ -25,8 +25,8 @@ public class SIVController {
     private SIVService sivService;
 
     @GetMapping("default-value")
-    public ResponseEntity<SIVDTO> defValue() throws ParseException {
-        return new ResponseEntity<>(sivService.getDefaultValueSIVEntry(), HttpStatus.OK);
+    public ResponseEntity<SIVDTO> defValue(@RequestParam String subType) throws ParseException {
+        return new ResponseEntity<>(sivService.getDefaultValueSIVEntry(subType), HttpStatus.OK);
     }
 
     @PostMapping("check-valid-issued-qty")

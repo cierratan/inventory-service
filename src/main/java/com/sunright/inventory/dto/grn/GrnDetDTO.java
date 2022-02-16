@@ -17,7 +17,10 @@ import java.util.Date;
 public class GrnDetDTO extends BaseDTO {
 
     private Long id;
+
+    @NotBlank(message = "Grn No Can Not be Blank !")
     private String grnNo;
+
     private String subType;
     private Integer seqNo;
     private String poNo;
@@ -43,6 +46,7 @@ public class GrnDetDTO extends BaseDTO {
 
     @NotBlank(message = "Recd Price Can Not be Blank !")
     private BigDecimal recdPrice;
+
     private BigDecimal poPrice;
     private BigDecimal issuedQty;
 
