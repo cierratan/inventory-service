@@ -6,15 +6,21 @@ import com.sunright.inventory.dto.lov.DocmValueDTO;
 import com.sunright.inventory.dto.search.SearchRequest;
 import com.sunright.inventory.dto.search.SearchResult;
 import com.sunright.inventory.service.GrnService;
+import net.sf.jasperreports.engine.JRException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.List;
+
+import static org.springframework.http.HttpHeaders.CONTENT_DISPOSITION;
 
 @RestController
 @RequestMapping("grns")
@@ -23,22 +29,31 @@ public class GrnController {
     @Autowired
     private GrnService grnService;
 
-    @GetMapping("print-label")
-    public void generateLabel(HttpServletRequest request, HttpServletResponse response, @RequestParam String grnNo) {
-        grnService.generateLabelGrn(request, response, grnNo);
+    @PostMapping("label")
+    public ResponseEntity<byte[]> label(@RequestBody GrnDTO input) throws SQLException,
+            JRException, FileNotFoundException {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("filename",input.getGrnNo() + "_Label" + ".pdf");
+        return new ResponseEntity<>(grnService.generatedLabelGRN(input), headers, HttpStatus.OK);
     }
 
-    @GetMapping("print-pick-list")
-    public void generatePickList(HttpServletRequest request, HttpServletResponse response,
-                                 @RequestParam String grnNo, @RequestParam String projectNo,
-                                 @RequestParam String orderNo) {
-        grnService.generatePickListGrn(request, response, grnNo, projectNo, orderNo);
+    @PostMapping("picked-list")
+    public ResponseEntity<byte[]> pickedList(@RequestBody GrnDTO input) throws SQLException,
+            JRException, FileNotFoundException {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("filename",input.getGrnNo() + "_PickList" + ".pdf");
+        return new ResponseEntity<>(grnService.generatedPickedListGRN(input), headers, HttpStatus.OK);
     }
 
-    @GetMapping("print-report-grn")
-    public void generateReport(HttpServletResponse response,
-                               @RequestParam String grnNo, @RequestParam String subType) {
-        grnService.generateReportGrn(response, grnNo, subType);
+    @PostMapping("report")
+    public ResponseEntity<byte[]> report(@RequestBody GrnDTO input) throws SQLException,
+            JRException, IOException {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("filename",input.getGrnNo() + "_Report" + ".pdf");
+        return new ResponseEntity<>(grnService.generatedReportGRN(input), headers, HttpStatus.OK);
     }
 
     @GetMapping("grn-no-manual")

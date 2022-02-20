@@ -3,10 +3,14 @@ package com.sunright.inventory.repository;
 import com.sunright.inventory.entity.msr.MSRDetail;
 import com.sunright.inventory.entity.msr.MSRDetailProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
+import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface MsrDetailRepository extends JpaRepository<MSRDetail, Long> {
@@ -52,4 +56,11 @@ public interface MsrDetailRepository extends JpaRepository<MSRDetail, Long> {
             "FROM MSRDET md WHERE md.companyCode = :companyCode AND md.plantNo = :plantNo AND md.msrNo = :msrNo " +
             "AND coalesce(md.itemNo,'X') = coalesce(:itemNo,'X') AND md.seqNo = :seqNo")
     MSRDetailProjection getRecdQtyByMsrNo(String companyCode, Integer plantNo, String msrNo, String itemNo, Integer seqNo);
+
+    Optional<MSRDetail> getMSRDetailByCompanyCodeAndPlantNoAndMsrNoAndSeqNo(String companyCode, Integer plantNo, String msrNo, int seqNo);
+
+    @Modifying
+    @Query("UPDATE MSRDET md set md.recdQty = :recdQty, md.recdPrice = :recdPrice " +
+            "WHERE md.companyCode = :companyCode AND md.plantNo = :plantNo AND md.msrNo = :msrNo")
+    void updateRecdQty(BigDecimal recdQty, BigDecimal recdPrice, String companyCode, Integer plantNo, String msrNo);
 }

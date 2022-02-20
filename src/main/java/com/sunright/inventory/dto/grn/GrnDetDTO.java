@@ -25,6 +25,7 @@ public class GrnDetDTO extends BaseDTO {
     private Integer seqNo;
     private String poNo;
 
+    private String doNo;
     private String itemNo;
 
     @NotBlank(message = "Part No. Can Not be Blank !")
@@ -70,4 +71,5 @@ public class GrnDetDTO extends BaseDTO {
 
     private String message;
     private Integer dateCode;
+    private String mrvNo;
 }

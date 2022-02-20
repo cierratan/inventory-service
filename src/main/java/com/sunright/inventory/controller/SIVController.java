@@ -1,9 +1,6 @@
 package com.sunright.inventory.controller;
 
-import com.sunright.inventory.dto.ItemDTO;
-import com.sunright.inventory.dto.grn.GrnDTO;
 import com.sunright.inventory.dto.lov.DocmValueDTO;
-import com.sunright.inventory.dto.lov.LocationDTO;
 import com.sunright.inventory.dto.search.SearchRequest;
 import com.sunright.inventory.dto.search.SearchResult;
 import com.sunright.inventory.dto.siv.SIVDTO;
@@ -14,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.text.ParseException;
 import java.util.List;
 
@@ -24,29 +22,32 @@ public class SIVController {
     @Autowired
     private SIVService sivService;
 
+    @PostMapping("docm-no-next-item")
+    public ResponseEntity<List<SIVDetailDTO>> nextItem(@RequestBody SIVDTO input) {
+        return new ResponseEntity<>(sivService.getSIVManualDetails(input), HttpStatus.OK);
+    }
+
     @GetMapping("default-value")
     public ResponseEntity<SIVDTO> defValue(@RequestParam String subType) throws ParseException {
-        return new ResponseEntity<>(sivService.getDefaultValueSIVEntry(subType), HttpStatus.OK);
+        return new ResponseEntity<>(sivService.getDefaultValueSIV(subType), HttpStatus.OK);
     }
 
-    @PostMapping("check-valid-issued-qty")
-    public ResponseEntity<SIVDetailDTO> checkValid(@RequestBody SIVDetailDTO input) {
-        return new ResponseEntity<>(sivService.checkValidIssuedQty(input), HttpStatus.OK);
+    @GetMapping("check-valid-issued-qty")
+    public ResponseEntity<SIVDetailDTO> check(@RequestParam String projectNo,
+                                              @RequestParam String itemNo,
+                                              @RequestParam BigDecimal issuedQty,
+                                              @RequestParam int seqNo) {
+        return new ResponseEntity<>(sivService.checkValidIssuedQty(projectNo, itemNo, issuedQty, seqNo), HttpStatus.OK);
     }
 
-    @PostMapping("check-next-item")
-    public ResponseEntity<List<SIVDetailDTO>> nextItem(@RequestBody SIVDTO input) {
-        return new ResponseEntity<>(sivService.checkNextItem(input), HttpStatus.OK);
+    @GetMapping("populate-batch-list")
+    public ResponseEntity<List<SIVDetailDTO>> populateBatc(@RequestParam String projectNo) {
+        return new ResponseEntity<>(sivService.populateBatchList(projectNo), HttpStatus.OK);
     }
 
-    @GetMapping("item")
-    public ResponseEntity<List<ItemDTO>> getItemNo() {
-        return new ResponseEntity<>(sivService.getItemNo(), HttpStatus.OK);
-    }
-
-    @GetMapping("loc")
-    public ResponseEntity<List<LocationDTO>> getLoc() {
-        return new ResponseEntity<>(sivService.getLocAndDesc(), HttpStatus.OK);
+    @GetMapping("populate-detail")
+    public ResponseEntity<List<SIVDetailDTO>> populateDet(@RequestParam String projectNo) {
+        return new ResponseEntity<>(sivService.populateSivDetail(projectNo), HttpStatus.OK);
     }
 
     @GetMapping("project-no")

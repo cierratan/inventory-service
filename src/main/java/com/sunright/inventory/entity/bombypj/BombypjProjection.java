@@ -20,4 +20,6 @@ public interface BombypjProjection {
     BigDecimal getStdMaterial();
     BigDecimal getInTransitQty();
     BigDecimal getIssuedQty();
+    String getTranType();
+    BigDecimal getRecdQty();
 }
