@@ -72,10 +72,4 @@ public interface PurDetRepository extends JpaRepository<PurDet, PurDetId>, JpaSp
             "from PURDET p where p.id.companyCode = :companyCode and p.id.plantNo = :plantNo " +
             "and p.id.poNo = :poNo and p.id.recSeq = :recSeq")
     PurDetProjection purDetInfo(String companyCode, Integer plantNo, String poNo, Integer recSeq);
-
-    /*@Query("select coalesce(pd.unitPrice * p.currencyRate,0) as up " +
-            "from PURDET pd join PUR p on p.id.companyCode = pd.id.companyCode and p.id.plantNo = pd.id.plantNo " +
-            "and p.id.poNo = pd.id.poNo where p.id.companyCode = :companyCode and p.id.plantNo = :plantNo " +
-            "and p.id.poNo = :poNo and pd.itemNo = :itemNo and pd.loc = :loc")
-    PurDetProjection purDetCur(String companyCode, Integer plantNo, String poNo, Integer recSeq);*/
 }

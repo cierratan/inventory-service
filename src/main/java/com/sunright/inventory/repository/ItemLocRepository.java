@@ -28,8 +28,7 @@ public interface ItemLocRepository extends JpaRepository<ItemLoc, Long> {
 
     @Query("select (coalesce (i.qoh, 0) - coalesce(i.pickedQty, 0) - coalesce(i.rpcResv, 0) - coalesce(i.mrvResv, 0)) as availQty " +
             "from ITEMLOC i where i.companyCode = :companyCode and i.plantNo = :plantNo " +
-            "and i.itemNo = :itemNo and i.loc = (select c.stockLoc from COMPANY c " +
-            "where c.id.companyCode = :companyCode and c.id.plantNo = :plantNo)")
+            "and i.itemNo = :itemNo and i.loc = (select c.stockLoc from COMPANY c where c.id.companyCode = :companyCode and c.id.plantNo = :plantNo)")
     ItemLocProjection getItemAvailQohL(String companyCode, Integer plantNo, String itemNo);
 
     @Query("select sum(coalesce(i.qoh,0)) as availQty from ITEMLOC i where i.companyCode = :companyCode " +
@@ -68,6 +67,16 @@ public interface ItemLocRepository extends JpaRepository<ItemLoc, Long> {
                                                                 Integer plantNo, String itemNo, String loc);
 
     @Modifying
+    @Query("UPDATE ITEMLOC i set i.costVariance = :newCostVar, i.stdMaterial = :newStdMat, " +
+            "i.ytdReceipt = :ytdReceipt, i.batchNo = :newBatchNo, i.lastTranDate = :lastTranDate, " +
+            "i.lastPurPrice = :convCost WHERE i.companyCode = :companyCode " +
+            "AND i.plantNo = :plantNo AND i.itemNo = :itemNo AND i.loc = :loc")
+    void updateStdMatYtdRecBatchNoLTranDate(BigDecimal newCostVar, BigDecimal newStdMat,
+                                            BigDecimal ytdReceipt, BigDecimal newBatchNo,
+                                            Date lastTranDate, String companyCode,
+                                            Integer plantNo, String itemNo, String loc);
+
+    @Modifying
     @Query("UPDATE ITEMLOC i set i.stdMaterial = :newStdMat, i.ytdReceipt = :ytdReceipt, " +
             "i.batchNo = :newBatchNo, i.lastTranDate = :lastTranDate, " +
             "i.lastPurPrice = :convCost WHERE i.companyCode = :companyCode " +
@@ -75,6 +84,14 @@ public interface ItemLocRepository extends JpaRepository<ItemLoc, Long> {
     void updateStdMatYtdRecBatchNoLTranDateLPurPrice(BigDecimal newStdMat, BigDecimal ytdReceipt, BigDecimal newBatchNo,
                                                      Date lastTranDate, BigDecimal convCost, String companyCode,
                                                      Integer plantNo, String itemNo, String loc);
+
+    @Modifying
+    @Query("UPDATE ITEMLOC i set i.stdMaterial = :newStdMat, i.ytdReceipt = :ytdReceipt, " +
+            "i.batchNo = :newBatchNo, i.lastTranDate = :lastTranDate WHERE i.companyCode = :companyCode " +
+            "AND i.plantNo = :plantNo AND i.itemNo = :itemNo AND i.loc <> :loc")
+    void updateStdMatYtdRecBatchNoLTranDate(BigDecimal newStdMat, BigDecimal ytdReceipt, BigDecimal newBatchNo,
+                                            Date lastTranDate, String companyCode,
+                                            Integer plantNo, String itemNo, String loc);
 
     @Modifying
     @Query("UPDATE ITEMLOC i set i.qoh = :qoh WHERE i.companyCode = :companyCode " +
@@ -124,14 +141,14 @@ public interface ItemLocRepository extends JpaRepository<ItemLoc, Long> {
             "where ib.companyCode = :companyCode and ib.plantNo = :plantNo and ib.itemNo = :itemNo and ib.loc = :loc")
     List<ItemLocProjection> itemLocCur(String companyCode, Integer plantNo, String itemNo, String loc);
 
-    @Query("select distinct coalesce((select sum(coalesce(i.prodnResv,0)) from ITEMLOC il where il.companyCode = :companyCode " +
-            "and il.plantNo = :plantNo and il.itemNo = :itemNo),0) as prodnResv, " +
-            "coalesce((select sum(coalesce(b.resvQty,0)) from BOMBYPJ b where b.id.companyCode = :companyCode " +
-            "and b.id.plantNo = :plantNo and coalesce(b.resvQty,0) <> 0 and b.id.alternate = :itemNo),0) as resvQty, " +
-            "coalesce((select sum(coalesce(pd.resvQty,0)) from PURDET pd join PUR p on p.id.companyCode = pd.id.companyCode " +
-            "and p.id.plantNo = pd.id.plantNo and coalesce(p.openClose,'O') not in ('V') and p.id.poNo = pd.id.poNo " +
-            "and pd.id.companyCode = :companyCode and pd.id.plantNo = :plantNo and coalesce(pd.advStatus,'N') = 'Y' " +
-            "and pd.itemNo = :itemNo),0) as poResvQty from ITEMLOC i where i.companyCode = :companyCode and i.plantNo = :plantNo " +
-            "and i.itemNo = :itemNo")
+    @Query(value = "SELECT nvl(s1.prodn_resv, 0) AS prodnResv, nvl(s2.resv_qty, 0) AS resvQty, nvl(s3.po_resv_qty, 0) AS poResvQty " +
+            "FROM (SELECT SUM(nvl(i.prodn_resv, 0)) prodn_resv FROM itemloc i WHERE i.company_code = :companyCode AND i.plant_no = :plantNo " +
+            "AND i.item_no = :itemNo) s1, (SELECT SUM(nvl(b.resv_qty, 0)) resv_qty FROM bombypj b " +
+            "WHERE b.company_code = :companyCode AND b.plant_no = :plantNo AND nvl(b.resv_qty, 0) <> 0 " +
+            "AND b.alternate = :itemNo) s2, (SELECT SUM(nvl(pd.resv_qty, 0)) po_resv_qty " +
+            "FROM purdet pd, pur p WHERE  p.company_code = pd.company_code AND p.plant_no = pd.plant_no " +
+            "AND nvl(p.open_close, 'O') NOT IN ( 'V' ) AND p.po_no = pd.po_no AND pd.company_code = :companyCode " +
+            "AND pd.plant_no = :plantNo AND nvl(pd.adv_status, 'N') = 'Y' " +
+            "AND nvl(pd.order_qty, 0) > nvl(pd.recd_qty, 0) AND pd.item_no = :itemNo) s3", nativeQuery = true)
     ItemLocProjection getResv(String companyCode, Integer plantNo, String itemNo);
 }

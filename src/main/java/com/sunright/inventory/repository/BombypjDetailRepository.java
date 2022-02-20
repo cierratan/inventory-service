@@ -29,4 +29,8 @@ public interface BombypjDetailRepository extends JpaRepository<BombypjDet, Bomby
             "AND b.poNo = :poNo AND b.id.alternate = :itemNo")
     void updateAccRecdStatusGrnNo(BigDecimal accumRecdQty, BigDecimal recdQty, String status, String grnNo,
                                   String companyCode, Integer plantNo, String projectNo, String poNo, String itemNo);
+
+    @Query("SELECT DISTINCT b.id.projectNo as projectNo, b.id.orderNo as orderNo " +
+            "FROM BOMBYPJ_DET b WHERE b.id.companyCode = :companyCode AND b.id.plantNo = :plantNo AND b.grnNo = :grnNo")
+    BombypjDetailProjection getProjectOrderNo(String companyCode, Integer plantNo, String grnNo);
 }

@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ItemRepository extends JpaRepository<Item, Long>, JpaSpecificationExecutor<Item> {
@@ -87,7 +88,7 @@ public interface ItemRepository extends JpaRepository<Item, Long>, JpaSpecificat
             "WHERE i.companyCode = :companyCode AND i.plantNo = :plantNo AND i.itemNo = :itemNo")
     ItemProjection getDataItemCur(String companyCode, Integer plantNo, String itemNo);
 
-    @Query("SELECT i.uom as uom FROM ITEM i WHERE i.companyCode = :companyCode AND i.plantNo = :plantNo AND i.itemNo = :itemNo")
+    @Query("SELECT i.uom as uom, i.source as source FROM ITEM i WHERE i.companyCode = :companyCode AND i.plantNo = :plantNo AND i.itemNo = :itemNo")
     ItemProjection getItemUomByItemNo(String companyCode, Integer plantNo, String itemNo);
 
     @Modifying
@@ -97,6 +98,14 @@ public interface ItemRepository extends JpaRepository<Item, Long>, JpaSpecificat
     void updateDataItems(BigDecimal qoh, BigDecimal itemOrderQty, BigDecimal newStdMat, BigDecimal newCostVar,
                          BigDecimal ytdReceipt, Date lastTranDate, BigDecimal convCost, BigDecimal newBatchNo,
                          String companyCode, Integer plantNo, String itemNo);
+
+    @Modifying
+    @Query("UPDATE ITEM i set i.qoh = :qoh, i.stdMaterial = :newStdMat, i.costVariance = :newCostVar, " +
+            "i.ytdReceipt = :ytdReceipt, i.lastTranDate = :lastTranDate, i.batchNo = :newBatchNo " +
+            "WHERE i.companyCode = :companyCode AND i.plantNo = :plantNo AND i.itemNo = :itemNo")
+    void updateQohStdMatCostVarYtdRecLTranDateBatchNo(BigDecimal qoh, BigDecimal newStdMat, BigDecimal newCostVar,
+                                                      BigDecimal ytdReceipt, Date lastTranDate, BigDecimal newBatchNo,
+                                                      String companyCode, Integer plantNo, String itemNo);
 
     @Modifying
     @Query("UPDATE ITEM i set i.pickedQty = :pickedQty, i.prodnResv = :prodnResv WHERE i.companyCode = :companyCode " +
@@ -123,4 +132,6 @@ public interface ItemRepository extends JpaRepository<Item, Long>, JpaSpecificat
             "AND s.id.plantNo = i.plantNo AND s.itemNo = i.itemNo WHERE s.id.orderNo =:docmNo AND i.companyCode = :companyCode " +
             "AND i.plantNo = :plantNo AND i.itemNo = :itemNo")
     List<ItemProjection> itemCur(String docmNo, String companyCode, Integer plantNo, String itemNo);
+
+    Optional<Item> getItemByCompanyCodeAndPlantNoAndItemNo(String companyCode, Integer plantNo, String itemNo);
 }

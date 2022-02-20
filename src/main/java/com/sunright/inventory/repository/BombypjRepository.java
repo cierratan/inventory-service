@@ -54,7 +54,7 @@ public interface BombypjRepository extends JpaRepository<Bombypj, BombypjId>, Jp
     @Query("select b.id.projectNo as projectNo, b.id.alternate as alternate , i.partNo as partNo, i.loc as loc, i.uom as uom, l.stdMaterial as stdMaterial, " +
             "coalesce(sum(coalesce(b.shortQty, 0)),0, sum(coalesce(b.resvQty, 0) - coalesce(b.inTransitQty, 0) - coalesce(b.pickedQty, 0)), " +
             "sum(coalesce(b.shortQty, 0))) as shortQty, sum(coalesce(b.pickedQty, 0)) as pickedQty " +
-            "from BOMBYPJ b join ITEM i on i.companyCode = b.id.companyCode and i.plantNo = b.id.plantNo and i.itemNo = b.id.alternate join ITEMLOC l " +
+            "from BOMBYPJ b left join ITEM i on i.companyCode = b.id.companyCode and i.plantNo = b.id.plantNo and i.itemNo = b.id.alternate left join ITEMLOC l " +
             "on l.loc = i.loc and l.companyCode = i.companyCode and l.plantNo = i.plantNo and l.itemNo = i.itemNo " +
             "where b.id.companyCode = :companyCode and b.id.plantNo = :plantNo and coalesce(b.statuz, 'R') NOT IN ('D', 'X') " +
             "and (coalesce(b.pickedQty, 0) > 0 or (coalesce(coalesce(b.shortQty, 0),0, " +
@@ -103,4 +103,20 @@ public interface BombypjRepository extends JpaRepository<Bombypj, BombypjId>, Jp
             "where b.id.companyCode = :companyCode and b.id.plantNo = :plantNo and coalesce(b.statuz, 'R') NOT IN ('D', 'X') " +
             "and b.id.projectNo = :projectNo and b.id.alternate = :itemNo group by i.partNo,i.loc,i.uom,i.source,l.stdMaterial")
     BombypjProjection bombypjCur(String companyCode, Integer plantNo, String projectNo, String itemNo);
+
+    @Query("SELECT b.tranType as tranType, b.id.orderNo as orderNo, b.id.projectNo as projectNo,b.id.alternate as alternate," +
+            "coalesce(b.recdQty,0) as recdQty, coalesce(b.resvQty,0) as resvQty, " +
+            "coalesce(b.shortQty,0) as shortQty, coalesce(b.issuedQty,0) as issuedQty, coalesce(b.pickedQty,0) as pickedQty FROM BOMBYPJ b " +
+            "WHERE b.id.companyCode = :companyCode AND b.id.plantNo = :plantNo AND b.id.projectNo = :projectNo " +
+            "AND b.id.alternate = :itemNo AND coalesce(b.resvQty,0) > 0 " +
+            "AND COALESCE(b.statuz, 'R') NOT IN ('D', 'X') ORDER BY b.id.assemblyNo, b.id.alternate")
+    List<BombypjProjection> bombypjCurList(String companyCode, Integer plantNo, String projectNo, String itemNo);
+
+    @Modifying
+    @Query("UPDATE BOMBYPJ b set b.pickedQty = :pickedQty, b.shortQty = :shortQty, b.resvQty = :resvQty, b.delvDate = :delvDate " +
+            "WHERE b.id.companyCode = :companyCode and b.id.plantNo = :plantNo " +
+            "and b.id.orderNo = :orderNo and b.id.alternate = :alternate and b.id.projectNo = :projectNo")
+    void updatePickedShortResvQtyDelvDate(BigDecimal pickedQty, BigDecimal shortQty, BigDecimal resvQty, Date delvDate,
+                                          String companyCode, Integer plantNo,
+                                          String orderNo, String alternate, String projectNo);
 }

@@ -58,6 +58,7 @@ public class ItemDTO extends InvBaseDTO {
     private BigDecimal qoh;
     private BigDecimal prodnResv;
     private BigDecimal orderQty;
+    private BigDecimal batchNo;
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private BigDecimal eoh;

@@ -5,9 +5,14 @@ import com.sunright.inventory.dto.grn.GrnDetDTO;
 import com.sunright.inventory.dto.lov.DocmValueDTO;
 import com.sunright.inventory.dto.search.SearchRequest;
 import com.sunright.inventory.dto.search.SearchResult;
+import net.sf.jasperreports.engine.JRException;
+import org.springframework.http.HttpHeaders;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.List;
 
@@ -39,9 +44,9 @@ public interface GrnService {
 
     DocmValueDTO getGeneratedNoManual();
 
-    void generateReportGrn(HttpServletResponse response, String grnNo, String subType);
+    byte[] generatedReportGRN(GrnDTO input) throws SQLException, IOException, JRException;
 
-    void generatePickListGrn(HttpServletRequest request, HttpServletResponse response, String grnNo, String projectNo, String orderNo);
+    byte[] generatedPickedListGRN(GrnDTO input) throws SQLException, FileNotFoundException, JRException;
 
-    void generateLabelGrn(HttpServletRequest request, HttpServletResponse response, String grnNo);
+    byte[] generatedLabelGRN(GrnDTO input) throws SQLException, FileNotFoundException, JRException;
 }

@@ -1,13 +1,12 @@
 package com.sunright.inventory.service;
 
-import com.sunright.inventory.dto.ItemDTO;
 import com.sunright.inventory.dto.lov.DocmValueDTO;
-import com.sunright.inventory.dto.lov.LocationDTO;
 import com.sunright.inventory.dto.search.SearchRequest;
 import com.sunright.inventory.dto.search.SearchResult;
 import com.sunright.inventory.dto.siv.SIVDTO;
 import com.sunright.inventory.dto.siv.SIVDetailDTO;
 
+import java.math.BigDecimal;
 import java.text.ParseException;
 import java.util.List;
 
@@ -22,13 +21,13 @@ public interface SIVService {
 
     List<SIVDTO> getProjectNoByStatus();
 
-    List<LocationDTO> getLocAndDesc();
+    List<SIVDetailDTO> populateSivDetail(String projectNo);
 
-    List<ItemDTO> getItemNo();
+    SIVDTO getDefaultValueSIV(String subType) throws ParseException;
 
-    List<SIVDetailDTO> checkNextItem(SIVDTO input);
+    List<SIVDetailDTO> populateBatchList(String projectNo);
 
-    SIVDetailDTO checkValidIssuedQty(SIVDetailDTO input);
+    SIVDetailDTO checkValidIssuedQty(String projectNo, String itemNo, BigDecimal issuedQty, int seqNo);
 
-    SIVDTO getDefaultValueSIVEntry(String subType) throws ParseException;
+    List<SIVDetailDTO> getSIVManualDetails(SIVDTO input);
 }
