@@ -16,6 +16,8 @@ public class MRVDetail implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private String companyCode;
+    private Integer plantNo;
     private String mrvNo;
     private int seqNo;
     private String itemNo;

@@ -8,9 +8,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface MRVDetailRepository extends JpaRepository<MRVDetail, MRVDetailId>, JpaSpecificationExecutor<MRVDetail> {
+public interface MRVDetailRepository extends JpaRepository<MRVDetail, Long>, JpaSpecificationExecutor<MRVDetail> {
 
-    @Query("SELECT md.projectNo as projectNo FROM MRVDET md WHERE md.id.companyCode = :companyCode AND md.id.plantNo = :plantNo " +
-            "AND md.id.mrvNo = :mrvNo AND md.itemNo = :itemNo AND md.id.seqNo = :seqNo")
+    @Query("SELECT md.projectNo as projectNo FROM MRVDET md WHERE md.companyCode = :companyCode AND md.plantNo = :plantNo " +
+            "AND md.mrvNo = :mrvNo AND md.itemNo = :itemNo AND md.seqNo = :seqNo")
     MRVDetailProjection mrvDetCur(String companyCode, Integer plantNo, String mrvNo, String itemNo, int seqNo);
 }
