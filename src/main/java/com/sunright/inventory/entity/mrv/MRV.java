@@ -31,7 +31,6 @@ public class MRV extends InvBaseEntity {
     private BigDecimal currencyRate;
 
     private String entryTime;
-    private String status;
 
     @OneToMany(fetch = FetchType.EAGER, mappedBy = "mrv", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<MRVDetail> mrvDetails;
