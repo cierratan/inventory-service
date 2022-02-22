@@ -50,11 +50,11 @@ public interface ItemLocRepository extends JpaRepository<ItemLoc, Long> {
             "and l.companyCode = :companyCode and l.plantNo = :plantNo and l.itemNo = :itemNo group by l.loc")
     ItemLocProjection getItemLocByItemNo(String companyCode, Integer plantNo, String loc, String itemNo);
 
-    @Query("select l.batchNo as batchNo, sum(coalesce(l.costVariance,0)) as costVariance, " +
+    /*@Query("select l.batchNo as batchNo, sum(coalesce(l.costVariance,0)) as costVariance, " +
             "sum(coalesce(l.qoh,0)) as qoh, sum(coalesce(l.orderQty,0)) as orderQty, coalesce(l.stdMaterial,0) as stdMaterial " +
             "from ITEMLOC l where l.companyCode = :companyCode and l.plantNo = :plantNo " +
             "and l.itemNo = :itemNo group by l.batchNo, l.stdMaterial")
-    ItemLocProjection getItemLocSumByItemNo(String companyCode, Integer plantNo, String itemNo);
+    ItemLocProjection getItemLocSumByItemNo(String companyCode, Integer plantNo, String itemNo);*/
 
     @Modifying
     @Query("UPDATE ITEMLOC i set i.orderQty = :qoh, i.costVariance = :newCostVar, i.stdMaterial = :newStdMat, " +
@@ -137,9 +137,9 @@ public interface ItemLocRepository extends JpaRepository<ItemLoc, Long> {
                                            Date lastTranDate, String companyCode,
                                            Integer plantNo, String itemNo, String loc);
 
-    @Query("select ib.itemNo as itemNo from ITEMLOC ib " +
+    @Query("select ib.itemNo as itemNo, ib.stdMaterial as stdMaterial from ITEMLOC ib " +
             "where ib.companyCode = :companyCode and ib.plantNo = :plantNo and ib.itemNo = :itemNo and ib.loc = :loc")
-    List<ItemLocProjection> itemLocCur(String companyCode, Integer plantNo, String itemNo, String loc);
+    ItemLocProjection itemLocCur(String companyCode, Integer plantNo, String itemNo, String loc);
 
     @Query(value = "SELECT nvl(s1.prodn_resv, 0) AS prodnResv, nvl(s2.resv_qty, 0) AS resvQty, nvl(s3.po_resv_qty, 0) AS poResvQty " +
             "FROM (SELECT SUM(nvl(i.prodn_resv, 0)) prodn_resv FROM itemloc i WHERE i.company_code = :companyCode AND i.plant_no = :plantNo " +

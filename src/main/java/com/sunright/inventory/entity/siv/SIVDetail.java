@@ -7,6 +7,7 @@ import lombok.Setter;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
+import java.util.Set;
 
 @Entity(name = "SIVDET")
 @Setter
@@ -56,4 +57,7 @@ public class SIVDetail {
     @ManyToOne
     @JoinColumn(name = "SIV_ID", nullable = false)
     private SIV siv;
+
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "sivDetail")
+    private Set<SIVDetailSub> sivDetailSub;
 }

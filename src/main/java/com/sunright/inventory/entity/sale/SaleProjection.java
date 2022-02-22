@@ -6,4 +6,6 @@ public interface SaleProjection {
     String getProductDesc();
     String getReasonCode();
     String getReasonDesc();
+    String getOrderNo();
+    String getOpenClose();
 }

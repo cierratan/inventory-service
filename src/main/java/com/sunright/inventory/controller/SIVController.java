@@ -22,9 +22,9 @@ public class SIVController {
     @Autowired
     private SIVService sivService;
 
-    @PostMapping("docm-no-next-item")
-    public ResponseEntity<List<SIVDetailDTO>> nextItem(@RequestBody SIVDTO input) {
-        return new ResponseEntity<>(sivService.getSIVManualDetails(input), HttpStatus.OK);
+    @PostMapping("populate-detail-manual")
+    public ResponseEntity<List<SIVDetailDTO>> populateDetManual(@RequestBody SIVDTO input) {
+        return new ResponseEntity<>(sivService.populateSIVManualDetails(input), HttpStatus.OK);
     }
 
     @GetMapping("default-value")
@@ -32,12 +32,14 @@ public class SIVController {
         return new ResponseEntity<>(sivService.getDefaultValueSIV(subType), HttpStatus.OK);
     }
 
-    @GetMapping("check-valid-issued-qty")
-    public ResponseEntity<SIVDetailDTO> check(@RequestParam String projectNo,
-                                              @RequestParam String itemNo,
-                                              @RequestParam BigDecimal issuedQty,
-                                              @RequestParam int seqNo) {
-        return new ResponseEntity<>(sivService.checkValidIssuedQty(projectNo, itemNo, issuedQty, seqNo), HttpStatus.OK);
+    @PostMapping("check-valid-item-no")
+    public ResponseEntity<SIVDetailDTO> checkItemNo(@RequestBody SIVDTO input) {
+        return new ResponseEntity<>(sivService.checkValidItemNo(input), HttpStatus.OK);
+    }
+
+    @PostMapping("check-valid-issued-qty")
+    public ResponseEntity<SIVDetailDTO> checkIssuedQty(@RequestBody SIVDTO input) {
+        return new ResponseEntity<>(sivService.checkValidIssuedQty(input), HttpStatus.OK);
     }
 
     @GetMapping("populate-batch-list")

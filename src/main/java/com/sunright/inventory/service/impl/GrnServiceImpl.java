@@ -1163,11 +1163,11 @@ public class GrnServiceImpl implements GrnService {
                     item.setItemNo(detail.getPartNo());
                 }
                 item.setPartNo(detail.getPartNo());
-                item.setDescription(detail.getDescription());
+                item.setRemarks(detail.getRemarks());
                 if (grnDetail.getItemNo() != null) {
                     item.setCategoryCode(grnDetail.getItemNo().substring(0, 3));
                 } else {
-                    item.setCategoryCode(null);
+                    item.setCategoryCode(grnDetail.getPartNo().substring(0, 1));
                 }
                 if (input.getSubType().equals("M")) {
                     item.setQoh(grnQty);
@@ -1179,6 +1179,8 @@ public class GrnServiceImpl implements GrnService {
                     item.setYtdReceipt(convQty);
                     item.setStdMaterial(newStdMat);
                 }
+                item.setProdnResv(BigDecimal.ZERO);
+                item.setStrRohsStatus("1");
                 item.setCostVariance(newCostVar);
                 item.setBatchNo(newBatchNo);
                 item.setLastTranDate(lastTranDate);
@@ -1467,7 +1469,7 @@ public class GrnServiceImpl implements GrnService {
             }
 
             if (input.getSubType().equals("M")) {
-                BigDecimal recdQty = detail.getRecdQty().multiply(convUom);
+                BigDecimal vRecdQty = (detail.getRecdQty() == null ? BigDecimal.ZERO : detail.getRecdQty()).multiply(convUom);
                 BigDecimal itemPickQty = BigDecimal.ZERO;
                 BigDecimal itemProdnResv = BigDecimal.ZERO;
                 /***************************** BOMBYPJ UPDATE *****************************/
@@ -1476,7 +1478,6 @@ public class GrnServiceImpl implements GrnService {
                 for (BombypjProjection bombypjCur : bombypjCurs) {
                     String tranType = bombypjCur.getTranType();
                     String orderNo = bombypjCur.getOrderNo();
-                    BigDecimal vRecdQty = bombypjCur.getRecdQty();
                     BigDecimal vResvQty = bombypjCur.getResvQty();
                     BigDecimal vShortQty = bombypjCur.getShortQty();
                     BigDecimal vIssuedQty = bombypjCur.getIssuedQty();
