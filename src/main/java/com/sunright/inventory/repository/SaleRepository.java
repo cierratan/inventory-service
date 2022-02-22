@@ -17,4 +17,8 @@ public interface SaleRepository extends JpaRepository<Sale, SaleId>, JpaSpecific
             "AND cr.id.docmType in ('WO') AND s.id.companyCode = :companyCode " +
             "AND s.id.plantNo = :plantNo AND s.id.orderNo = :docmNo")
     SaleProjection saleCoqReasonsDet(String companyCode, Integer plantNo, String docmNo);
+
+    @Query("SELECT s.id.orderNo as orderNo, s.openClose as openClose " +
+            "FROM SALE s WHERE s.id.companyCode = :companyCode AND s.id.plantNo = :plantNo AND s.id.orderNo = :docmNo")
+    SaleProjection cOrder(String companyCode, Integer plantNo, String docmNo);
 }

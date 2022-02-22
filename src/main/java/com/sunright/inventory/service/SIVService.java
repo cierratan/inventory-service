@@ -27,7 +27,9 @@ public interface SIVService {
 
     List<SIVDetailDTO> populateBatchList(String projectNo);
 
-    SIVDetailDTO checkValidIssuedQty(String projectNo, String itemNo, BigDecimal issuedQty, int seqNo);
+    SIVDetailDTO checkValidIssuedQty(SIVDTO input);
 
-    List<SIVDetailDTO> getSIVManualDetails(SIVDTO input);
+    List<SIVDetailDTO> populateSIVManualDetails(SIVDTO input);
+
+    SIVDetailDTO checkValidItemNo(SIVDTO input);
 }

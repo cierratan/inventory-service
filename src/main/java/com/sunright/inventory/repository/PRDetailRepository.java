@@ -76,4 +76,19 @@ public interface PRDetailRepository extends JpaRepository<PRDetail, PRDetailId>,
             "order by 2, 6", nativeQuery = true)
     List<PRDetailProjection> bombypjCur(String saleType, String docmNo, String remarks,
                                         String companyCode, Integer plantNo, String tranType);
+
+    @Query(value = "select (sum(iss) / sum(req)) as issReq " +
+            "from (select count(alternate) iss, 0 req" +
+            "      from bombypj" +
+            "      where company_code = :companyCode" +
+            "        and plant_no = :plantNo" +
+            "        and project_no = :docmNo" +
+            "        and nvl(issued_qty, 0) = nvl(reqd_qty, 0)" +
+            "      union" +
+            "      select 0, count(rec_seq)" +
+            "      from prdet" +
+            "      where company_code = :companyCode" +
+            "        and plant_no = :plantNo" +
+            "        and docm_no = :docmNo)", nativeQuery = true)
+    PRDetailProjection cComplete(String companyCode, Integer plantNo, String docmNo);
 }

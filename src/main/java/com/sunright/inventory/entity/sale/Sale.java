@@ -38,6 +38,7 @@ public class Sale {
     private String coqReasonCode;
     private String coqDivCode;
     private String coqDeptCode;
+    private String openClose;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "sale")
     private Set<SaleDetail> saleDetails;

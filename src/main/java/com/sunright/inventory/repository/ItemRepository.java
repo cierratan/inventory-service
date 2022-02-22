@@ -133,5 +133,7 @@ public interface ItemRepository extends JpaRepository<Item, Long>, JpaSpecificat
             "AND i.plantNo = :plantNo AND i.itemNo = :itemNo")
     List<ItemProjection> itemCur(String docmNo, String companyCode, Integer plantNo, String itemNo);
 
-    Optional<Item> getItemByCompanyCodeAndPlantNoAndItemNo(String companyCode, Integer plantNo, String itemNo);
+    @Query("SELECT i.itemNo as itemNo, i.loc as loc, i.uom as uom FROM ITEM i WHERE i.companyCode = :companyCode " +
+            "AND i.plantNo = :plantNo AND i.itemNo = :itemNo")
+    ItemProjection itemOtherCurOrItemPRCur(String companyCode, Integer plantNo, String itemNo);
 }
