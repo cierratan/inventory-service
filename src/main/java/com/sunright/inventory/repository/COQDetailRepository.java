@@ -20,6 +20,6 @@ public interface COQDetailRepository extends JpaRepository<COQDetail, COQDetailI
 
     @Modifying
     @Query("UPDATE COQ_DET cd set cd.docmQty = :docmQty WHERE cd.id.companyCode = :companyCode AND cd.id.plantNo = :plantNo " +
-            "AND cd.id.recSeq = :recSeq AND cd.id.docmNo = :docmNo")
-    void updateDocmQty(BigDecimal docmQty, String companyCode, Integer plantNo, Integer recSeq, String docmNo);
+            "AND cd.seqNo = :seqNo AND cd.id.docmNo = :docmNo")
+    void updateDocmQty(BigDecimal docmQty, String companyCode, Integer plantNo, Integer seqNo, String docmNo);
 }

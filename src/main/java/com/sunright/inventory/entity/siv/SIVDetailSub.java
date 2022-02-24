@@ -24,7 +24,7 @@ public class SIVDetailSub {
     private String subType;
     private String sivNo;
     private int seqNo;
-    private int detailSeq;
+    private Integer detailSeq;
     private String itemNo;
     private String saleType;
     private String docmNo;

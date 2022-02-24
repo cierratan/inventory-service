@@ -33,5 +33,5 @@ public class SIVDTO extends InvBaseDTO {
     private Set<SIVDetailDTO> sivDetails;
 
     private String entryUser;
-    private ZonedDateTime entryDate;
+    private Date entryDate;
 }

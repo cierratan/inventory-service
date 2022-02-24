@@ -24,8 +24,16 @@ public interface BombypjRepository extends JpaRepository<Bombypj, BombypjId>, Jp
             "AND COALESCE(b.statuz, 'R') NOT IN ('D', 'X')")
     BombypjProjection getAltrnt(String companyCode, Integer plantNo, String projectNo, String itemNo);
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    /*@Lock(LockModeType.PESSIMISTIC_WRITE)
     @QueryHints({@QueryHint(name = "javax.persistence.lock.timeout", value = "3000")})
+    @Query("SELECT b.mrvResv as mrvResv, b.id.orderNo as orderNo, " +
+            "b.id.assemblyNo as assemblyNo, b.id.component as component, b.id.alternate as alternate, b.id.projectNo as projectNo, " +
+            "b.resvQty as resvQty, b.shortQty as shortQty, b.pickedQty as pickedQty, b.issuedQty as issuedQty " +
+            "FROM BOMBYPJ b " +
+            "WHERE b.id.companyCode = :companyCode AND b.id.plantNo = :plantNo" +
+            "   AND b.id.projectNo = :projectNo AND b.id.alternate = :alternate ")
+    BombypjProjection getBombypjInfo(String companyCode, Integer plantNo, String projectNo, String alternate);*/
+
     @Query("SELECT b.mrvResv as mrvResv, b.id.orderNo as orderNo, " +
             "b.id.assemblyNo as assemblyNo, b.id.component as component, b.id.alternate as alternate, b.id.projectNo as projectNo, " +
             "b.resvQty as resvQty, b.shortQty as shortQty, b.pickedQty as pickedQty, b.issuedQty as issuedQty " +
@@ -54,7 +62,7 @@ public interface BombypjRepository extends JpaRepository<Bombypj, BombypjId>, Jp
     @Query("select b.id.projectNo as projectNo, b.id.alternate as alternate , i.partNo as partNo, i.loc as loc, i.uom as uom, l.stdMaterial as stdMaterial, " +
             "coalesce(sum(coalesce(b.shortQty, 0)),0, sum(coalesce(b.resvQty, 0) - coalesce(b.inTransitQty, 0) - coalesce(b.pickedQty, 0)), " +
             "sum(coalesce(b.shortQty, 0))) as shortQty, sum(coalesce(b.pickedQty, 0)) as pickedQty " +
-            "from BOMBYPJ b join ITEM i on i.companyCode = b.id.companyCode and i.plantNo = b.id.plantNo and i.itemNo = b.id.alternate join ITEMLOC l " +
+            "from BOMBYPJ b left join ITEM i on i.companyCode = b.id.companyCode and i.plantNo = b.id.plantNo and i.itemNo = b.id.alternate left join ITEMLOC l " +
             "on l.loc = i.loc and l.companyCode = i.companyCode and l.plantNo = i.plantNo and l.itemNo = i.itemNo " +
             "where b.id.companyCode = :companyCode and b.id.plantNo = :plantNo and coalesce(b.statuz, 'R') NOT IN ('D', 'X') " +
             "and (coalesce(b.pickedQty, 0) > 0 or (coalesce(coalesce(b.shortQty, 0),0, " +
@@ -120,7 +128,7 @@ public interface BombypjRepository extends JpaRepository<Bombypj, BombypjId>, Jp
                                           String companyCode, Integer plantNo,
                                           String orderNo, String alternate, String projectNo);
 
-    @Query("SELECT CASE WHEN (SUM(COALESCE(b.pickedQty,:plantNo)) = :plantNo) THEN (SUM(coalesce(b.shortQty, :plantNo))) ELSE (SUM(COALESCE (b.pickedQty, :plantNo))) END as pickedQty " +
+    @Query("SELECT CASE WHEN (SUM(COALESCE(b.pickedQty,0)) = 0) THEN (SUM(coalesce(b.shortQty, 0))) ELSE (SUM(COALESCE (b.pickedQty, 0))) END as pickedQty " +
             "FROM BOMBYPJ b WHERE b.id.companyCode = :companyCode AND b.id.plantNo = :plantNo AND b.id.projectNo = :projectNo " +
             "AND b.id.alternate = :itemNo")
     BombypjProjection bombypjCurCaseWhen(String companyCode, Integer plantNo, String projectNo, String itemNo);

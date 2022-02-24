@@ -22,13 +22,13 @@ public interface COQRepository extends JpaRepository<COQ, COQId>, JpaSpecificati
             "  and cd.company_code(+) = :companyCode" +
             "  and cd.plant_no(+) = :plantNo" +
             "  and cd.item_no(+) = :itemNo" +
-            "  and cd.item_type(+) = :plantNo" +
+            "  and cd.item_type(+) = 0" +
             "  and cd.docm_no(+) = c.docm_no" +
             "  and c.company_code = :companyCode" +
             "  and c.plant_no = :plantNo" +
             "  and c.docm_type in (:WKType)" +
             "  and c.project_no_sub = :projectNo " +
-            "group by c.docm_no, c.docm_type, cd.rowid, cd.rec_seq, nvl(cd.docm_qty, :plantNo) " +
+            "group by c.docm_no, c.docm_type, cd.rec_seq, nvl(cd.docm_qty, 0) " +
             "union " +
             "select c.docm_no as docmNo, c.docm_type as docmType, cd.rec_seq as recSeq, nvl(cd.docm_qty, 0) as docmQty, nvl(max(cs.seq_no), 0) as seqNo " +
             "from coq c," +
@@ -46,7 +46,23 @@ public interface COQRepository extends JpaRepository<COQ, COQId>, JpaSpecificati
             "  and c.company_code = :companyCode" +
             "  and c.plant_no = :plantNo" +
             "  and c.docm_type in (:PRType)" +
-            "  and c.docm_no = pDocmNo " +
-            "group by c.docm_no, c.docm_type, cd.rowid, cd.rec_seq, nvl(cd.docm_qty, :plantNo)", nativeQuery = true)
-    COQProjection coqRec(String companyCode, Integer plantNo, String itemNo, String projectNo, String WKType, String PRType);
+            "  and c.docm_no = :projectNo " +
+            "group by c.docm_no, c.docm_type, cd.rec_seq, nvl(cd.docm_qty, 0)", nativeQuery = true)
+    COQProjection coqRecM(String companyCode, Integer plantNo, String itemNo, String projectNo, String WKType, String PRType);
+
+    @Query("select c.id.docmNo as docmNo, c.docmType as docmType, cd.id.recSeq as recSeq, coalesce(cd.docmQty, 0) as docmQty, coalesce(max(cs.id.seqNo), 0) as seqNo " +
+            "from COQ c left join COQ_DET cd on cd.id.docmNo = c.id.docmNo " +
+            "left join COQ_DET_SUB cs on cs.id.detRecSeq = cd.id.recSeq and cs.id.docmNo = cd.id.docmNo " +
+            "where cs.id.companyCode = :companyCode" +
+            "  and cs.id.plantNo = :plantNo" +
+            "  and cd.id.companyCode = :companyCode" +
+            "  and cd.id.plantNo = :plantNo" +
+            "  and cd.itemNo = :itemNo" +
+            "  and cd.itemType = 0" +
+            "  and c.id.companyCode = :companyCode" +
+            "  and c.id.plantNo = :plantNo" +
+            "  and c.docmType in (:WKType)" +
+            "  and c.projectNoSub = :projectNo " +
+            "group by c.id.docmNo, c.docmType, cd.id.recSeq, coalesce(cd.docmQty,0)")
+    COQProjection coqRecN(String companyCode, Integer plantNo, String itemNo, String projectNo, String WKType);
 }

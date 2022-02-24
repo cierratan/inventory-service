@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 
 public interface ItemLocProjection {
 
+    Long getId();
     BigDecimal getAvailQty();
     BigDecimal getQoh();
     BigDecimal getStdMaterial();
