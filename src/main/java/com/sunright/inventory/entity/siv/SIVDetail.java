@@ -35,10 +35,10 @@ public class SIVDetail {
     private String poNo;
     private String prNo;
     private String grnNo;
-    private int grnDetSeqNo;
+    private Integer grndetSeqNo;
 
     @Column(name = "GRNDET_RECD_PRICE", precision = 16, scale = 4)
-    private BigDecimal grnDetRecdPrice;
+    private BigDecimal grndetRecdPrice;
 
     @Column(name = "ISSUED_QTY", precision = 16, scale = 4)
     private BigDecimal issuedQty;

@@ -26,8 +26,8 @@ public class SIVDetailDTO extends InvBaseDTO {
     private String poNo;
     private String prNo;
     private String grnNo;
-    private int grnDetSeqNo;
-    private BigDecimal grnDetRecdPrice;
+    private Integer grndetSeqNo;
+    private BigDecimal grndetRecdPrice;
     private BigDecimal issuedQty;
     private BigDecimal issuedPrice;
     private String saleType;

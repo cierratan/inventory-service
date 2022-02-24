@@ -21,13 +21,28 @@ public interface ItemBatcRepository extends JpaRepository<ItemBatc, ItemBatcId> 
             " and i.id.itemNo = :itemNo and i.id.loc = :loc")
     void updateQoh(BigDecimal balance, String companyCode, Integer plantNo, Long batchNo, String itemNo, String loc);
 
-    @Query(value = "select batch_no as batchNo, loc as loc, qoh as qoh, item_no as itemNo from itembatc ib " +
-            "where company_code = :companyCode and plant_no = :plantNo and item_no = :itemNo " +
-            "and loc = (select stock_loc from company where company_code = :companyCode and plant_no = :plantNo) and nvl(qoh, 0) > 0 " +
-            "union select batch_no as batchNo, loc as loc, qoh as qoh, item_no as itemNo from itembatc ib where company_code = :companyCode " +
-            "and plant_no = :plantNo and item_no = :itemNo and loc != (select stock_loc from company where company_code = :companyCode " +
-            "and plant_no = :plantNo) and nvl(qoh, 0) > 0", nativeQuery = true)
-    List<ItemBatchProjection> getBatchNoByItemNo(String companyCode, Integer plantNo, String itemNo);
+    @Query(value = "select 1 num, batch_no as batchNo, loc as loc, qoh as qoh " +
+            "from itembatc  " +
+            "where company_code = :companyCode" +
+            "  and plant_no = :plantNo" +
+            "  and item_no = :alternate" +
+            "  and loc = (select stock_loc" +
+            "             from company" +
+            "             where company_code = :companyCode" +
+            "               and plant_no = :plantNo)" +
+            "  and nvl(qoh, 0) > 0 " +
+            "union " +
+            "select 2 num, batch_no as batchNo, loc as loc, qoh as qoh " +
+            "from itembatc  " +
+            "where company_code = :companyCode" +
+            "  and plant_no = :plantNo" +
+            "  and item_no = :alternate" +
+            "  and loc <> (select stock_loc" +
+            "  from company" +
+            "   where company_code = :companyCode    " +
+            " and plant_no = :plantNo)" +
+            "       and nvl(qoh,0) > 0 order by 1,2", nativeQuery = true)
+    List<ItemBatchProjection> getBatchNoByItemNo(String companyCode, Integer plantNo, String alternate);
 
     @Query("select distinct concat(ib.id.batchNo,'/',ib.id.loc,'/',ib.qoh) as batchDesc, " +
             "concat(ib.id.batchNo,'/',ib.id.loc) as batchNoLoc from ITEMBATC ib where ib.id.companyCode = :companyCode " +

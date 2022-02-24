@@ -1,15 +1,16 @@
 package com.sunright.inventory.entity.mrv;
 
 import com.sunright.inventory.entity.InvBaseEntity;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
 import java.util.Set;
 
 @Entity(name = "MRV")
-@Data
+@Setter
+@Getter
+@AllArgsConstructor
 @NoArgsConstructor
 public class MRV extends InvBaseEntity {
 

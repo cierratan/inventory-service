@@ -105,7 +105,7 @@ public interface ItemLocRepository extends JpaRepository<ItemLoc, Long> {
     void updatePickedQtyProdnResv(BigDecimal pickedQtyUpdate, BigDecimal prodnResvUpdate, String companyCode,
                                   Integer plantNo, String itemNo, String loc);
 
-    @Query("select ib.qoh as qoh, ib.stdMaterial as stdMaterial, coalesce(ib.batchNo,0) as batchNo from ITEMLOC ib " +
+    @Query("select ib.id as id, ib.qoh as qoh, ib.stdMaterial as stdMaterial, coalesce(ib.batchNo,0) as batchNo from ITEMLOC ib " +
             "where ib.companyCode = :companyCode and ib.plantNo = :plantNo and ib.itemNo = :itemNo and ib.loc = :loc")
     ItemLocProjection itemLocByItemNo(String companyCode, Integer plantNo, String itemNo, String loc);
 
