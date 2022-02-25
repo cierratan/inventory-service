@@ -1,12 +1,14 @@
 package com.sunright.inventory.controller;
 
 import com.sunright.inventory.dto.lov.DocmValueDTO;
+import com.sunright.inventory.dto.mrv.MrvDetailDTO;
 import com.sunright.inventory.service.MRVService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -19,5 +21,10 @@ public class MRVController {
     @GetMapping("mrv-no")
     public ResponseEntity<DocmValueDTO> getMsrNo() {
         return new ResponseEntity<>(mrvService.getGeneratedNo(), HttpStatus.OK);
+    }
+
+    @GetMapping("siv")
+    public ResponseEntity<MrvDetailDTO> findBySiv(@RequestParam String sivNo) {
+        return new ResponseEntity<>(mrvService.findSivAndPopulateMRVDetails(sivNo), HttpStatus.OK);
     }
 }

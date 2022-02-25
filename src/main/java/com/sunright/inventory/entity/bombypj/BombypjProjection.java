@@ -22,4 +22,6 @@ public interface BombypjProjection {
     BigDecimal getIssuedQty();
     String getTranType();
     BigDecimal getRecdQty();
+    BigDecimal getMrvQty();
+    BigDecimal getMrvResv();
 }
