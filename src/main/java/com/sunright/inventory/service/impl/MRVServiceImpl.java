@@ -4,6 +4,8 @@ import com.sunright.inventory.dto.UserProfile;
 import com.sunright.inventory.dto.lov.DocmValueDTO;
 import com.sunright.inventory.dto.mrv.MrvDTO;
 import com.sunright.inventory.dto.mrv.MrvDetailDTO;
+import com.sunright.inventory.dto.msr.MsrDTO;
+import com.sunright.inventory.dto.search.Filter;
 import com.sunright.inventory.dto.search.SearchRequest;
 import com.sunright.inventory.dto.search.SearchResult;
 import com.sunright.inventory.entity.ItemLoc;
@@ -13,6 +15,8 @@ import com.sunright.inventory.entity.docmno.DocmNoProjection;
 import com.sunright.inventory.entity.enums.Status;
 import com.sunright.inventory.entity.mrv.MRV;
 import com.sunright.inventory.entity.mrv.MRVDetail;
+import com.sunright.inventory.entity.msr.MSR;
+import com.sunright.inventory.entity.sfcwip.SfcWipProjection;
 import com.sunright.inventory.entity.siv.SIV;
 import com.sunright.inventory.entity.siv.SIVDetail;
 import com.sunright.inventory.entity.siv.SIVDetailSub;
@@ -21,9 +25,12 @@ import com.sunright.inventory.exception.ServerException;
 import com.sunright.inventory.interceptor.UserProfileContext;
 import com.sunright.inventory.repository.*;
 import com.sunright.inventory.service.MRVService;
+import com.sunright.inventory.util.QueryGenerator;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -33,6 +40,9 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+
+import static org.springframework.data.jpa.domain.Specification.where;
 
 @Service
 public class MRVServiceImpl implements MRVService {
@@ -57,6 +67,12 @@ public class MRVServiceImpl implements MRVService {
 
     @Autowired
     private ItemRepository itemRepository;
+
+    @Autowired
+    private SfcWipRepository sfcWipRepository;
+
+    @Autowired
+    private QueryGenerator queryGenerator;
 
     @Override
     public DocmValueDTO getGeneratedNo() {
@@ -165,6 +181,7 @@ public class MRVServiceImpl implements MRVService {
 
                 mrvDetail.setCompanyCode(userProfile.getCompanyCode());
                 mrvDetail.setPlantNo(userProfile.getPlantNo());
+                mrvDetail.setMrvNo(saved.getMrvNo());
                 mrvDetail.setMrv(saved);
 
                 mrvDetailRepository.save(mrvDetail);
@@ -180,12 +197,29 @@ public class MRVServiceImpl implements MRVService {
 
     @Override
     public SearchResult<MrvDTO> searchBy(SearchRequest searchRequest) {
-        return null;
+        Specification<MRV> specs = where(queryGenerator.createDefaultSpec());
+
+        if(!CollectionUtils.isEmpty(searchRequest.getFilters())) {
+            for (Filter filter : searchRequest.getFilters()) {
+                specs = specs.and(queryGenerator.createSpecification(filter));
+            }
+        }
+
+        Page<MRV> pgMRV = mrvRepository.findAll(specs, queryGenerator.constructPageable(searchRequest));
+
+        SearchResult<MrvDTO> result = new SearchResult<>();
+        result.setTotalRows(pgMRV.getTotalElements());
+        result.setTotalPages(pgMRV.getTotalPages());
+        result.setCurrentPageNumber(pgMRV.getPageable().getPageNumber());
+        result.setCurrentPageSize(pgMRV.getNumberOfElements());
+        result.setRows(pgMRV.getContent().stream().map(mrv -> convertToMrvDTO(mrv)).collect(Collectors.toList()));
+
+        return result;
     }
 
     @Override
     public MrvDTO findBy(Long id) {
-        return null;
+        return convertToMrvDTO(checkIfRecordExist(id));
     }
 
     private void mrvPostSaving(UserProfile userProfile) {
@@ -204,7 +238,7 @@ public class MRVServiceImpl implements MRVService {
 
         BigDecimal projReturn = BigDecimal.ZERO;
 
-        BigDecimal mrvQty = bombypj.getMrvQty();
+        BigDecimal mrvQty = bombypj.getMrvQty() == null ? BigDecimal.ZERO : bombypj.getMrvQty();
         BigDecimal issuedQty = bombypj.getIssuedQty();
         BigDecimal recdQty = mrvDetail.getRecdQty();
 
@@ -297,7 +331,37 @@ public class MRVServiceImpl implements MRVService {
                     itemLocRepository.updatePickedQtyMrvResvProdnResv(finalPickedQty, finalMrvResv, finalProdnResv, mrvDetail.getCompanyCode(), mrvDetail.getPlantNo(), mrvDetail.getItemNo(), mrvDetail.getLoc());
                 }
             }
-
         }
+
+        // update sfc wip
+        if(StringUtils.startsWith(mrvDetail.getItemNo(), "01-") && mrvDetail.getProjectNo() != null) {
+            SfcWipProjection sfcWip = sfcWipRepository.wipCur(mrvDetail.getProjectNo(), mrvDetail.getPartNo());
+            if(sfcWip != null) {
+                String pcbPartNo = sfcWip.getPcbPartNo();
+                BigDecimal pcbQty = sfcWip.getPcbQty();
+
+                //TODO: existing logic in PL/SQL seems wrong. Need to double check
+            }
+        }
+    }
+
+    private MRV checkIfRecordExist(Long id) {
+        Optional<MRV> optionalItem = mrvRepository.findById(id);
+
+        if (!optionalItem.isPresent()) {
+            throw new NotFoundException("Record is not found");
+        }
+        return optionalItem.get();
+    }
+
+    private MrvDTO convertToMrvDTO(MRV mrv) {
+        MrvDTO mrvDTO = MrvDTO.builder()
+                .mrvNo(mrv.getMrvNo())
+                .currencyCode(mrv.getCurrencyCode())
+                .currencyRate(mrv.getCurrencyRate())
+                .build();
+        mrvDTO.setId(mrv.getId());
+
+        return mrvDTO;
     }
 }
