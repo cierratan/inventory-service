@@ -42,6 +42,7 @@ import com.sunright.inventory.interceptor.UserProfileContext;
 import com.sunright.inventory.repository.*;
 import com.sunright.inventory.service.SIVService;
 import com.sunright.inventory.util.QueryGenerator;
+import net.sf.jasperreports.engine.*;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.springframework.beans.BeanUtils;
@@ -51,8 +52,12 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
+import javax.sql.DataSource;
 import javax.transaction.Transactional;
+import java.io.InputStream;
 import java.math.BigDecimal;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -63,6 +68,9 @@ import static org.springframework.data.jpa.domain.Specification.where;
 @Transactional
 @Service
 public class SIVServiceImpl implements SIVService {
+
+    @Autowired
+    private DataSource dataSource;
 
     @Autowired
     private SIVRepository sivRepository;
@@ -761,11 +769,11 @@ public class SIVServiceImpl implements SIVService {
                 detail.getItemNo(), detail.getLoc());
         CompanyProjection coStkLoc = companyRepository.getStockLoc(userProfile.getCompanyCode(), userProfile.getPlantNo());
         ItemProjection itemInfo = itemRepository.itemInfo(userProfile.getCompanyCode(), userProfile.getPlantNo(), detail.getItemNo());
-        for (ItemBatchProjection itemBatc : itemBatcPrj) {
-            if (itemBatc.getQoh().compareTo(detail.getIssuedQty()) < 0) {
+        for (ItemBatchProjection rec : itemBatcPrj) {
+            if (rec.getQoh().compareTo(detail.getIssuedQty()) < 0) {
                 throw new ServerException("Item No : " + detail.getItemNo() + " Issued Qty > Batch Qty!");
             } else {
-                itemBatchBal = itemBatc.getQoh().subtract(detail.getIssuedQty());
+                itemBatchBal = rec.getQoh().subtract(detail.getIssuedQty());
                 if (itemBatchBal.compareTo(BigDecimal.ZERO) == 0) {
                     itemBatcRepository.deleteItemBatcBal(detail.getItemNo(), detail.getBatchNo());
                 } else {
@@ -781,17 +789,22 @@ public class SIVServiceImpl implements SIVService {
                 id.setSivNo(detail.getDocmNo());
                 id.setLoc(detail.getLoc());
                 itemBatcLog.setSivQty(detail.getIssuedQty());
-                itemBatcLog.setDateCode(itemBatc.getDateCode());
-                itemBatcLog.setPoNo(itemBatc.getPoNo());
-                itemBatcLog.setPoRecSeq(itemBatc.getPoRecSeq());
-                itemBatcLog.setGrnNo(itemBatc.getGrnNo());
-                itemBatcLog.setGrnSeq(itemBatc.getGrnSeq());
-                itemBatcLog.setGrnQty(itemBatc.getOriQoh());
+                itemBatcLog.setDateCode(rec.getDateCode());
+                itemBatcLog.setPoNo(rec.getPoNo());
+                itemBatcLog.setPoRecSeq(rec.getPoRecSeq());
+                itemBatcLog.setGrnNo(rec.getGrnNo());
+                itemBatcLog.setGrnSeq(rec.getGrnSeq());
+                itemBatcLog.setGrnQty(rec.getOriQoh());
                 itemBatcLog.setId(id);
+                itemBatcLog.setStatus(Status.ACTIVE);
+                itemBatcLog.setCreatedBy(userProfile.getUsername());
+                itemBatcLog.setCreatedAt(ZonedDateTime.now());
+                itemBatcLog.setUpdatedBy(userProfile.getUsername());
+                itemBatcLog.setUpdatedAt(ZonedDateTime.now());
                 itemBatcLogRepository.save(itemBatcLog);
             }
-            detail.setPoNo(itemBatc.getPoNo());
-            detail.setGrnNo(itemBatc.getGrnNo());
+            detail.setPoNo(rec.getPoNo());
+            detail.setGrnNo(rec.getGrnNo());
         }
         if (itemBatchBal == null) {
             throw new NotFoundException("Batch No : " + detail.getBatchNo() + " not found!");
@@ -1251,6 +1264,51 @@ public class SIVServiceImpl implements SIVService {
         return dto;
     }
 
+    @Override
+    public byte[] generatedLabelSIV(SIVDTO input) throws JRException, SQLException {
+
+        Integer seqNo = 0;
+        for (SIVDetailDTO dto : input.getSivDetails()) {
+            seqNo = dto.getSeqNo();
+        }
+        UserProfile userProfile = UserProfileContext.getUserProfile();
+        InputStream resource = this.getClass().getResourceAsStream("/reports/siv_label.jrxml");
+        // Compile the Jasper report from .jrxml to .jasper
+        JasperReport jasperReport = JasperCompileManager.compileReport(resource);
+        Map<String, Object> param = new HashMap<>();
+        param.put("SIV_NO", input.getSivNo());
+        param.put("COMPANY_CODE", userProfile.getCompanyCode());
+        param.put("PLANT_NO", userProfile.getPlantNo());
+        param.put("SEQ_NO", seqNo);
+        Connection source = dataSource.getConnection();
+        JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, param, source);
+        return JasperExportManager.exportReportToPdf(jasperPrint);
+    }
+
+    @Override
+    public byte[] generatedReportSIV(SIVDTO input) throws JRException, SQLException {
+
+        UserProfile userProfile = UserProfileContext.getUserProfile();
+        // Fetching the .jrxml file from the resources folder.
+        InputStream resourceSubReport = this.getClass().getResourceAsStream("/reports/siv_report_header_INR00009.jrxml");
+        InputStream mainReport = this.getClass().getResourceAsStream("/reports/siv_report_detail_INR00009.jrxml");
+        // Compile the Jasper report from .jrxml to .jasper
+        JasperReport jasperSubReport = JasperCompileManager.compileReport(resourceSubReport);
+        JasperReport jasperMainReport = JasperCompileManager.compileReport(mainReport);
+        Map<String, Object> param = new HashMap<>();
+        // Adding the additional parameters to the pdf.
+        param.put("SIV_NO_START", input.getSivNo());
+        param.put("SIV_NO_END", input.getSivNo());
+        param.put("COMPANY_CODE", userProfile.getCompanyCode());
+        param.put("PLANT_NO", userProfile.getPlantNo());
+        param.put("SUB_REPORT", jasperSubReport);
+        // Fetching the inventoryuser from the data source.
+        Connection source = dataSource.getConnection();
+        // Filling the report with the data and additional parameters information.
+        JasperPrint jasperPrint = JasperFillManager.fillReport(jasperMainReport, param, source);
+        return JasperExportManager.exportReportToPdf(jasperPrint);
+    }
+
     private SIVDetailDTO checkValidPRItemNo(UserProfile userProfile, SIVDTO input) {
 
         SIVDetailDTO detailDTO = SIVDetailDTO.builder().build();
@@ -1569,7 +1627,6 @@ public class SIVServiceImpl implements SIVService {
     public SIVDTO getDefaultValueSIV(String subType) {
         UserProfile userProfile = UserProfileContext.getUserProfile();
         String entryTime = FastDateFormat.getInstance("kkmmss").format(System.currentTimeMillis());
-        ZonedDateTime now = ZonedDateTime.now();
         // subType (N : for Entry, M : for Manual)
         return SIVDTO.builder().currencyCode("USD").currencyRate(BigDecimal.ONE)
                 .entryUser(userProfile.getUsername()).subType(subType).statuz("O")
