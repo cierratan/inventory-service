@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.util.Date;
 
@@ -34,7 +36,7 @@ public class GrnDetDTO extends BaseDTO {
     @NotBlank(message = "Location Can Not be Blank !")
     private String loc;
 
-    @NotBlank(message = "Item Type Can Not be Blank !")
+    @NotEmpty(message = "Item Type Can Not be Blank !")
     private Integer itemType;
 
     private String projectNo;
@@ -45,19 +47,24 @@ public class GrnDetDTO extends BaseDTO {
 
     private BigDecimal recdQty;
 
-    @NotBlank(message = "Recd Price Can Not be Blank !")
+    @NotEmpty(message = "Recd Price Can Not be Blank !")
     private BigDecimal recdPrice;
 
+    @NotNull(message = "Po Price Can Not be Blank !")
     private BigDecimal poPrice;
+
+    @NotEmpty(message = "Issued Qty Can Not be Blank !")
     private BigDecimal issuedQty;
 
-    @NotBlank(message = "Qty per label cannot be empty or zero!")
+    @NotEmpty(message = "Qty per label cannot be empty or zero!")
     private BigDecimal labelQty;
 
+    @NotEmpty(message = "Std Pack Qty Can Not be Blank !")
     private BigDecimal stdPackQty;
     private BigDecimal apRecdQty;
     private String remarks;
 
+    @NotEmpty(message = "Order Qty Can Not be Blank !")
     private BigDecimal orderQty;
     private Date dueDate;
     private String mslCode;
@@ -69,7 +76,6 @@ public class GrnDetDTO extends BaseDTO {
     private BigDecimal retnQty;
     private BigDecimal retnPrice;
 
-    private String message;
     private Integer dateCode;
     private String mrvNo;
 }

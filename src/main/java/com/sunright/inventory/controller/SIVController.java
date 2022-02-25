@@ -6,12 +6,17 @@ import com.sunright.inventory.dto.search.SearchResult;
 import com.sunright.inventory.dto.siv.SIVDTO;
 import com.sunright.inventory.dto.siv.SIVDetailDTO;
 import com.sunright.inventory.service.SIVService;
+import net.sf.jasperreports.engine.JRException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.List;
 
@@ -21,6 +26,24 @@ public class SIVController {
 
     @Autowired
     private SIVService sivService;
+
+    @PostMapping("label")
+    public ResponseEntity<byte[]> label(@RequestBody SIVDTO input) throws SQLException,
+            JRException, FileNotFoundException {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("filename", input.getSivNo() + "_Label" + ".pdf");
+        return new ResponseEntity<>(sivService.generatedLabelSIV(input), headers, HttpStatus.OK);
+    }
+
+    @PostMapping("report")
+    public ResponseEntity<byte[]> report(@RequestBody SIVDTO input) throws SQLException,
+            JRException, IOException {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("filename", input.getSivNo() + "_Report" + ".pdf");
+        return new ResponseEntity<>(sivService.generatedReportSIV(input), headers, HttpStatus.OK);
+    }
 
     @PostMapping("populate-detail-manual")
     public ResponseEntity<List<SIVDetailDTO>> populateDetManual(@RequestBody SIVDTO input) {

@@ -235,18 +235,18 @@ order by seq_no]]>
                 <reportElement x="490" y="2" width="58" height="30" uuid="3b233eda-e952-49b2-af42-d3cc48dcf7ea"/>
                 <textFieldExpression><![CDATA[$F{RECD_QTY}.multiply($F{RECD_PRICE})]]></textFieldExpression>
             </textField>
-            <textField>
+            <textField isBlankWhenNull="true">
                 <reportElement x="30" y="60" width="224" height="40" uuid="08585e66-3861-43dc-8e5a-2ec252a510d6"/>
                 <textFieldExpression><![CDATA[$F{REMARKS}]]></textFieldExpression>
             </textField>
-            <textField>
+            <textField isBlankWhenNull="true">
                 <reportElement x="30" y="30" width="224" height="30" uuid="2171d17b-9698-4688-8081-89c4fbeaa8da">
                     <property name="com.jaspersoft.studio.spreadsheet.connectionID"
                               value="dbe05902-2c08-481f-8d03-ad0e736e15e0"/>
                 </reportElement>
                 <textFieldExpression><![CDATA[$F{PART_NO}]]></textFieldExpression>
             </textField>
-            <textField>
+            <textField isBlankWhenNull="true">
                 <reportElement x="289" y="2" width="62" height="30" uuid="29f9d593-4f90-47a4-aa65-65aec545fa05">
                     <property name="com.jaspersoft.studio.spreadsheet.connectionID"
                               value="f8614c2c-19ad-405f-a763-b42977ae5c65"/>

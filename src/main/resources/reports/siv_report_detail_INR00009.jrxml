@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.8.0.final using JasperReports Library version 6.8.0-2ed8dfabb690ff337a5797129f2cd92902b0c87b  -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="siv_report_detail_INR00009" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="9246a81e-05ec-4808-95e6-1603d22eb951">
+	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="Sunright"/>
+	<parameter name="SUB_REPORT" class="net.sf.jasperreports.engine.JasperReport"/>
+	<parameter name="COMPANY_CODE" class="java.lang.String"/>
+	<parameter name="PLANT_NO" class="java.lang.Integer"/>
+	<parameter name="SIV_NO_START" class="java.lang.String"/>
+	<parameter name="SIV_NO_END" class="java.lang.String"/>
+	<queryString language="SQL">
+		<![CDATA[select siv.siv_no,
+       sivdet.siv_no as siv_no_det,
+       seq_no,
+       project_no,
+       sivdet.item_no,
+       sivdet.loc,
+       item.part_no,
+       sivdet.batch_no,
+       sivdet.uom,
+       issued_qty,
+       item.msl_code,
+       sivdet.remarks
+from siv siv,
+     sivdet sivdet,
+     item item
+where item.company_code(+) = $P{COMPANY_CODE}
+  and item.plant_no(+) = $P{PLANT_NO}
+  and item.item_no(+) = sivdet.item_no
+  and sivdet.company_code = $P{COMPANY_CODE}
+  and sivdet.plant_no = $P{PLANT_NO}
+  and sivdet.siv_no = siv.siv_no
+  and siv.company_code = $P{COMPANY_CODE}
+  and siv.plant_no = $P{PLANT_NO}
+  and siv.sub_type = 'N'
+  and siv.siv_no between $P{SIV_NO_START} and $P{SIV_NO_END}
+order by sivdet.seq_no]]>
+	</queryString>
+	<field name="SIV_NO" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="SIV_NO"/>
+	</field>
+	<field name="SIV_NO_DET" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="SIV_NO_DET"/>
+	</field>
+	<field name="SEQ_NO" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.label" value="SEQ_NO"/>
+	</field>
+	<field name="PROJECT_NO" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="PROJECT_NO"/>
+	</field>
+	<field name="ITEM_NO" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="ITEM_NO"/>
+	</field>
+	<field name="LOC" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="LOC"/>
+	</field>
+	<field name="PART_NO" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="PART_NO"/>
+	</field>
+	<field name="BATCH_NO" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.label" value="BATCH_NO"/>
+	</field>
+	<field name="UOM" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="UOM"/>
+	</field>
+	<field name="ISSUED_QTY" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.label" value="ISSUED_QTY"/>
+	</field>
+	<field name="MSL_CODE" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="MSL_CODE"/>
+	</field>
+	<field name="REMARKS" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="REMARKS"/>
+	</field>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="10" splitType="Stretch">
+			<subreport>
+				<reportElement x="0" y="-20" width="200" height="30" uuid="15c6b6c3-8654-4a1e-8053-34ed847d8fce"/>
+				<subreportParameter name="COMPANY_CODE">
+					<subreportParameterExpression><![CDATA[$P{COMPANY_CODE}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PLANT_NO">
+					<subreportParameterExpression><![CDATA[$P{PLANT_NO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression><![CDATA[$P{SUB_REPORT}]]></subreportExpression>
+			</subreport>
+		</band>
+	</title>
+	<columnHeader>
+		<band height="60" splitType="Stretch">
+			<line>
+				<reportElement x="0" y="47" width="544" height="1" uuid="be9ccb46-feb8-4ae3-b0ae-9d797795e47b"/>
+			</line>
+			<staticText>
+				<reportElement x="188" y="3" width="122" height="17" uuid="a9c67e39-9ccf-474f-a047-b50cdd58ce1e"/>
+				<text><![CDATA[STORE ISSUE VOUCHER]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="313" y="3" width="100" height="17" uuid="74b10161-af5d-4a0b-90cb-858c3278d661"/>
+				<textFieldExpression><![CDATA[$F{SIV_NO}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="30" width="40" height="18" uuid="1037a1e6-d9ec-41ce-b931-a880ca387303">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="8b8f5971-e6b9-4bb1-9679-ddd18fce4d94"/>
+				</reportElement>
+				<text><![CDATA[Seq]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="41" y="30" width="80" height="18" uuid="f32f9e14-d312-4014-a09f-273f466d8b87">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="537ad955-854a-4ec9-89b7-647329c957cb"/>
+				</reportElement>
+				<text><![CDATA[Project No]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="122" y="30" width="70" height="18" uuid="b711a97d-54c0-46c1-bf61-5b703ab17a2d">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="1d4848bf-4c49-46ed-942e-47c5c451fe4c"/>
+				</reportElement>
+				<text><![CDATA[Item No]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="193" y="30" width="29" height="18" uuid="fd431e24-ee69-4849-9115-6c68a3a1337c">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="7b0f1a56-a0c9-4e90-ac17-0372fdcbf647"/>
+				</reportElement>
+				<text><![CDATA[Loc]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="223" y="30" width="68" height="17" uuid="73c8c264-a75e-4fc6-8c28-f1ae43427750">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="df4ece73-1f14-45f4-93fc-e1529674a0a2"/>
+				</reportElement>
+				<text><![CDATA[Part No]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="292" y="30" width="80" height="17" uuid="02e9dff1-a8c3-41c8-9796-95509e3c8623">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="044b5194-a276-41fc-b303-a9745f1fad0c"/>
+				</reportElement>
+				<text><![CDATA[Batch No]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="373" y="30" width="50" height="18" uuid="01d1ff5f-42f4-49a1-92f1-88636af820c0">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="463a929f-170f-441f-bc0b-b347f2ca41e4"/>
+				</reportElement>
+				<text><![CDATA[Uom]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="424" y="30" width="57" height="18" uuid="e7801649-4b07-4a3d-b199-9b3e7772d769">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="bb74f7d1-60fa-41b7-9a30-eb953f14b750"/>
+				</reportElement>
+				<text><![CDATA[MSL]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="481" y="30" width="63" height="30" uuid="fd75854e-6334-42d2-beab-b0647c50647d">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="0575cbf2-d964-4559-8faf-1aecd9859d37"/>
+				</reportElement>
+				<text><![CDATA[Issued Qty]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="30" splitType="Stretch">
+			<textField isBlankWhenNull="true">
+				<reportElement x="0" y="0" width="40" height="30" uuid="f85dff67-5528-4a90-beed-f9ca03d66cf8">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="8b8f5971-e6b9-4bb1-9679-ddd18fce4d94"/>
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{SEQ_NO}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="41" y="0" width="80" height="30" uuid="02026b58-10cb-4d57-8e49-05c822135753">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="537ad955-854a-4ec9-89b7-647329c957cb"/>
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{PROJECT_NO}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="122" y="0" width="70" height="30" uuid="e4611ff7-cae3-4f65-8ed8-dfa4cf361946">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="1d4848bf-4c49-46ed-942e-47c5c451fe4c"/>
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{ITEM_NO}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="193" y="0" width="29" height="30" uuid="694ea0a6-40c2-4100-a843-419aeb9ae715">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="7b0f1a56-a0c9-4e90-ac17-0372fdcbf647"/>
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{LOC}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="223" y="0" width="68" height="30" uuid="bf295aba-7788-4ac1-8661-2979e623023f">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="df4ece73-1f14-45f4-93fc-e1529674a0a2"/>
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{PART_NO}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="292" y="0" width="80" height="30" uuid="024e4c57-3ac4-4029-a97f-337d303e3364">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="044b5194-a276-41fc-b303-a9745f1fad0c"/>
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{BATCH_NO}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="373" y="0" width="50" height="30" uuid="4503a0c2-9ee2-4edf-a470-0480f7cff2e6">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="463a929f-170f-441f-bc0b-b347f2ca41e4"/>
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{UOM}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="424" y="0" width="57" height="30" uuid="6e51453b-4e20-42dc-b2a2-5a6756903fba">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="bb74f7d1-60fa-41b7-9a30-eb953f14b750"/>
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{MSL_CODE}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="481" y="0" width="63" height="30" uuid="d04077b2-adde-481b-b89e-96b1c59aaeba">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="0575cbf2-d964-4559-8faf-1aecd9859d37"/>
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{ISSUED_QTY}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>
