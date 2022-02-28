@@ -6,10 +6,7 @@ import com.sunright.inventory.dto.lov.DocmValueDTO;
 import com.sunright.inventory.dto.search.SearchRequest;
 import com.sunright.inventory.dto.search.SearchResult;
 import net.sf.jasperreports.engine.JRException;
-import org.springframework.http.HttpHeaders;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -49,4 +46,8 @@ public interface GrnService {
     byte[] generatedPickedListGRN(GrnDTO input) throws SQLException, FileNotFoundException, JRException;
 
     byte[] generatedLabelGRN(GrnDTO input) throws SQLException, FileNotFoundException, JRException;
+
+    List<GrnDetDTO> showPartNoByMSR(GrnDTO input);
+
+    List<GrnDetDTO> showItemPart(GrnDTO input);
 }

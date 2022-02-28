@@ -29,6 +29,16 @@ public class GrnController {
     @Autowired
     private GrnService grnService;
 
+    @PostMapping("show-item-part")
+    public ResponseEntity<List<GrnDetDTO>> lovItemPart(@RequestBody GrnDTO input) {
+        return new ResponseEntity<>(grnService.showItemPart(input), HttpStatus.OK);
+    }
+
+    @PostMapping("show-part-no")
+    public ResponseEntity<List<GrnDetDTO>> lovPartNo(@RequestBody GrnDTO input) {
+        return new ResponseEntity<>(grnService.showPartNoByMSR(input), HttpStatus.OK);
+    }
+
     @PostMapping("label")
     public ResponseEntity<byte[]> label(@RequestBody GrnDTO input) throws SQLException,
             JRException, FileNotFoundException {

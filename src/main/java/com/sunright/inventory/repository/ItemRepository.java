@@ -11,7 +11,6 @@ import org.springframework.stereotype.Repository;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface ItemRepository extends JpaRepository<Item, Long>, JpaSpecificationExecutor<Item> {
@@ -46,7 +45,7 @@ public interface ItemRepository extends JpaRepository<Item, Long>, JpaSpecificat
     ItemProjection getCountByPartNo(String companyCode, Integer plantNo, String partNo);
 
     @Query("SELECT i.partNo as partNo, i.itemNo as itemNo FROM ITEM i WHERE i.companyCode = :companyCode AND i.plantNo = :plantNo " +
-            "AND (partNo LIKE %:partNo% or itemNo LIKE %:itemNo%) AND i.source IN ('B','C')")
+            "AND (i.partNo LIKE %:partNo% or i.itemNo LIKE %:itemNo%) AND i.source IN ('B','C')")
     List<ItemProjection> lovItemPart(String companyCode, Integer plantNo, String partNo, String itemNo);
 
     @Query("SELECT i.itemNo as itemNo, i.partNo as partNo FROM ITEM i WHERE i.companyCode = :companyCode " +
@@ -69,19 +68,8 @@ public interface ItemRepository extends JpaRepository<Item, Long>, JpaSpecificat
             "AND i.itemNo = :itemNo")
     ItemProjection getSource(String companyCode, Integer plantNo, String itemNo);
 
-    @Query("SELECT i.partNo as partNo, i.loc as loc, i.uom as uom ,i.source as source, l.stdMaterial as stdMaterial, " +
-            "SUM(COALESCE(b.pickedQty, 0)) as pickedQty FROM BOMBYPJ b join ITEM i join ITEMLOC l on l.companyCode = i.companyCode " +
-            "AND l.plantNo = i.plantNo AND l.itemNo = i.itemNo AND l.loc = i.loc AND i.companyCode = b.id.companyCode " +
-            "AND i.plantNo = b.id.plantNo AND i.itemNo = b.id.alternate WHERE b.id.companyCode = :companyCode " +
-            "AND b.id.plantNo = :plantNo AND COALESCE(b.statuz, 'R') NOT IN ('D', 'X') AND b.id.projectNo = :projectNo " +
-            "AND b.id.alternate = :itemNo GROUP BY i.partNo, i.loc, i.uom, i.source, l.stdMaterial")
-    ItemProjection getDataByProjectNoAndItemNo(String companyCode, Integer plantNo, String projectNo, String itemNo);
-
     @Query("SELECT i.itemNo as itemNo FROM ITEM i WHERE i.itemNo = :projectNo")
     ItemProjection getItemNoByProjectNo(String projectNo);
-
-    @Query("SELECT i.itemNo as itemNo FROM ITEM i WHERE i.companyCode = :companyCode AND i.plantNo = :plantNo")
-    List<ItemProjection> getItemNoByCompanyCodeAndPlantNo(String companyCode, Integer plantNo);
 
     @Query("SELECT coalesce(i.qoh,0) as qoh, coalesce(i.orderQty,0) as orderQty, coalesce(i.costVariance,0) as costVariance, " +
             "coalesce(i.stdMaterial,0) as stdMaterial, i.batchNo as batchNo FROM ITEM i " +

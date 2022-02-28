@@ -55,12 +55,6 @@ public interface ItemLocRepository extends JpaRepository<ItemLoc, Long> {
             "and l.companyCode = :companyCode and l.plantNo = :plantNo and l.itemNo = :itemNo group by l.loc")
     ItemLocProjection getItemLocByItemNo(String companyCode, Integer plantNo, String loc, String itemNo);
 
-    /*@Query("select l.batchNo as batchNo, sum(coalesce(l.costVariance,0)) as costVariance, " +
-            "sum(coalesce(l.qoh,0)) as qoh, sum(coalesce(l.orderQty,0)) as orderQty, coalesce(l.stdMaterial,0) as stdMaterial " +
-            "from ITEMLOC l where l.companyCode = :companyCode and l.plantNo = :plantNo " +
-            "and l.itemNo = :itemNo group by l.batchNo, l.stdMaterial")
-    ItemLocProjection getItemLocSumByItemNo(String companyCode, Integer plantNo, String itemNo);*/
-
     @Modifying
     @Query("UPDATE ITEMLOC i set i.orderQty = :qoh, i.costVariance = :newCostVar, i.stdMaterial = :newStdMat, " +
             "i.ytdReceipt = :ytdReceipt, i.batchNo = :newBatchNo, i.lastTranDate = :lastTranDate, " +
@@ -73,8 +67,8 @@ public interface ItemLocRepository extends JpaRepository<ItemLoc, Long> {
 
     @Modifying
     @Query("UPDATE ITEMLOC i set i.costVariance = :newCostVar, i.stdMaterial = :newStdMat, " +
-            "i.ytdReceipt = :ytdReceipt, i.batchNo = :newBatchNo, i.lastTranDate = :lastTranDate, " +
-            "i.lastPurPrice = :convCost WHERE i.companyCode = :companyCode " +
+            "i.ytdReceipt = :ytdReceipt, i.batchNo = :newBatchNo, i.lastTranDate = :lastTranDate " +
+            "WHERE i.companyCode = :companyCode " +
             "AND i.plantNo = :plantNo AND i.itemNo = :itemNo AND i.loc = :loc")
     void updateStdMatYtdRecBatchNoLTranDate(BigDecimal newCostVar, BigDecimal newStdMat,
                                             BigDecimal ytdReceipt, BigDecimal newBatchNo,
