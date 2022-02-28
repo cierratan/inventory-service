@@ -30,7 +30,7 @@ public class GrnDet {
     private int itemType;
     private String projectNo;
     private String poNo;
-    private int poRecSeq;
+    private Integer poRecSeq;
     private String doNo;
     private String sivNo;
     private String uom;

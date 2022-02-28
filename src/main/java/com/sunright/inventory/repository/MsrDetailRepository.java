@@ -18,7 +18,7 @@ public interface MsrDetailRepository extends JpaRepository<MSRDetail, Long> {
     @Query("SELECT mdet.seqNo as seqNo, mdet.partNo as partNo, mdet.itemNo as itemNo FROM MSRDET mdet WHERE mdet.companyCode = :companyCode " +
             "AND mdet.plantNo = :plantNo AND mdet.msrNo = :msrNo AND (mdet.partNo LIKE %:partNo% " +
             "or mdet.itemNo LIKE %:itemNo%) AND COALESCE(mdet.retnQty,0) > COALESCE(mdet.recdQty,0)")
-    MSRDetailProjection showLovPartNo(String companyCode, Integer plantNo, String msrNo, String partNo, String itemNo);
+    List<MSRDetailProjection> showLovPartNo(String companyCode, Integer plantNo, String msrNo, String partNo, String itemNo);
 
     @Query("SELECT sd.partNo as partNo, sd.seqNo as seqNo, sd.itemNo as itemNo, substring(COALESCE(i.description, sd.remarks), 1, 60) as description, " +
             "i.mslCode as mslCode, sd.itemType as itemType, sd.loc as loc, sd.uom as uom, sd.projectNo as projectNo, sd.grnNo as grnNo, " +
