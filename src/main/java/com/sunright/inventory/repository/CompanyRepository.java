@@ -1,15 +1,12 @@
 package com.sunright.inventory.repository;
 
-import com.sunright.inventory.entity.BaseIdEntity;
+import com.sunright.inventory.entity.base.BaseIdEntity;
 import com.sunright.inventory.entity.company.Company;
 import com.sunright.inventory.entity.company.CompanyProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
-
-import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface CompanyRepository extends JpaRepository<Company, BaseIdEntity>, JpaSpecificationExecutor<Company> {

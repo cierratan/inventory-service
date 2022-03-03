@@ -4,18 +4,16 @@ import com.sunright.inventory.dto.UserProfile;
 import com.sunright.inventory.dto.lov.DocmValueDTO;
 import com.sunright.inventory.dto.mrv.MrvDTO;
 import com.sunright.inventory.dto.mrv.MrvDetailDTO;
-import com.sunright.inventory.dto.msr.MsrDTO;
 import com.sunright.inventory.dto.search.Filter;
 import com.sunright.inventory.dto.search.SearchRequest;
 import com.sunright.inventory.dto.search.SearchResult;
-import com.sunright.inventory.entity.ItemLoc;
-import com.sunright.inventory.entity.ItemProjection;
+import com.sunright.inventory.entity.itemloc.ItemLoc;
+import com.sunright.inventory.entity.item.ItemProjection;
 import com.sunright.inventory.entity.bombypj.BombypjProjection;
 import com.sunright.inventory.entity.docmno.DocmNoProjection;
 import com.sunright.inventory.entity.enums.Status;
 import com.sunright.inventory.entity.mrv.MRV;
 import com.sunright.inventory.entity.mrv.MRVDetail;
-import com.sunright.inventory.entity.msr.MSR;
 import com.sunright.inventory.entity.sfcwip.SfcWipProjection;
 import com.sunright.inventory.entity.siv.SIV;
 import com.sunright.inventory.entity.siv.SIVDetail;
@@ -92,7 +90,7 @@ public class MRVServiceImpl implements MRVService {
     public MrvDetailDTO findSivAndPopulateMRVDetails(String sivNo) {
         Optional<SIV> found = sivRepository.findSIVByCompanyCodeAndPlantNoAndSivNo(UserProfileContext.getUserProfile().getCompanyCode(), UserProfileContext.getUserProfile().getPlantNo(), sivNo);
 
-        if(found.isEmpty() || CollectionUtils.isEmpty(found.get().getSivDetails())) {
+        if(!found.isPresent() || CollectionUtils.isEmpty(found.get().getSivDetails())) {
             throw new NotFoundException(String.format("SIV No: %s is not found", sivNo));
         }
 

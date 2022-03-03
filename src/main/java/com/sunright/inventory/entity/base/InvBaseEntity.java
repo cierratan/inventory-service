@@ -1,17 +1,23 @@
-package com.sunright.inventory.entity;
+package com.sunright.inventory.entity.base;
 
 import com.sunright.inventory.entity.enums.Status;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.MappedSuperclass;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
 
 @MappedSuperclass
 @Data
 @NoArgsConstructor
-public class BaseEntity implements Serializable {
+public class InvBaseEntity implements Serializable {
+    private String companyCode;
+    private Integer plantNo;
+
     @Enumerated(EnumType.ORDINAL)
     private Status status;
 

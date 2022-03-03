@@ -1,12 +1,13 @@
 package com.sunright.inventory.dto.grn;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.sunright.inventory.dto.BaseDTO;
+import com.sunright.inventory.dto.InvBaseDTO;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.Set;
@@ -15,13 +16,16 @@ import java.util.Set;
 @Getter
 @Setter
 @Builder
-public class GrnDTO extends BaseDTO {
+public class GrnDTO extends InvBaseDTO {
 
     private Long id;
 
     @NotBlank(message = "Grn No Can Not be Blank !")
+    @Size(max = 15, message = "Maximum Grn No {max} characters")
     private String grnNo;
 
+    @NotBlank(message = "Sub Type Can Not be Blank !")
+    @Size(max = 10, message = "Maximum Sub Type {max} characters")
     private String subType;
 
     private String poNo;
@@ -47,5 +51,4 @@ public class GrnDTO extends BaseDTO {
     protected Set<GrnDetDTO> grnDetails;
 
     private String msrNo;
-    private String message;
 }

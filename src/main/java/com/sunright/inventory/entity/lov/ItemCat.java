@@ -1,6 +1,6 @@
 package com.sunright.inventory.entity.lov;
 
-import com.sunright.inventory.entity.InvBaseEntity;
+import com.sunright.inventory.entity.base.InvBaseEntity;
 import com.sunright.inventory.entity.enums.MRPStatus;
 import lombok.Data;
 import lombok.EqualsAndHashCode;

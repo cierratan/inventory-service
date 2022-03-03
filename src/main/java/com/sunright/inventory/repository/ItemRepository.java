@@ -1,7 +1,7 @@
 package com.sunright.inventory.repository;
 
-import com.sunright.inventory.entity.Item;
-import com.sunright.inventory.entity.ItemProjection;
+import com.sunright.inventory.entity.item.Item;
+import com.sunright.inventory.entity.item.ItemProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
@@ -105,7 +105,7 @@ public interface ItemRepository extends JpaRepository<Item, Long>, JpaSpecificat
             "AND i.plantNo = :plantNo AND i.itemNo = :itemNo")
     void updatePickedQtyProdnResv(BigDecimal pickedQty, BigDecimal prodnResv, String companyCode, Integer plantNo, String itemNo);
 
-    @Query("SELECT i.qoh as qoh FROM ITEM i WHERE i.companyCode = :companyCode AND i.plantNo = :plantNo " +
+    @Query("SELECT i.qoh as qoh, i.orderQty as orderQty FROM ITEM i WHERE i.companyCode = :companyCode AND i.plantNo = :plantNo " +
             "AND i.itemNo = :itemNo AND i.loc = :loc")
     ItemProjection getQohByItemNo(String companyCode, Integer plantNo, String itemNo, String loc);
 

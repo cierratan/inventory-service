@@ -1,6 +1,6 @@
 package com.sunright.inventory.entity.mrv;
 
-import com.sunright.inventory.entity.InvBaseEntity;
+import com.sunright.inventory.entity.base.InvBaseEntity;
 import lombok.*;
 
 import javax.persistence.*;

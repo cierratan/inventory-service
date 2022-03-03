@@ -29,11 +29,11 @@ public interface MsrDetailRepository extends JpaRepository<MSRDetail, Long> {
             "OR sd.itemNo LIKE %:itemNo%) AND COALESCE(sd.retnQty, 0) > COALESCE(sd.recdQty, 0)")
     MSRDetailProjection itemInfo(String companyCode, Integer plantNo, String msrNo, String partNo, String itemNo, Integer msrSeqNo);
 
-    @Query("SELECT COUNT(md) as countItemNo FROM MSRDET md WHERE md.companyCode = :companyCode AND md.plantNo = :plantNo " +
+    @Query("SELECT COUNT(md.itemNo) as countItemNo FROM MSRDET md WHERE md.companyCode = :companyCode AND md.plantNo = :plantNo " +
             "AND md.msrNo = :msrNo AND md.itemNo LIKE %:itemNo% AND COALESCE(md.retnQty,0) > COALESCE(md.recdQty,0)")
     MSRDetailProjection getCountMsrByItemNo(String companyCode, Integer plantNo, String msrNo, String itemNo);
 
-    @Query("SELECT COUNT(md) as countPartNo FROM MSRDET md WHERE md.companyCode = :companyCode AND md.plantNo = :plantNo " +
+    @Query("SELECT COUNT(md.partNo) as countPartNo FROM MSRDET md WHERE md.companyCode = :companyCode AND md.plantNo = :plantNo " +
             "AND md.msrNo = :msrNo AND md.partNo LIKE %:partNo% AND COALESCE(md.retnQty,0) > COALESCE(md.recdQty,0)")
     MSRDetailProjection getCountMsrByPartNo(String companyCode, Integer plantNo, String msrNo, String partNo);
 

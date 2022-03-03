@@ -1,7 +1,9 @@
 package com.sunright.inventory.entity.grn;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
@@ -61,6 +63,5 @@ public class GrnDet {
 
     @ManyToOne
     @JoinColumn(name = "GRN_ID", nullable = false)
-    @JsonIgnore
     private Grn grn;
 }

@@ -1,6 +1,6 @@
 package com.sunright.inventory.repository;
 
-import com.sunright.inventory.entity.BaseIdEntity;
+import com.sunright.inventory.entity.base.BaseIdEntity;
 import com.sunright.inventory.entity.nlctl.NLCTL;
 import com.sunright.inventory.entity.nlctl.NLCTLProjection;
 import org.springframework.data.jpa.repository.JpaRepository;

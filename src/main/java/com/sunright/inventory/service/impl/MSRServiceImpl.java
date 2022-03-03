@@ -8,9 +8,9 @@ import com.sunright.inventory.dto.msr.MsrDetailDTO;
 import com.sunright.inventory.dto.search.Filter;
 import com.sunright.inventory.dto.search.SearchRequest;
 import com.sunright.inventory.dto.search.SearchResult;
-import com.sunright.inventory.entity.InAudit;
-import com.sunright.inventory.entity.ItemLoc;
-import com.sunright.inventory.entity.ItemProjection;
+import com.sunright.inventory.entity.inaudit.InAudit;
+import com.sunright.inventory.entity.itemloc.ItemLoc;
+import com.sunright.inventory.entity.item.ItemProjection;
 import com.sunright.inventory.entity.bombypj.BombypjProjection;
 import com.sunright.inventory.entity.docmno.DocmNoProjection;
 import com.sunright.inventory.entity.enums.Status;
@@ -37,8 +37,6 @@ import org.springframework.util.CollectionUtils;
 
 import javax.transaction.Transactional;
 import java.math.BigDecimal;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -302,7 +300,7 @@ public class MSRServiceImpl implements MSRService {
 
         Optional<ItemBatc> itemBatcFound = itemBatcRepository.findById(itemBatcId);
 
-        if(itemBatcFound.isEmpty()) {
+        if(!itemBatcFound.isPresent()) {
             throw new NotFoundException(String.format("Itembatc is not found for %s", itemBatcId));
         }
 

@@ -1,7 +1,5 @@
 package com.sunright.inventory.entity.pr;
 
-import io.swagger.models.auth.In;
-
 import java.math.BigDecimal;
 
 public interface PRDetailProjection {

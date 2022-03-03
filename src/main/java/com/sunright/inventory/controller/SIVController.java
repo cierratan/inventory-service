@@ -14,6 +14,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -81,7 +82,7 @@ public class SIVController {
     }
 
     @PostMapping
-    public ResponseEntity<SIVDTO> create(@RequestBody SIVDTO siv) {
+    public ResponseEntity<SIVDTO> create(@Valid @RequestBody SIVDTO siv) {
         return new ResponseEntity<>(sivService.createSIV(siv), HttpStatus.OK);
     }
 

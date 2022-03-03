@@ -172,4 +172,8 @@ public interface BombypjRepository extends JpaRepository<Bombypj, BombypjId>, Jp
             "  AND alternate = :itemNo" +
             "  AND nvl(status, 'R') not in ('D', 'X')", nativeQuery = true)
     BombypjProjection bomProjCur(String companyCode, Integer plantNo, String projectNo, String itemNo);
+
+    @Query("SELECT DISTINCT b.id.projectNo as projectNo FROM BOMBYPJ b WHERE b.id.companyCode = :companyCode " +
+            "AND b.id.plantNo = :plantNo AND b.id.alternate = :itemNo")
+    BombypjProjection bombypjCur(String companyCode, Integer plantNo, String itemNo);
 }
