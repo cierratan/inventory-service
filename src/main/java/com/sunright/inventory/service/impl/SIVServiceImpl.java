@@ -8,9 +8,9 @@ import com.sunright.inventory.dto.search.SearchResult;
 import com.sunright.inventory.dto.siv.SIVDTO;
 import com.sunright.inventory.dto.siv.SIVDetailDTO;
 import com.sunright.inventory.dto.wip.WipProjDTO;
-import com.sunright.inventory.entity.InAudit;
-import com.sunright.inventory.entity.ItemLocProjection;
-import com.sunright.inventory.entity.ItemProjection;
+import com.sunright.inventory.entity.inaudit.InAudit;
+import com.sunright.inventory.entity.itemloc.ItemLocProjection;
+import com.sunright.inventory.entity.item.ItemProjection;
 import com.sunright.inventory.entity.bombypj.BombypjProjection;
 import com.sunright.inventory.entity.bomproj.BomprojProjection;
 import com.sunright.inventory.entity.company.CompanyProjection;
@@ -645,7 +645,7 @@ public class SIVServiceImpl implements SIVService {
             }
 
             if (detail.getItemType() == 0) {
-                if (input.getTranType().equals("PR") && input.getTranType().equals("WK")) {
+                if (input.getTranType().equals("PR") || input.getTranType().equals("WK")) {
                     String recValidSub;
                     if (detail.getSaleType().equals("P")) {
                         recValidSub = "PROJECT_NO";
@@ -692,7 +692,7 @@ public class SIVServiceImpl implements SIVService {
                             checkRecValidSub(userProfile, detail, detail.getProjectNo5(), recValidSub);
                         }
                     }
-                } else if (input.getTranType().equals("DS") && input.getTranType().equals("WD")) {
+                } else if (input.getTranType().equals("DS") || input.getTranType().equals("WD")) {
                     if (detail.getItemType() == 0) {
                         List<ItemProjection> itemCur = itemRepository.itemCur(input.getDocmNo(), detail.getCompanyCode(), detail.getPlantNo(), detail.getItemNo());
                         for (ItemProjection rec : itemCur) {
@@ -912,7 +912,7 @@ public class SIVServiceImpl implements SIVService {
                 throw new ServerException("Item No : " + detail.getItemNo() + " not found in " + input.getProjectNo() + " !");
             }
 
-            if (!bombypjCur.getSource().equals("B") && !bombypjCur.getSource().equals("C")) {
+            if (!bombypjCur.getSource().equals("B") || !bombypjCur.getSource().equals("C")) {
                 throw new ServerException("Invalid Item Source, Item is not Buy or Consigned !");
             }
 
@@ -1244,9 +1244,9 @@ public class SIVServiceImpl implements SIVService {
         UserProfile userProfile = UserProfileContext.getUserProfile();
         if (input.getTranType().equals("OTHER")) {
             dto = checkValidOtherItemNo(userProfile, input);
-        } else if (input.getTranType().equals("DS") && input.getTranType().equals("WD")) {
+        } else if (input.getTranType().equals("DS") || input.getTranType().equals("WD")) {
             dto = checkRecValidItemNo(userProfile, input);
-        } else if (input.getTranType().equals("WK") && input.getTranType().equals("PR")) {
+        } else if (input.getTranType().equals("WK") || input.getTranType().equals("PR")) {
             dto = checkValidPRItemNo(userProfile, input);
         }
         if (dto.getItemType() == 0) {
@@ -1315,12 +1315,13 @@ public class SIVServiceImpl implements SIVService {
         for (SIVDetailDTO dto : input.getSivDetails()) {
             if (dto.getItemType() == 0) {
                 ItemProjection rec = itemRepository.itemOtherCurOrItemPRCur(userProfile.getCompanyCode(), userProfile.getPlantNo(), dto.getItemNo());
-                detailDTO.setItemNo(rec.getItemNo());
-                detailDTO.setLoc(rec.getLoc());
-                detailDTO.setUom(rec.getUom());
-                detailDTO.setItemType(dto.getItemType());
-                if (StringUtils.isBlank(detailDTO.getItemNo())) {
+                if (rec == null) {
                     throw new ServerException("Item No : " + dto.getItemNo() + " is Invalid or not found in ITEM Table!");
+                } else {
+                    detailDTO.setItemNo(rec.getItemNo());
+                    detailDTO.setLoc(rec.getLoc());
+                    detailDTO.setUom(rec.getUom());
+                    detailDTO.setItemType(dto.getItemType());
                 }
             }
         }
@@ -1333,14 +1334,15 @@ public class SIVServiceImpl implements SIVService {
         for (SIVDetailDTO dto : input.getSivDetails()) {
             if (dto.getItemType() == 0) {
                 List<ItemProjection> itemCur = itemRepository.itemCur(input.getDocmNo(), userProfile.getCompanyCode(), userProfile.getPlantNo(), dto.getItemNo());
-                for (ItemProjection rec : itemCur) {
-                    detailDTO.setItemNo(rec.getItemNo());
-                    detailDTO.setLoc(rec.getLoc());
-                    detailDTO.setUom(rec.getUom());
-                    detailDTO.setItemType(dto.getItemType());
-                }
-                if (StringUtils.isBlank(detailDTO.getItemNo())) {
+                if (itemCur.size() == 0) {
                     throw new ServerException("Item No : " + dto.getItemNo() + " is Invalid or not found in SALEDET/ITEM Table!");
+                } else {
+                    for (ItemProjection rec : itemCur) {
+                        detailDTO.setItemNo(rec.getItemNo());
+                        detailDTO.setLoc(rec.getLoc());
+                        detailDTO.setUom(rec.getUom());
+                        detailDTO.setItemType(dto.getItemType());
+                    }
                 }
             }
         }
@@ -1352,12 +1354,13 @@ public class SIVServiceImpl implements SIVService {
         for (SIVDetailDTO dto : input.getSivDetails()) {
             if (dto.getItemType() == 0) {
                 ItemProjection rec = itemRepository.itemOtherCurOrItemPRCur(userProfile.getCompanyCode(), userProfile.getPlantNo(), dto.getItemNo());
-                detailDTO.setItemNo(rec.getItemNo());
-                detailDTO.setLoc(rec.getLoc());
-                detailDTO.setUom(rec.getUom());
-                detailDTO.setItemType(dto.getItemType());
-                if (StringUtils.isBlank(detailDTO.getItemNo())) {
+                if (rec == null) {
                     throw new ServerException("Item No : " + dto.getItemNo() + " is Invalid or not found in ITEM Table!");
+                } else {
+                    detailDTO.setItemNo(rec.getItemNo());
+                    detailDTO.setLoc(rec.getLoc());
+                    detailDTO.setUom(rec.getUom());
+                    detailDTO.setItemType(dto.getItemType());
                 }
             }
         }
@@ -1366,30 +1369,25 @@ public class SIVServiceImpl implements SIVService {
 
     private List<SIVDetailDTO> populateDetailsManual(UserProfile userProfile, SIVDTO input) {
         List<SIVDetailDTO> list = new ArrayList<>();
-        String saleType = "";
-        String prRemarks = "";
-        List<PRDetailProjection> bombypjCurs = prDetailRepository.bombypjCur(saleType, input.getDocmNo(),
-                prRemarks, userProfile.getCompanyCode(), userProfile.getPlantNo(), input.getTranType());
-        PRProjection prRmkProj = prRepository.prRmk(userProfile.getCompanyCode(), userProfile.getPlantNo(), input.getDocmNo());
         String tranType = input.getTranType();
         String prRmk = "";
+        PRProjection prRmkProj = prRepository.prRmk(userProfile.getCompanyCode(), userProfile.getPlantNo(), input.getDocmNo());
         if (input.getTranType().equals("PR")) {
             checkValidPRNo(userProfile, input);
-            tranType = input.getTranType();
             prRmk = prRmkProj.getRemarks();
-        } else if (input.getTranType().equals("DS") && input.getTranType().equals("WD")) {
+        } else if (input.getTranType().equals("DS") || input.getTranType().equals("WD")) {
             checkValidOrderNo(userProfile, input);
-            tranType = input.getTranType();
         } else if (input.getTranType().equals("OTHER")) {
-            tranType = input.getTranType();
-            if (input.getTranType().substring(0, 2).equals("PR")) {
+            String docmNo = input.getDocmNo().substring(0, 2);
+            if (docmNo.equals("PR")) {
                 checkValidPRNo(userProfile, input);
                 tranType = "PR";
-                prRmk = prRmkProj.getRemarks();
             }
         }
 
-        String projectNo = input.getDocmNo(); // for print report
+        List<PRDetailProjection> bombypjCurs = prDetailRepository.bombypjCur(input.getDocmNo(), prRmk, userProfile.getCompanyCode(),
+                userProfile.getPlantNo(), tranType);
+
         for (PRDetailProjection bomRec : bombypjCurs) {
             BigDecimal docmPickQty = bomRec.getPickedQty();
             int count = 0;
@@ -1451,7 +1449,7 @@ public class SIVServiceImpl implements SIVService {
                         seqNo = count++;
 
                         String projectNo1 = null;
-                        if (input.getTranType().equals("DS") && input.getTranType().equals("WD")) {
+                        if (input.getTranType().equals("DS") || input.getTranType().equals("WD")) {
                             projectNo1 = input.getDocmNo();
                         }
 
@@ -1495,7 +1493,7 @@ public class SIVServiceImpl implements SIVService {
                         seqNo = count++;
 
                         String projectNo1 = null;
-                        if (input.getTranType().equals("DS") && input.getTranType().equals("WD")) {
+                        if (input.getTranType().equals("DS") || input.getTranType().equals("WD")) {
                             projectNo1 = input.getDocmNo();
                         }
 
@@ -1541,7 +1539,7 @@ public class SIVServiceImpl implements SIVService {
                         seqNo = count++;
 
                         String projectNo1 = null;
-                        if (input.getTranType().equals("DS") && input.getTranType().equals("WD")) {
+                        if (input.getTranType().equals("DS") || input.getTranType().equals("WD")) {
                             projectNo1 = input.getDocmNo();
                         }
 
@@ -1576,7 +1574,7 @@ public class SIVServiceImpl implements SIVService {
                 seqNo = count++;
 
                 String projectNo1 = null;
-                if (input.getTranType().equals("DS") && input.getTranType().equals("WD")) {
+                if (input.getTranType().equals("DS") || input.getTranType().equals("WD")) {
                     projectNo1 = input.getDocmNo();
                 }
 
@@ -1605,9 +1603,9 @@ public class SIVServiceImpl implements SIVService {
 
     private void checkValidOrderNo(UserProfile userProfile, SIVDTO input) {
         SaleProjection cOrder = saleRepository.cOrder(userProfile.getCompanyCode(), userProfile.getPlantNo(), input.getDocmNo());
-        if (StringUtils.isBlank(cOrder.getOrderNo())) {
+        if (cOrder == null) {
             throw new NotFoundException("" + input.getDocmNo() + " is Invalid or not found!");
-        } else if (cOrder.getOpenClose().equals("C") && cOrder.getOpenClose().equals("V")) {
+        } else if (cOrder.getOpenClose().equals("C") || cOrder.getOpenClose().equals("V")) {
             throw new NotFoundException("" + input.getDocmNo() + " is CLOSED/VOIDED !");
         }
     }
@@ -1618,7 +1616,7 @@ public class SIVServiceImpl implements SIVService {
             throw new NotFoundException("" + input.getDocmNo() + " is Invalid or not found!");
         } else if (!cPr.getStatus().equals("A")) {
             throw new NotFoundException("" + input.getDocmNo() + " is yet to be approved!");
-        } else if (cPr.getStatus().equals("C") && cPr.getStatus().equals("V")) {
+        } else if (cPr.getStatus().equals("C") || cPr.getStatus().equals("V")) {
             throw new NotFoundException("" + input.getDocmNo() + " is CLOSED/VOIDED !");
         }
     }

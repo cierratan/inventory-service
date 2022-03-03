@@ -1,7 +1,9 @@
 package com.sunright.inventory.repository;
 
 import com.sunright.inventory.entity.grn.Grn;
+import com.sunright.inventory.entity.grn.GrnDetailProjection;
 import com.sunright.inventory.entity.grn.GrnSupplierProjection;
+import com.sunright.inventory.entity.msr.MSRDetailProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -13,6 +15,9 @@ import java.util.Optional;
 public interface GrnRepository extends JpaRepository<Grn, Long>, JpaSpecificationExecutor<Grn> {
 
     Optional<Grn> findGrnByGrnNo(String grnNo);
+
+    @Query("SELECT g.grnNo as grnNo FROM GRN g WHERE g.companyCode = :companyCode AND g.plantNo = :plantNo AND g.grnNo = :grnNo")
+    GrnDetailProjection findPoNoByGrnNo(String companyCode, Integer plantNo, String grnNo);
 
     @Query("SELECT g.id as grnId, g.grnNo as grnNo, s.id.supplierCode as supplierCode, s.name as name " +
             "FROM GRN g " +

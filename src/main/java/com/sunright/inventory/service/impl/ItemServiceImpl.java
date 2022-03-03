@@ -5,14 +5,20 @@ import com.sunright.inventory.dto.UserProfile;
 import com.sunright.inventory.dto.search.Filter;
 import com.sunright.inventory.dto.search.SearchRequest;
 import com.sunright.inventory.dto.search.SearchResult;
-import com.sunright.inventory.entity.Item;
-import com.sunright.inventory.entity.ItemLoc;
+import com.sunright.inventory.entity.bom.BomProjection;
+import com.sunright.inventory.entity.bombypj.BombypjProjection;
 import com.sunright.inventory.entity.enums.Status;
+import com.sunright.inventory.entity.inaudit.InAuditProjection;
+import com.sunright.inventory.entity.item.Item;
+import com.sunright.inventory.entity.item.ItemProjection;
+import com.sunright.inventory.entity.itembatc.ItemBatchProjection;
+import com.sunright.inventory.entity.itemeql.Itemeql;
+import com.sunright.inventory.entity.itemloc.ItemLoc;
 import com.sunright.inventory.exception.DuplicateException;
 import com.sunright.inventory.exception.NotFoundException;
+import com.sunright.inventory.exception.ServerException;
 import com.sunright.inventory.interceptor.UserProfileContext;
-import com.sunright.inventory.repository.ItemLocRepository;
-import com.sunright.inventory.repository.ItemRepository;
+import com.sunright.inventory.repository.*;
 import com.sunright.inventory.service.ItemService;
 import com.sunright.inventory.util.QueryGenerator;
 import org.apache.commons.lang3.BooleanUtils;
@@ -41,7 +47,22 @@ public class ItemServiceImpl implements ItemService {
     private ItemRepository itemRepository;
 
     @Autowired
+    private ItemBatcRepository itemBatcRepository;
+
+    @Autowired
+    private InAuditRepository inAuditRepository;
+
+    @Autowired
     private ItemLocRepository itemLocRepository;
+
+    @Autowired
+    private BomRepository bomRepository;
+
+    @Autowired
+    private BombypjRepository bombypjRepository;
+
+    @Autowired
+    private ItemeqlRepository itemeqlRepository;
 
     @Autowired
     private QueryGenerator queryGenerator;
@@ -52,42 +73,82 @@ public class ItemServiceImpl implements ItemService {
         UserProfile userProfile = UserProfileContext.getUserProfile();
 
         List<Item> found = itemRepository.findByCompanyCodeAndPlantNoAndItemNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), input.getItemNo());
+        if (!CollectionUtils.isEmpty(found)) {
+            // add logic by Arya for bug fixing soft deleted
+            for (Item rec : found) {
+                Optional<Item> optionalItem = itemRepository.findById(rec.getId());
+                ItemLoc foundItemLoc = itemLocRepository.findItemLocByCompanyCodeAndPlantNoAndItemId(userProfile.getCompanyCode(), userProfile.getPlantNo(), rec.getId());
+                if (optionalItem.isPresent() && foundItemLoc != null) {
+                    if (optionalItem.get().getStatus() == Status.DELETED) {
+                        Item item = new Item();
+                        BeanUtils.copyProperties(input, item);
+                        item.setCompanyCode(UserProfileContext.getUserProfile().getCompanyCode());
+                        item.setPlantNo(UserProfileContext.getUserProfile().getPlantNo());
+                        item.setStrRohsStatus(BooleanUtils.toString(input.getRohsStatus(), "1", "0"));
+                        item.setStatus(Status.ACTIVE);
+                        item.setCreatedBy(rec.getCreatedBy());
+                        item.setCreatedAt(rec.getCreatedAt());
+                        item.setUpdatedBy(UserProfileContext.getUserProfile().getUsername());
+                        item.setUpdatedAt(ZonedDateTime.now());
+                        item.setId(rec.getId());
+                        item.setVersion(rec.getVersion());
+                        prePopulateBeforeSaving(item);
+                        Item saved = itemRepository.save(item);
+                        updateAlternate(input, userProfile);
 
-        if(!CollectionUtils.isEmpty(found)) {
-            throw new DuplicateException(String.format("Duplicate item with itemNo: %s", input.getItemNo()));
+                        // insert itemloc
+                        ItemLoc itemLoc = new ItemLoc();
+                        BeanUtils.copyProperties(saved, itemLoc);
+                        itemLoc.setItemId(foundItemLoc.getItemId());
+                        itemLoc.setVersion(foundItemLoc.getVersion());
+                        itemLoc.setStatus(Status.ACTIVE);
+                        itemLoc.setCreatedBy(foundItemLoc.getCreatedBy());
+                        itemLoc.setCreatedAt(foundItemLoc.getCreatedAt());
+                        itemLoc.setUpdatedBy(userProfile.getUsername());
+                        itemLoc.setUpdatedAt(ZonedDateTime.now());
+                        itemLoc.setId(foundItemLoc.getId());
+                        itemLocRepository.save(itemLoc);
+
+                        input.setEoh(item.getQoh().subtract(item.getProdnResv()).add(item.getOrderQty()));
+                        input.setQryObsItem(item.getObsoleteItem());
+                        input.setRohsStatus(StringUtils.equals("1", item.getStrRohsStatus()) ? true : false);
+                    } else {
+                        throw new DuplicateException(String.format("Duplicate item with itemNo: %s", input.getItemNo()));
+                    }
+                }
+            }
+        } else {
+            Item item = new Item();
+            BeanUtils.copyProperties(input, item);
+
+            item.setCompanyCode(userProfile.getCompanyCode());
+            item.setPlantNo(userProfile.getPlantNo());
+            item.setStrRohsStatus(BooleanUtils.toString(input.getRohsStatus(), "1", "0"));
+            item.setStatus(Status.ACTIVE);
+            item.setCreatedBy(userProfile.getUsername());
+            item.setCreatedAt(ZonedDateTime.now());
+            item.setUpdatedBy(userProfile.getUsername());
+            item.setUpdatedAt(ZonedDateTime.now());
+
+            prePopulateBeforeSaving(item);
+
+            Item saved = itemRepository.save(item);
+            updateAlternate(input, userProfile);
+
+            // insert itemloc
+            ItemLoc itemLoc = new ItemLoc();
+            BeanUtils.copyProperties(saved, itemLoc);
+            itemLoc.setItemId(saved.getId());
+            itemLoc.setStatus(Status.ACTIVE);
+            itemLoc.setCreatedBy(userProfile.getUsername());
+            itemLoc.setCreatedAt(ZonedDateTime.now());
+            itemLoc.setUpdatedBy(userProfile.getUsername());
+            itemLoc.setUpdatedAt(ZonedDateTime.now());
+
+            itemLocRepository.save(itemLoc);
+
+            populateAfterSaving(input, item, saved);
         }
-
-        Item item = new Item();
-        BeanUtils.copyProperties(input, item);
-
-        item.setCompanyCode(userProfile.getCompanyCode());
-        item.setPlantNo(userProfile.getPlantNo());
-        item.setStrRohsStatus(BooleanUtils.toString(input.getRohsStatus(), "1", "0"));
-        item.setStatus(Status.ACTIVE);
-        item.setCreatedBy(userProfile.getUsername());
-        item.setCreatedAt(ZonedDateTime.now());
-        item.setUpdatedBy(userProfile.getUsername());
-        item.setUpdatedAt(ZonedDateTime.now());
-
-        prePopulateBeforeSaving(item);
-
-        Item saved = itemRepository.save(item);
-        updateAlternate(input, userProfile);
-
-        // insert itemloc
-        ItemLoc itemLoc = new ItemLoc();
-        BeanUtils.copyProperties(saved, itemLoc);
-        itemLoc.setItemId(saved.getId());
-        itemLoc.setStatus(Status.ACTIVE);
-        itemLoc.setCreatedBy(userProfile.getUsername());
-        itemLoc.setCreatedAt(ZonedDateTime.now());
-        itemLoc.setUpdatedBy(userProfile.getUsername());
-        itemLoc.setUpdatedAt(ZonedDateTime.now());
-
-        itemLocRepository.save(itemLoc);
-
-        populateAfterSaving(input, item, saved);
-
         return input;
     }
 
@@ -112,7 +173,7 @@ public class ItemServiceImpl implements ItemService {
         // update item loc
         List<ItemLoc> itemLocs = itemLocRepository.findByCompanyCodeAndPlantNoAndItemNoAndLoc(saved.getCompanyCode(), saved.getPlantNo(), saved.getItemNo(), saved.getLoc());
 
-        if(!CollectionUtils.isEmpty(itemLocs) && itemLocs.size() == 1) {
+        if (!CollectionUtils.isEmpty(itemLocs) && itemLocs.size() == 1) {
             ItemLoc itemLoc = itemLocRepository.getById(itemLocs.get(0).getId());
             itemLoc.setPartNo(item.getPartNo());
             itemLoc.setDescription(item.getDescription());
@@ -149,11 +210,82 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public void deleteItem(Long id) {
-        Item item = checkIfRecordExist(id);
+        // comment by Arya
+        /*Item item = checkIfRecordExist(id);
         item.setStatus(Status.DELETED);
         item.setUpdatedBy(UserProfileContext.getUserProfile().getUsername());
         item.setUpdatedAt(ZonedDateTime.now());
+        itemRepository.save(item);*/
 
+        // add logic by Arya for delete item
+        Item item = checkIfRecordExist(id);
+        //before deletion, check for any QOH of that item
+        ItemProjection itemCur = itemRepository.getQohByItemNo(item.getCompanyCode(), item.getPlantNo(), item.getItemNo(), item.getLoc());
+        if (itemCur != null) {
+            if (itemCur.getQoh().compareTo(BigDecimal.ZERO) > 0) {
+                throw new ServerException("Qty On Hand for this item > 0, CANNOT delete !");
+            } else if (itemCur.getOrderQty().compareTo(BigDecimal.ZERO) > 0) {
+                throw new ServerException("Order Qty for this item > 0, CANNOT delete !");
+            }
+        }
+        //before deletion, check for any movement of that item
+        ItemBatchProjection itembatcCur = itemBatcRepository.itembatcCur(item.getCompanyCode(), item.getPlantNo(), item.getItemNo());
+        if (itembatcCur != null) {
+            if (itembatcCur.getCountItemBatc() > 0) {
+                throw new ServerException("This is NOT a NON-MOVEMENT item (ITEMBATC), CANNOT delete !");
+            }
+        }
+        InAuditProjection inauditCur = inAuditRepository.inauditCur(item.getCompanyCode(), item.getPlantNo(), item.getItemNo());
+        if (inauditCur != null) {
+            if (inauditCur.getCountInAudit() > 0) {
+                throw new ServerException("This is NOT a NON-MOVEMENT item (INAUDIT), CANNOT delete !");
+            }
+        }
+        List<BomProjection> bomCur = bomRepository.bomCur(item.getCompanyCode(), item.getPlantNo(), item.getItemNo());
+        if (bomCur.size() > 0) {
+            for (BomProjection rec : bomCur) {
+                if (StringUtils.isNotBlank(rec.getComponent())) {
+                    throw new ServerException("This item still in-use in BOM, CANNOT delete !");
+                }
+            }
+        }
+        BombypjProjection bombypjCur = bombypjRepository.bombypjCur(item.getCompanyCode(), item.getPlantNo(), item.getItemNo());
+        if (bombypjCur != null) {
+            if (StringUtils.isNotBlank(bombypjCur.getProjectNo())) {
+                throw new ServerException(String.format("This item still in-use in Project %s , CANNOT delete !", bombypjCur.getProjectNo()));
+            }
+        }
+        // if not error then
+        // delete itemLoc
+        ItemLoc foundItemLoc = itemLocRepository.findItemLocByCompanyCodeAndPlantNoAndItemId(item.getCompanyCode(), item.getPlantNo(), item.getId());
+        if (foundItemLoc != null) {
+            ItemLoc itemLoc = new ItemLoc();
+            BeanUtils.copyProperties(foundItemLoc, itemLoc);
+            itemLoc.setCompanyCode(UserProfileContext.getUserProfile().getCompanyCode());
+            itemLoc.setPlantNo(UserProfileContext.getUserProfile().getPlantNo());
+            itemLoc.setStatus(Status.DELETED);
+            itemLoc.setUpdatedBy(UserProfileContext.getUserProfile().getUsername());
+            itemLoc.setUpdatedAt(ZonedDateTime.now());
+            itemLoc.setItemId(foundItemLoc.getItemId());
+            itemLoc.setVersion(foundItemLoc.getVersion());
+            itemLoc.setCreatedBy(foundItemLoc.getCreatedBy());
+            itemLoc.setCreatedAt(foundItemLoc.getCreatedAt());
+            itemLoc.setId(foundItemLoc.getId());
+            itemLocRepository.save(itemLoc);
+        }
+        // delete Itemeql
+        Itemeql foundItemeqlItemNo = itemeqlRepository.findItemeqlByIdCompanyCodeAndIdPlantNoAndIdItemNo(item.getCompanyCode(), item.getPlantNo(), item.getItemNo());
+        if (foundItemeqlItemNo != null) {
+            itemeqlRepository.deleteItemeqlByIdCompanyCodeAndIdPlantNoAndIdItemNo(item.getCompanyCode(), item.getPlantNo(), item.getItemNo());
+        }
+        Itemeql foundItemeqlAlternate = itemeqlRepository.findItemeqlByIdCompanyCodeAndIdPlantNoAndIdAlternate(item.getCompanyCode(), item.getPlantNo(), item.getItemNo());
+        if (foundItemeqlAlternate != null) {
+            itemeqlRepository.deleteItemeqlByIdCompanyCodeAndIdPlantNoAndIdAlternate(item.getCompanyCode(), item.getPlantNo(), item.getItemNo());
+        }
+        // delete item
+        item.setStatus(Status.DELETED);
+        item.setUpdatedBy(UserProfileContext.getUserProfile().getUsername());
+        item.setUpdatedAt(ZonedDateTime.now());
         itemRepository.save(item);
     }
 
@@ -161,7 +293,7 @@ public class ItemServiceImpl implements ItemService {
     public SearchResult<ItemDTO> searchBy(SearchRequest searchRequest) {
         Specification<Item> specs = where(queryGenerator.createDefaultSpec());
 
-        if(!CollectionUtils.isEmpty(searchRequest.getFilters())) {
+        if (!CollectionUtils.isEmpty(searchRequest.getFilters())) {
             for (Filter filter : searchRequest.getFilters()) {
                 specs = specs.and(queryGenerator.createSpecification(filter));
             }
@@ -190,7 +322,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     private void updateAlternate(ItemDTO input, UserProfile userProfile) {
-        if(StringUtils.isNotBlank(input.getObsoleteItem())) {
+        if (StringUtils.isNotBlank(input.getObsoleteItem())) {
             itemRepository.updateAlternate(
                     input.getItemNo(),
                     userProfile.getCompanyCode(),
@@ -198,7 +330,7 @@ public class ItemServiceImpl implements ItemService {
                     input.getObsoleteItem()
             );
 
-            if(StringUtils.isNotBlank(input.getQryObsItem())
+            if (StringUtils.isNotBlank(input.getQryObsItem())
                     && !StringUtils.equals(input.getQryObsItem(), input.getObsoleteItem())) {
                 itemRepository.updateAlternate(
                         userProfile.getCompanyCode(),
@@ -230,7 +362,7 @@ public class ItemServiceImpl implements ItemService {
     private Item checkIfRecordExist(Long id) {
         Optional<Item> optionalItem = itemRepository.findById(id);
 
-        if (optionalItem.isEmpty()) {
+        if (!optionalItem.isPresent()) {
             throw new NotFoundException("Record is not found");
         }
         return optionalItem.get();

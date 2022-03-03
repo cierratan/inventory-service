@@ -14,13 +14,12 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.List;
-
-import static org.springframework.http.HttpHeaders.CONTENT_DISPOSITION;
 
 @RestController
 @RequestMapping("grns")
@@ -44,7 +43,7 @@ public class GrnController {
             JRException, FileNotFoundException {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentDispositionFormData("filename",input.getGrnNo() + "_Label" + ".pdf");
+        headers.setContentDispositionFormData("filename", input.getGrnNo() + "_Label" + ".pdf");
         return new ResponseEntity<>(grnService.generatedLabelGRN(input), headers, HttpStatus.OK);
     }
 
@@ -53,7 +52,7 @@ public class GrnController {
             JRException, FileNotFoundException {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentDispositionFormData("filename",input.getGrnNo() + "_PickList" + ".pdf");
+        headers.setContentDispositionFormData("filename", input.getGrnNo() + "_PickList" + ".pdf");
         return new ResponseEntity<>(grnService.generatedPickedListGRN(input), headers, HttpStatus.OK);
     }
 
@@ -62,7 +61,7 @@ public class GrnController {
             JRException, IOException {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentDispositionFormData("filename",input.getGrnNo() + "_Report" + ".pdf");
+        headers.setContentDispositionFormData("filename", input.getGrnNo() + "_Report" + ".pdf");
         return new ResponseEntity<>(grnService.generatedReportGRN(input), headers, HttpStatus.OK);
     }
 
@@ -120,7 +119,7 @@ public class GrnController {
     }
 
     @PostMapping
-    public ResponseEntity<GrnDTO> create(@RequestBody GrnDTO grn) throws ParseException {
+    public ResponseEntity<GrnDTO> create(@Valid @RequestBody GrnDTO grn) throws ParseException {
         return new ResponseEntity<>(grnService.createGrn(grn), HttpStatus.CREATED);
     }
 

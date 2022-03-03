@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 
 public interface MSRDetailProjection {
 
+    String getMsrNo();
     Integer getSeqNo();
     String getPartNo();
     String getItemNo();
@@ -12,6 +13,7 @@ public interface MSRDetailProjection {
     String getLoc();
     String getUom();
     String getProjectNo();
+    String getPoNo();
     String getGrnNo();
     String getGrnType();
     Integer getGrndetSeqNo();

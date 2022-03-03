@@ -8,9 +8,13 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface UOMRepository extends JpaRepository<UOM, UOMId>, JpaSpecificationExecutor<UOM> {
 
     @Query("SELECT u.uomFactor as uomFactor FROM UOM u WHERE u.id.uomFrom = :uomFrom and u.id.uomTo = :uomTo")
     UOMProjection getUomFactor(String uomFrom, String uomTo);
+
+    List<UOM> findUOMByIdUomFromAndIdUomTo(String uomFrom, String uomTo);
 }

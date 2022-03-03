@@ -15,4 +15,5 @@ public interface ItemBatchProjection {
     String getGrnNo();
     Integer getGrnSeq();
     BigDecimal getOriQoh();
+    Long getCountItemBatc();
 }

@@ -1,12 +1,14 @@
 package com.sunright.inventory.service.impl;
 
-import com.sunright.inventory.dto.*;
+import com.sunright.inventory.dto.UomDTO;
+import com.sunright.inventory.dto.UserProfile;
 import com.sunright.inventory.dto.search.Filter;
 import com.sunright.inventory.dto.search.SearchRequest;
 import com.sunright.inventory.dto.search.SearchResult;
 import com.sunright.inventory.entity.enums.Status;
 import com.sunright.inventory.entity.uom.UOM;
 import com.sunright.inventory.entity.uom.UOMId;
+import com.sunright.inventory.exception.DuplicateException;
 import com.sunright.inventory.exception.NotFoundException;
 import com.sunright.inventory.interceptor.UserProfileContext;
 import com.sunright.inventory.repository.UOMRepository;
@@ -20,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -38,17 +41,38 @@ public class UOMServiceImpl implements UOMService {
     public UomDTO createUOM(UomDTO input) {
         UserProfile userProfile = UserProfileContext.getUserProfile();
 
-        UOM uom = new UOM();
-        uom.setId(populateUomId(input.getUomFrom(), input.getUomTo()));
-        BeanUtils.copyProperties(input, uom);
-        uom.setStatus(Status.ACTIVE);
-        uom.setCreatedBy(userProfile.getUsername());
-        uom.setCreatedAt(ZonedDateTime.now());
-        uom.setUpdatedBy(userProfile.getUsername());
-        uom.setUpdatedAt(ZonedDateTime.now());
+        List<UOM> found = uomRepository.findUOMByIdUomFromAndIdUomTo(input.getUomFrom(), input.getUomTo());
+        if (!CollectionUtils.isEmpty(found)) {
+            for (UOM rec : found) {
+                Optional<UOM> optionalUOM = uomRepository.findById(rec.getId());
+                if (optionalUOM.get().getStatus() == Status.DELETED) {
+                    UOM uom = new UOM();
+                    BeanUtils.copyProperties(input, uom);
+                    uom.setStatus(Status.ACTIVE);
+                    uom.setCreatedBy(rec.getCreatedBy());
+                    uom.setCreatedAt(rec.getCreatedAt());
+                    uom.setUpdatedBy(UserProfileContext.getUserProfile().getUsername());
+                    uom.setUpdatedAt(ZonedDateTime.now());
+                    uom.setId(rec.getId());
+                    uom.setVersion(rec.getVersion());
+                    uomRepository.save(uom);
+                } else {
+                    throw new DuplicateException("UOM Record Exists!");
+                }
+            }
+        } else {
+            UOM uom = new UOM();
+            uom.setId(populateUomId(input.getUomFrom(), input.getUomTo()));
+            BeanUtils.copyProperties(input, uom);
+            uom.setStatus(Status.ACTIVE);
+            uom.setCreatedBy(userProfile.getUsername());
+            uom.setCreatedAt(ZonedDateTime.now());
+            uom.setUpdatedBy(userProfile.getUsername());
+            uom.setUpdatedAt(ZonedDateTime.now());
 
-        UOM saved = uomRepository.save(uom);
-        input.setVersion(saved.getVersion());
+            UOM saved = uomRepository.save(uom);
+            input.setVersion(saved.getVersion());
+        }
 
         return input;
     }
@@ -102,12 +126,10 @@ public class UOMServiceImpl implements UOMService {
     public SearchResult<UomDTO> searchBy(SearchRequest searchRequest) {
         Specification activeStatus = ((root, query, criteriaBuilder) ->
                 criteriaBuilder.equal(root.get("status"), Status.ACTIVE));
-
         Specification<UOM> specs = where(activeStatus);
-
-        if(!CollectionUtils.isEmpty(searchRequest.getFilters())) {
+        if (!CollectionUtils.isEmpty(searchRequest.getFilters())) {
             for (Filter filter : searchRequest.getFilters()) {
-                specs = specs.and(queryGenerator.createSpecification(filter));
+                specs = specs.and(queryGenerator.createSpecificationCustom(filter));
             }
         }
 
@@ -139,7 +161,7 @@ public class UOMServiceImpl implements UOMService {
     private UOM checkIfRecordExist(UOMId uomId) {
         Optional<UOM> optionalUom = uomRepository.findById(uomId);
 
-        if (optionalUom.isEmpty()) {
+        if (!optionalUom.isPresent()) {
             throw new NotFoundException("Record is not found");
         }
         return optionalUom.get();

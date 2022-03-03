@@ -5,8 +5,8 @@ import com.sunright.inventory.dto.UserProfile;
 import com.sunright.inventory.dto.search.Filter;
 import com.sunright.inventory.dto.search.SearchRequest;
 import com.sunright.inventory.dto.search.SearchResult;
-import com.sunright.inventory.entity.BaseIdEntity;
-import com.sunright.inventory.entity.InvCtl;
+import com.sunright.inventory.entity.base.BaseIdEntity;
+import com.sunright.inventory.entity.invctl.InvCtl;
 import com.sunright.inventory.entity.enums.Status;
 import com.sunright.inventory.exception.NotFoundException;
 import com.sunright.inventory.interceptor.UserProfileContext;
@@ -140,7 +140,7 @@ public class InvCtlServiceImpl implements InvCtlService {
     private InvCtl checkIfRecordExist(BaseIdEntity id) {
         Optional<InvCtl> optionalInvCtl = invCtlRepository.findById(id);
 
-        if (optionalInvCtl.isEmpty()) {
+        if (!optionalInvCtl.isPresent()) {
             throw new NotFoundException("Record is not found");
         }
         return optionalInvCtl.get();

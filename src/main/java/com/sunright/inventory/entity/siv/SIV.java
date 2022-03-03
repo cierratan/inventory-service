@@ -1,6 +1,6 @@
 package com.sunright.inventory.entity.siv;
 
-import com.sunright.inventory.entity.InvBaseEntity;
+import com.sunright.inventory.entity.base.InvBaseEntity;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

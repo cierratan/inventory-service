@@ -67,4 +67,8 @@ public interface ItemBatcRepository extends JpaRepository<ItemBatc, ItemBatcId> 
     @Modifying
     @Query("UPDATE ITEMBATC i SET i.qoh = :itemBatcBal WHERE i.id.itemNo = :itemNo and i.id.batchNo = :batchNo")
     void updateItemBatcBal(BigDecimal itemBatcBal, Long batchNo);
+
+    @Query("select count(ib) as countItemBatc from ITEMBATC ib where ib.id.companyCode = :companyCode " +
+            "and ib.id.plantNo = :plantNo and ib.id.itemNo = :itemNo")
+    ItemBatchProjection itembatcCur(String companyCode, Integer plantNo, String itemNo);
 }

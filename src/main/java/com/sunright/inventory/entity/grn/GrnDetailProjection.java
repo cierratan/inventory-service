@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 
 public interface GrnDetailProjection {
 
+    String getPoNo();
     String getGrnNo();
     Integer getSeqNo();
     String getUom();

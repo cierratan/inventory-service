@@ -1,4 +1,4 @@
-package com.sunright.inventory.entity;
+package com.sunright.inventory.entity.base;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;

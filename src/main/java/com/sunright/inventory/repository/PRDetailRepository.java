@@ -13,19 +13,19 @@ import java.util.List;
 @Repository
 public interface PRDetailRepository extends JpaRepository<PRDetail, PRDetailId>, JpaSpecificationExecutor<PRDetail> {
 
-    @Query(value = "select '0'                              as itemType," +
+    @Query(value = "select 0                              as itemType," +
             "       b.alternate                      as alternate," +
             "       decode(sum(nvl(b.short_qty, 0))," +
             "              0, sum(nvl(b.resv_qty, 0) - nvl(b.in_transit_qty, 0) - nvl(b.picked_qty, 0))," +
             "              sum(nvl(b.short_qty, 0))) as shortQty," +
             "       sum(nvl(b.picked_qty, 0))        as pickedQty," +
-            "       :saleType                               as saleType," +
+            "       ''                               as saleType," +
             "       :docmNo                   as docmNo," +
             "       i.part_no                        as partNo," +
             "       i.uom                            as uom," +
             "       i.loc                            as loc," +
             "       l.std_material                   as stdMaterial," +
-            "       decode(tran_type, 'PR', :remarks, '')  as remarks " +
+            "       decode(tran_type, 'PR', '', '')  as remarks " +
             "from bombypj b," +
             "     item i," +
             "     itemloc l " +
@@ -48,19 +48,19 @@ public interface PRDetailRepository extends JpaRepository<PRDetail, PRDetailId>,
             "  and b.status not in ('X', 'D')" +
             "group by '0'," +
             "         b.alternate," +
-            "         saleType," +
+            "         ''," +
             "         :docmNo," +
             "         i.part_no," +
             "         i.uom," +
             "         i.loc," +
             "         l.std_material," +
-            "         decode(tran_type, 'PR', :remarks, '') " +
+            "         decode(tran_type, 'PR', '', '') " +
             "union " +
-            "select '1'                        as itemType," +
+            "select 1                        as itemType," +
             "       pd.item_no                 as itemNo," +
             "       0                          as shortQty," +
             "       pd.qty                     as pickedQty," +
-            "       :saleType                         as saleType," +
+            "       ''                         as saleType," +
             "       :docmNo             as docmNo," +
             "       pd.part_no                 as partNo," +
             "       pd.uom                     as uom," +
@@ -68,14 +68,13 @@ public interface PRDetailRepository extends JpaRepository<PRDetail, PRDetailId>,
             "       0                          as stdMaterial," +
             "       decode(:tranType, 'PR', :remarks, '') as remarks " +
             "from prdet pd " +
-            "where company_code = :companyCode " +
-            "  and plant_no = :plantNo " +
-            "  and item_type = 1 " +
-            "  and :tranType = 'PR' " +
+            "where company_code = :companyCode" +
+            "  and plant_no = :plantNo" +
+            "  and item_type = 1" +
+            "  and :tranType = 'PR'" +
             "  and docm_no = :docmNo " +
             "order by 2, 6", nativeQuery = true)
-    List<PRDetailProjection> bombypjCur(String saleType, String docmNo, String remarks,
-                                        String companyCode, Integer plantNo, String tranType);
+    List<PRDetailProjection> bombypjCur(String docmNo, String remarks, String companyCode, Integer plantNo, String tranType);
 
     @Query(value = "select (sum(iss) / sum(req)) as issReq " +
             "from (select count(alternate) iss, 0 req" +

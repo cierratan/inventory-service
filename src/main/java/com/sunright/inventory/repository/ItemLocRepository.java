@@ -1,7 +1,7 @@
 package com.sunright.inventory.repository;
 
-import com.sunright.inventory.entity.ItemLoc;
-import com.sunright.inventory.entity.ItemLocProjection;
+import com.sunright.inventory.entity.itemloc.ItemLoc;
+import com.sunright.inventory.entity.itemloc.ItemLocProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -150,4 +150,6 @@ public interface ItemLocRepository extends JpaRepository<ItemLoc, Long> {
             "AND pd.plant_no = :plantNo AND nvl(pd.adv_status, 'N') = 'Y' " +
             "AND nvl(pd.order_qty, 0) > nvl(pd.recd_qty, 0) AND pd.item_no = :itemNo) s3", nativeQuery = true)
     ItemLocProjection getResv(String companyCode, Integer plantNo, String itemNo);
+
+    ItemLoc findItemLocByCompanyCodeAndPlantNoAndItemId(String companyCode, Integer plantNo, Long id);
 }

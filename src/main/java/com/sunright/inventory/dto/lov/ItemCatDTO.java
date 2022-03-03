@@ -21,7 +21,7 @@ public class ItemCatDTO extends InvBaseDTO {
     private String description;
     private String subDescription;
 
-    private MRPStatus mrpStatus;
+    private String mrpStatus;
 
     private BigDecimal designQtya;
     private BigDecimal designQtyb;

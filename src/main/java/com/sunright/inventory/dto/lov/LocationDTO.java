@@ -23,10 +23,14 @@ public class LocationDTO extends InvBaseDTO {
     private String pcode;
     private String telNo;
     private String faxNo;
+
+    @NotBlank(message = "Country Code must not be empty")
     private String countryCode;
     private String regionCode;
     private String stateCode;
     private String cityCode;
     private String personInCharge;
     private String remarks;
+
+    private String countryName;
 }

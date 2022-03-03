@@ -1,6 +1,6 @@
 package com.sunright.inventory.entity.lov;
 
-import com.sunright.inventory.entity.BaseEntity;
+import com.sunright.inventory.entity.base.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;

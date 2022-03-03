@@ -13,6 +13,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
+import java.util.Locale;
+
 @Component
 public class QueryGenerator {
 
@@ -39,15 +41,44 @@ public class QueryGenerator {
         return companyCode.and(plantNo).and(status);
     }
 
-    public Specification createSpecification(Filter input) {
+    public Specification createSpecificationCustom(Filter input) {
+        if (input.getField().equals("uomFrom") || input.getField().equals("uomTo")) {
+            switch (input.getOperator()) {
+                case EQUALS:
+                    return (root, query, criteriaBuilder) ->
+                            criteriaBuilder.equal(root.get(input.getField()),
+                                    castToRequiredType(root.get("id").get(input.getField()).getJavaType(), input.getValue()));
+                case LIKE:
+                    return (root, query, criteriaBuilder) -> // add by Arya (case-insensitive like matching anywhere)
+                            criteriaBuilder.like(criteriaBuilder.lower(root.get("id").get(input.getField())), "%" + input.getValue().toLowerCase(Locale.ROOT) + "%");
+            }
+
+        }
         switch (input.getOperator()) {
             case EQUALS:
                 return (root, query, criteriaBuilder) ->
                         criteriaBuilder.equal(root.get(input.getField()),
                                 castToRequiredType(root.get(input.getField()).getJavaType(), input.getValue()));
             case LIKE:
+                return (root, query, criteriaBuilder) -> // add by Arya (case-insensitive like matching anywhere)
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get(input.getField())), "%" + input.getValue().toLowerCase(Locale.ROOT) + "%");
+            default:
+                throw new RuntimeException("Operation not supported yet");
+        }
+    }
+
+    public Specification createSpecification(Filter input) {
+        switch (input.getOperator()) {
+            case EQUALS:
                 return (root, query, criteriaBuilder) ->
-                        criteriaBuilder.like(root.get(input.getField()), "%" + input.getValue() + "%");
+                        criteriaBuilder.equal(root.get(input.getField()),
+                                castToRequiredType(root.get(input.getField()).getJavaType(), input.getValue()));
+            /*case LIKE: // comment by Arya
+                return (root, query, criteriaBuilder) ->
+                        criteriaBuilder.like(root.get(input.getField()), "%" + input.getValue() + "%");*/
+            case LIKE:
+                return (root, query, criteriaBuilder) -> // add by Arya (case-insensitive like matching anywhere)
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get(input.getField())), "%" + input.getValue().toLowerCase(Locale.ROOT) + "%");
             default:
                 throw new RuntimeException("Operation not supported yet");
         }

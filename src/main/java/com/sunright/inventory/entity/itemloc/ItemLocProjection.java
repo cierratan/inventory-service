@@ -1,4 +1,4 @@
-package com.sunright.inventory.entity;
+package com.sunright.inventory.entity.itemloc;
 
 import java.math.BigDecimal;
 

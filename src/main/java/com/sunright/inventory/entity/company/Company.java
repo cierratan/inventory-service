@@ -1,6 +1,6 @@
 package com.sunright.inventory.entity.company;
 
-import com.sunright.inventory.entity.BaseIdEntity;
+import com.sunright.inventory.entity.base.BaseIdEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 

@@ -1,5 +1,7 @@
-package com.sunright.inventory.entity;
+package com.sunright.inventory.entity.invctl;
 
+import com.sunright.inventory.entity.base.BaseEntity;
+import com.sunright.inventory.entity.base.BaseIdEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
