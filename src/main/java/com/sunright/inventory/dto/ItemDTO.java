@@ -8,6 +8,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
+import javax.validation.constraints.NotBlank;
 import java.math.BigDecimal;
 import java.util.Date;
 
@@ -18,8 +19,13 @@ import java.util.Date;
 public class ItemDTO extends InvBaseDTO {
     private Boolean rohsStatus;
 
+    @NotBlank(message = "Item No Can Not be Blank !")
     private String itemNo;
+
+    @NotBlank(message = "Loc Can Not be Blank !")
     private String loc;
+
+    @NotBlank(message = "Source Can Not be Blank !")
     private String source;
     private String partNo;
     private String mslCode;
@@ -31,7 +37,10 @@ public class ItemDTO extends InvBaseDTO {
     private String issueNo;
     private String rev;
 
+    @NotBlank(message = "Category Code Can Not be Blank !")
     private String categoryCode;
+
+    @NotBlank(message = "Category Sub Code Can Not be Blank !")
     private String categorySubCode;
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)

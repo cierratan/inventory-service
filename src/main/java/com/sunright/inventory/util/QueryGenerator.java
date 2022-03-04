@@ -85,12 +85,14 @@ public class QueryGenerator {
     }
 
     public Pageable constructPageable(SearchRequest searchRequest) {
-        Sort sort = Sort.by(Sort.Direction.DESC, "updatedAt");
+        Sort sort = null;
 
         if (!CollectionUtils.isEmpty(searchRequest.getSorts())) {
             for (DataSorting dataSort : searchRequest.getSorts()) {
-                sort = sort.and(Sort.by(dataSort.getSort() == SortOption.ASC ? Sort.Direction.ASC : Sort.Direction.DESC, dataSort.getField()));
+                sort = Sort.by(dataSort.getSort() == SortOption.ASC ? Sort.Direction.ASC : Sort.Direction.DESC, dataSort.getField());
             }
+        } else {
+            sort = Sort.by(Sort.Direction.DESC, "updatedAt");
         }
 
         return PageRequest.of(searchRequest.getPage(), searchRequest.getLimit(), sort);

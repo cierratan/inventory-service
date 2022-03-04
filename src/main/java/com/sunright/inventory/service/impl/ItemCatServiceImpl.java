@@ -55,6 +55,7 @@ public class ItemCatServiceImpl implements ItemCatService {
                         BeanUtils.copyProperties(input, itemCat);
                         itemCat.setCompanyCode(UserProfileContext.getUserProfile().getCompanyCode());
                         itemCat.setPlantNo(UserProfileContext.getUserProfile().getPlantNo());
+                        itemCat.setMrpStatus(MRPStatus.Y);
                         itemCat.setStatus(Status.ACTIVE);
                         itemCat.setCreatedBy(rec.getCreatedBy());
                         itemCat.setCreatedAt(rec.getCreatedAt());
@@ -160,9 +161,9 @@ public class ItemCatServiceImpl implements ItemCatService {
 
     private void defineMrpStatusAndCategoryGroup(ItemCat itemCat, ItemCatDTO itemCatDTO) {
         if (itemCat.getMrpStatus() == MRPStatus.Y) {
-            itemCatDTO.setMrpStatus("YES");
+            itemCatDTO.setMrpStatusDesc("YES");
         } else if (itemCat.getMrpStatus() == MRPStatus.N) {
-            itemCatDTO.setMrpStatus("NO");
+            itemCatDTO.setMrpStatusDesc("NO");
         }
 
         List<ValueDescProjection> listCatGrp = itemCatRepository.findCategoryGroups();

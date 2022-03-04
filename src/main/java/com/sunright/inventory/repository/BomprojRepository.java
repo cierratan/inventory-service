@@ -23,4 +23,8 @@ public interface BomprojRepository extends JpaRepository<Bomproj, BomprojId>, Jp
     @Modifying
     @Query("UPDATE BOMPROJ b set b.sivNo = :sivNo WHERE b.projectNo = :projectNo")
     void updateSivNo(String sivNo, String projectNo);
+
+    @Query("SELECT DISTINCT b.projectNo as projectNo FROM BOMPROJ b WHERE b.id.companyCode = :companyCode " +
+            "AND b.id.plantNo = :plantNo AND b.projectNo = :itemNo")
+    BomprojProjection foundProjectNo(String companyCode, Integer plantNo, String itemNo);
 }
