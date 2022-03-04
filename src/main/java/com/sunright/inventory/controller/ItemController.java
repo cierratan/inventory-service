@@ -9,6 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
+
 @RestController
 @RequestMapping("items")
 public class ItemController {
@@ -16,7 +18,7 @@ public class ItemController {
     private ItemService itemService;
 
     @PostMapping
-    public ResponseEntity<ItemDTO> create(@RequestBody ItemDTO item) {
+    public ResponseEntity<ItemDTO> create(@Valid @RequestBody ItemDTO item) {
         return new ResponseEntity<>(itemService.createItem(item), HttpStatus.OK);
     }
 

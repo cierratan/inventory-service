@@ -129,4 +129,13 @@ public interface ItemRepository extends JpaRepository<Item, Long>, JpaSpecificat
     @Query("SELECT i.itemNo as itemNo, i.loc as loc, i.uom as uom FROM ITEM i WHERE i.companyCode = :companyCode " +
             "AND i.plantNo = :plantNo AND i.itemNo = :itemNo")
     ItemProjection itemOtherCurOrItemPRCur(String companyCode, Integer plantNo, String itemNo);
+
+    @Query("SELECT DISTINCT i.partNo as partNo FROM ITEM i WHERE i.companyCode = :companyCode " +
+            "AND i.plantNo = :plantNo AND i.partNo = :partNo")
+    ItemProjection foundPartNo(String companyCode, Integer plantNo, String partNo);
+
+    @Query("SELECT DISTINCT i.itemNo as itemNo FROM ITEM i WHERE i.companyCode = :companyCode " +
+            "AND i.plantNo = :plantNo AND i.itemNo = :obsoleteItem")
+    ItemProjection foundObsoleteItem(String companyCode, Integer plantNo, String obsoleteItem);
+
 }

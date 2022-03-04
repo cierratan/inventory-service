@@ -7,6 +7,7 @@ import com.sunright.inventory.dto.search.SearchRequest;
 import com.sunright.inventory.dto.search.SearchResult;
 import com.sunright.inventory.entity.bom.BomProjection;
 import com.sunright.inventory.entity.bombypj.BombypjProjection;
+import com.sunright.inventory.entity.bomproj.BomprojProjection;
 import com.sunright.inventory.entity.enums.Status;
 import com.sunright.inventory.entity.inaudit.InAuditProjection;
 import com.sunright.inventory.entity.item.Item;
@@ -65,6 +66,9 @@ public class ItemServiceImpl implements ItemService {
     private ItemeqlRepository itemeqlRepository;
 
     @Autowired
+    private BomprojRepository bomprojRepository;
+
+    @Autowired
     private QueryGenerator queryGenerator;
 
     @Override
@@ -92,6 +96,16 @@ public class ItemServiceImpl implements ItemService {
                         item.setUpdatedAt(ZonedDateTime.now());
                         item.setId(rec.getId());
                         item.setVersion(rec.getVersion());
+                        if (input.getSource().equals(rec.getSource())) {
+                            input.setSource(null);
+                        }
+                        if (input.getPartNo().equals(rec.getPartNo())) {
+                            input.setPartNo(null);
+                        }
+                        if (input.getObsoleteItem().equals(rec.getObsoleteItem())) {
+                            input.setObsoleteItem(null);
+                        }
+                        checkRecValid(userProfile, input);
                         prePopulateBeforeSaving(item);
                         Item saved = itemRepository.save(item);
                         updateAlternate(input, userProfile);
@@ -113,7 +127,7 @@ public class ItemServiceImpl implements ItemService {
                         input.setQryObsItem(item.getObsoleteItem());
                         input.setRohsStatus(StringUtils.equals("1", item.getStrRohsStatus()) ? true : false);
                     } else {
-                        throw new DuplicateException(String.format("Duplicate item with itemNo: %s", input.getItemNo()));
+                        throw new DuplicateException("Item Record exists !");
                     }
                 }
             }
@@ -130,6 +144,7 @@ public class ItemServiceImpl implements ItemService {
             item.setUpdatedBy(userProfile.getUsername());
             item.setUpdatedAt(ZonedDateTime.now());
 
+            checkRecValid(userProfile, input);
             prePopulateBeforeSaving(item);
 
             Item saved = itemRepository.save(item);
@@ -152,21 +167,57 @@ public class ItemServiceImpl implements ItemService {
         return input;
     }
 
+    private void checkRecValid(UserProfile userProfile, ItemDTO input) {
+        if (StringUtils.isNotBlank(input.getSource())) {
+            if (input.getSource().equals("A") || input.getSource().equals("W")) {
+                BomprojProjection recBomproj = bomprojRepository.foundProjectNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), input.getItemNo());
+                if (recBomproj == null) {
+                    throw new ServerException("Item No. Not Found in BOMPROJ table !");
+                }
+            }
+        }
+        if (StringUtils.isNotBlank(input.getPartNo())) {
+            ItemProjection recPartNoExists = itemRepository.foundPartNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), input.getPartNo());
+            if (recPartNoExists != null) {
+                if (recPartNoExists.getPartNo() != null) {
+                    throw new ServerException("Part No exists in ITEM master.");
+                }
+            }
+        }
+        if (StringUtils.isNotBlank(input.getObsoleteItem())) {
+            ItemProjection recObsItem = itemRepository.foundObsoleteItem(userProfile.getCompanyCode(), userProfile.getPlantNo(), input.getObsoleteItem());
+            if (recObsItem == null) {
+                throw new ServerException("Invaild Stock Code!");
+            }
+        }
+    }
+
     @Override
     @Transactional
     public ItemDTO editItem(ItemDTO input) {
+        UserProfile userProfile = UserProfileContext.getUserProfile();
         Item found = checkIfRecordExist(input.getId());
 
         Item item = new Item();
-        BeanUtils.copyProperties(input, item, "status");
+        BeanUtils.copyProperties(input, item, "status", "createdBy", "createdAt");
         item.setCompanyCode(UserProfileContext.getUserProfile().getCompanyCode());
         item.setPlantNo(UserProfileContext.getUserProfile().getPlantNo());
         item.setStatus(found.getStatus());
+        item.setCreatedBy(found.getCreatedBy());
+        item.setCreatedAt(found.getCreatedAt());
+        if (input.getSource().equals(found.getSource())) {
+            input.setSource(null);
+        }
+        if (input.getPartNo().equals(found.getPartNo())) {
+            input.setPartNo(null);
+        }
+        if (input.getObsoleteItem().equals(found.getObsoleteItem())) {
+            input.setObsoleteItem(null);
+        }
+        checkRecValid(userProfile, input);
         item.setUpdatedBy(UserProfileContext.getUserProfile().getUsername());
         item.setUpdatedAt(ZonedDateTime.now());
-
         prePopulateBeforeSaving(item);
-
         Item saved = itemRepository.save(item);
         updateAlternate(input, UserProfileContext.getUserProfile());
 
