@@ -175,5 +175,5 @@ public interface BombypjRepository extends JpaRepository<Bombypj, BombypjId>, Jp
 
     @Query("SELECT DISTINCT b.id.projectNo as projectNo FROM BOMBYPJ b WHERE b.id.companyCode = :companyCode " +
             "AND b.id.plantNo = :plantNo AND b.id.alternate = :itemNo")
-    BombypjProjection bombypjCur(String companyCode, Integer plantNo, String itemNo);
+    List<BombypjProjection> bombypjCur(String companyCode, Integer plantNo, String itemNo);
 }

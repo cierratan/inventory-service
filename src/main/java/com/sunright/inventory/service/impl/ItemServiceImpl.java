@@ -187,7 +187,7 @@ public class ItemServiceImpl implements ItemService {
         if (StringUtils.isNotBlank(input.getObsoleteItem())) {
             ItemProjection recObsItem = itemRepository.foundObsoleteItem(userProfile.getCompanyCode(), userProfile.getPlantNo(), input.getObsoleteItem());
             if (recObsItem == null) {
-                throw new ServerException("Invaild Stock Code!");
+                throw new ServerException("Invalid Stock Code!");
             }
         }
     }
@@ -300,11 +300,14 @@ public class ItemServiceImpl implements ItemService {
                 }
             }
         }
-        BombypjProjection bombypjCur = bombypjRepository.bombypjCur(item.getCompanyCode(), item.getPlantNo(), item.getItemNo());
-        if (bombypjCur != null) {
-            if (StringUtils.isNotBlank(bombypjCur.getProjectNo())) {
-                throw new ServerException(String.format("This item still in-use in Project %s , CANNOT delete !", bombypjCur.getProjectNo()));
+        List<BombypjProjection> bombypjCur = bombypjRepository.bombypjCur(item.getCompanyCode(), item.getPlantNo(), item.getItemNo());
+        if (bombypjCur.size() != 0) {
+            for (BombypjProjection rec : bombypjCur){
+                if (StringUtils.isNotBlank(rec.getProjectNo())) {
+                    throw new ServerException(String.format("This item still in-use in Project %s , CANNOT delete !", rec.getProjectNo()));
+                }
             }
+
         }
         // if not error then
         // delete itemLoc
