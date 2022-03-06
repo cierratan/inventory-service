@@ -56,6 +56,11 @@ public class SIVController {
         return new ResponseEntity<>(sivService.getDefaultValueSIV(subType), HttpStatus.OK);
     }
 
+    @PostMapping("check-next-item")
+    public ResponseEntity<SIVDetailDTO> nextItem(@RequestBody SIVDTO input) {
+        return new ResponseEntity<>(sivService.checkNextItem(input), HttpStatus.OK);
+    }
+
     @PostMapping("check-valid-item-no")
     public ResponseEntity<SIVDetailDTO> checkItemNo(@RequestBody SIVDTO input) {
         return new ResponseEntity<>(sivService.checkValidItemNo(input), HttpStatus.OK);

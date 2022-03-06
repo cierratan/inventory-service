@@ -85,6 +85,17 @@ public class ItemServiceImpl implements ItemService {
                 if (optionalItem.isPresent() && foundItemLoc != null) {
                     if (optionalItem.get().getStatus() == Status.DELETED) {
                         Item item = new Item();
+                        if (input.getSource().equals(rec.getSource())) {
+                            input.setSource(null);
+                        }
+                        if (input.getPartNo().equals(rec.getPartNo())) {
+                            input.setPartNo(null);
+                        }
+                        if (input.getObsoleteItem().equals(rec.getObsoleteItem())) {
+                            input.setObsoleteItem(null);
+                        }
+                        String process = "CREATE";
+                        checkRecValid(userProfile, input, process);
                         BeanUtils.copyProperties(input, item);
                         item.setCompanyCode(UserProfileContext.getUserProfile().getCompanyCode());
                         item.setPlantNo(UserProfileContext.getUserProfile().getPlantNo());
@@ -96,16 +107,6 @@ public class ItemServiceImpl implements ItemService {
                         item.setUpdatedAt(ZonedDateTime.now());
                         item.setId(rec.getId());
                         item.setVersion(rec.getVersion());
-                        if (input.getSource().equals(rec.getSource())) {
-                            input.setSource(null);
-                        }
-                        if (input.getPartNo().equals(rec.getPartNo())) {
-                            input.setPartNo(null);
-                        }
-                        if (input.getObsoleteItem().equals(rec.getObsoleteItem())) {
-                            input.setObsoleteItem(null);
-                        }
-                        checkRecValid(userProfile, input);
                         prePopulateBeforeSaving(item);
                         Item saved = itemRepository.save(item);
                         updateAlternate(input, userProfile);
@@ -133,6 +134,8 @@ public class ItemServiceImpl implements ItemService {
             }
         } else {
             Item item = new Item();
+            String process = "CREATE";
+            checkRecValid(userProfile, input, process);
             BeanUtils.copyProperties(input, item);
 
             item.setCompanyCode(userProfile.getCompanyCode());
@@ -144,7 +147,6 @@ public class ItemServiceImpl implements ItemService {
             item.setUpdatedBy(userProfile.getUsername());
             item.setUpdatedAt(ZonedDateTime.now());
 
-            checkRecValid(userProfile, input);
             prePopulateBeforeSaving(item);
 
             Item saved = itemRepository.save(item);
@@ -167,7 +169,7 @@ public class ItemServiceImpl implements ItemService {
         return input;
     }
 
-    private void checkRecValid(UserProfile userProfile, ItemDTO input) {
+    private void checkRecValid(UserProfile userProfile, ItemDTO input, String process) {
         if (StringUtils.isNotBlank(input.getSource())) {
             if (input.getSource().equals("A") || input.getSource().equals("W")) {
                 BomprojProjection recBomproj = bomprojRepository.foundProjectNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), input.getItemNo());
@@ -176,11 +178,14 @@ public class ItemServiceImpl implements ItemService {
                 }
             }
         }
-        if (StringUtils.isNotBlank(input.getPartNo())) {
-            ItemProjection recPartNoExists = itemRepository.foundPartNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), input.getPartNo());
-            if (recPartNoExists != null) {
-                if (recPartNoExists.getPartNo() != null) {
-                    throw new ServerException("Part No exists in ITEM master.");
+        if (process.equalsIgnoreCase("CREATE")) {
+            if (StringUtils.isNotBlank(input.getPartNo())) {
+                ItemProjection recPartNoExists = itemRepository.foundPartNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), input.getPartNo());
+                if (recPartNoExists != null) {
+                    if (recPartNoExists.getPartNo() != null) {
+                        //throw new ServerException("Part No exists in ITEM master.");
+                        input.setMessage("Part No exists in ITEM master.");
+                    }
                 }
             }
         }
@@ -199,12 +204,6 @@ public class ItemServiceImpl implements ItemService {
         Item found = checkIfRecordExist(input.getId());
 
         Item item = new Item();
-        BeanUtils.copyProperties(input, item, "status", "createdBy", "createdAt");
-        item.setCompanyCode(UserProfileContext.getUserProfile().getCompanyCode());
-        item.setPlantNo(UserProfileContext.getUserProfile().getPlantNo());
-        item.setStatus(found.getStatus());
-        item.setCreatedBy(found.getCreatedBy());
-        item.setCreatedAt(found.getCreatedAt());
         if (input.getSource().equals(found.getSource())) {
             input.setSource(null);
         }
@@ -214,7 +213,15 @@ public class ItemServiceImpl implements ItemService {
         if (input.getObsoleteItem().equals(found.getObsoleteItem())) {
             input.setObsoleteItem(null);
         }
-        checkRecValid(userProfile, input);
+        String process = "UPDATE";
+        checkRecValid(userProfile, input, process);
+        BeanUtils.copyProperties(input, item, "status", "createdBy", "createdAt");
+        item.setCompanyCode(UserProfileContext.getUserProfile().getCompanyCode());
+        item.setPlantNo(UserProfileContext.getUserProfile().getPlantNo());
+        item.setStatus(found.getStatus());
+        item.setCreatedBy(found.getCreatedBy());
+        item.setCreatedAt(found.getCreatedAt());
+
         item.setUpdatedBy(UserProfileContext.getUserProfile().getUsername());
         item.setUpdatedAt(ZonedDateTime.now());
         prePopulateBeforeSaving(item);
@@ -296,7 +303,7 @@ public class ItemServiceImpl implements ItemService {
         }
         List<BombypjProjection> bombypjCur = bombypjRepository.bombypjCur(item.getCompanyCode(), item.getPlantNo(), item.getItemNo());
         if (bombypjCur.size() != 0) {
-            for (BombypjProjection rec : bombypjCur){
+            for (BombypjProjection rec : bombypjCur) {
                 if (StringUtils.isNotBlank(rec.getProjectNo())) {
                     throw new ServerException(String.format("This item still in-use in Project %s , CANNOT delete !", rec.getProjectNo()));
                 }

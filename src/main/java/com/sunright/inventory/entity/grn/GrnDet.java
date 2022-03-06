@@ -21,7 +21,7 @@ public class GrnDet {
     private Long id;
 
     private String companyCode;
-    private int plantNo;
+    private Integer plantNo;
     private String grnNo;
     private String subType;
 
@@ -29,7 +29,7 @@ public class GrnDet {
     private String itemNo;
     private String partNo;
     private String loc;
-    private int itemType;
+    private Integer itemType;
     private String projectNo;
     private String poNo;
     private Integer poRecSeq;

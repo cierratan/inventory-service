@@ -38,4 +38,6 @@ public interface SIVService {
     byte[] generatedLabelSIV(SIVDTO input) throws JRException, SQLException;
 
     byte[] generatedReportSIV(SIVDTO input) throws JRException, SQLException;
+
+    SIVDetailDTO checkNextItem(SIVDTO input);
 }

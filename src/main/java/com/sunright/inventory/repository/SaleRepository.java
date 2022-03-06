@@ -48,4 +48,20 @@ public interface SaleRepository extends JpaRepository<Sale, SaleId>, JpaSpecific
     @Query("SELECT s.id.orderNo as orderNo, s.openClose as openClose " +
             "FROM SALE s WHERE s.id.companyCode = :companyCode AND s.id.plantNo = :plantNo AND s.id.orderNo = :docmNo")
     SaleProjection cOrder(String companyCode, Integer plantNo, String docmNo);
+
+    @Query(value = "select sale_type " +
+            "from sale " +
+            "where company_code = :companyCode    " +
+            "and plant_no = :plantNo            " +
+            "and order_no = :projectNo1 " +
+            "union " +
+            "select sale_type " +
+            "from sale s, saledet sd " +
+            "where s.company_code = sd.company_code    " +
+            "and s.plant_no = sd.plant_no            " +
+            "and s.order_no = sd.order_no " +
+            "and sd.company_code = :companyCode    " +
+            "and sd.plant_no = :plantNo            " +
+            "and sd.project_no_sub = :projectNo1", nativeQuery = true)
+    SaleProjection saleTypeCur(String companyCode, Integer plantNo, String projectNo1);
 }
