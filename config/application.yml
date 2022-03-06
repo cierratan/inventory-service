@@ -4,8 +4,11 @@ spring:
     url: jdbc:oracle:thin:@//192.168.1.230:1521/inventory_pdb.example.com
     username: inventoryuser
     password: Weblogic1
+#    url: jdbc:oracle:thin:@//203.126.35.87:1521/inventory_pdb.sunright.com
+#    username: inventoryuser
+#    password: Ue1car0
   flyway:
-    enabled: true
+    enabled: false
 #  jpa:
 #    show-sql: true
 #    properties:
