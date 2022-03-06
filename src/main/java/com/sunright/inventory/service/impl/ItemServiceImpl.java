@@ -260,14 +260,8 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
+    @Transactional
     public void deleteItem(Long id) {
-        // comment by Arya
-        /*Item item = checkIfRecordExist(id);
-        item.setStatus(Status.DELETED);
-        item.setUpdatedBy(UserProfileContext.getUserProfile().getUsername());
-        item.setUpdatedAt(ZonedDateTime.now());
-        itemRepository.save(item);*/
-
         // add logic by Arya for delete item
         Item item = checkIfRecordExist(id);
         //before deletion, check for any QOH of that item
