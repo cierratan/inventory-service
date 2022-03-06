@@ -6,6 +6,7 @@ import com.sunright.inventory.dto.search.SearchRequest;
 import com.sunright.inventory.dto.search.SortOption;
 import com.sunright.inventory.entity.enums.Status;
 import com.sunright.inventory.interceptor.UserProfileContext;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -73,12 +74,18 @@ public class QueryGenerator {
                 return (root, query, criteriaBuilder) ->
                         criteriaBuilder.equal(root.get(input.getField()),
                                 castToRequiredType(root.get(input.getField()).getJavaType(), input.getValue()));
-            /*case LIKE: // comment by Arya
-                return (root, query, criteriaBuilder) ->
-                        criteriaBuilder.like(root.get(input.getField()), "%" + input.getValue() + "%");*/
             case LIKE:
+                final String strValue;
+                if(StringUtils.contains(input.getValue(), "_")) {
+                    strValue = StringUtils.replace(input.getValue(), "_", "\\_");
+                } else if(StringUtils.contains(input.getValue(), "%")) {
+                    strValue = StringUtils.replace(input.getValue(), "%", "\\%");
+                } else {
+                    strValue = input.getValue();
+                }
+
                 return (root, query, criteriaBuilder) -> // add by Arya (case-insensitive like matching anywhere)
-                        criteriaBuilder.like(criteriaBuilder.lower(root.get(input.getField())), "%" + input.getValue().toLowerCase(Locale.ROOT) + "%");
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get(input.getField())), "%" + strValue.toLowerCase(Locale.ROOT) + "%", '\\');
             default:
                 throw new RuntimeException("Operation not supported yet");
         }
