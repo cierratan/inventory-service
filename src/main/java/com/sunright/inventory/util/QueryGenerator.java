@@ -42,32 +42,6 @@ public class QueryGenerator {
         return companyCode.and(plantNo).and(status);
     }
 
-    public Specification createSpecificationCustom(Filter input) {
-        if (input.getField().equals("uomFrom") || input.getField().equals("uomTo")) {
-            switch (input.getOperator()) {
-                case EQUALS:
-                    return (root, query, criteriaBuilder) ->
-                            criteriaBuilder.equal(root.get(input.getField()),
-                                    castToRequiredType(root.get("id").get(input.getField()).getJavaType(), input.getValue()));
-                case LIKE:
-                    return (root, query, criteriaBuilder) -> // add by Arya (case-insensitive like matching anywhere)
-                            criteriaBuilder.like(criteriaBuilder.lower(root.get("id").get(input.getField())), "%" + input.getValue().toLowerCase(Locale.ROOT) + "%");
-            }
-
-        }
-        switch (input.getOperator()) {
-            case EQUALS:
-                return (root, query, criteriaBuilder) ->
-                        criteriaBuilder.equal(root.get(input.getField()),
-                                castToRequiredType(root.get(input.getField()).getJavaType(), input.getValue()));
-            case LIKE:
-                return (root, query, criteriaBuilder) -> // add by Arya (case-insensitive like matching anywhere)
-                        criteriaBuilder.like(criteriaBuilder.lower(root.get(input.getField())), "%" + input.getValue().toLowerCase(Locale.ROOT) + "%");
-            default:
-                throw new RuntimeException("Operation not supported yet");
-        }
-    }
-
     public Specification createSpecification(Filter input) {
         switch (input.getOperator()) {
             case EQUALS:
@@ -76,9 +50,9 @@ public class QueryGenerator {
                                 castToRequiredType(root.get(input.getField()).getJavaType(), input.getValue()));
             case LIKE:
                 final String strValue;
-                if(StringUtils.contains(input.getValue(), "_")) {
+                if (StringUtils.contains(input.getValue(), "_")) {
                     strValue = StringUtils.replace(input.getValue(), "_", "\\_");
-                } else if(StringUtils.contains(input.getValue(), "%")) {
+                } else if (StringUtils.contains(input.getValue(), "%")) {
                     strValue = StringUtils.replace(input.getValue(), "%", "\\%");
                 } else {
                     strValue = input.getValue();

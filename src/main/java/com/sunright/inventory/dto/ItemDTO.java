@@ -71,4 +71,6 @@ public class ItemDTO extends InvBaseDTO {
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private BigDecimal eoh;
+
+    private String message;
 }

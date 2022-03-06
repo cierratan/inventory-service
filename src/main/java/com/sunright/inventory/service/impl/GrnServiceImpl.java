@@ -338,25 +338,24 @@ public class GrnServiceImpl implements GrnService {
 
         if (!CollectionUtils.isEmpty(input.getGrnDetails())) {
             for (GrnDetDTO detail : input.getGrnDetails()) {
+                String msrNo = input.getMsrNo();
+                String poNo = input.getPoNo();
+                String itemNo = detail.getItemNo();
+                String partNo = detail.getPartNo();
+                Integer poRecSeq = detail.getPoRecSeq();
+                BigDecimal orderQty = detail.getOrderQty();
+                Integer itemType = detail.getItemType();
+                String projectNo = detail.getProjectNo();
+                BigDecimal recdPrice = detail.getRecdPrice();
+                BigDecimal recdQty = detail.getRecdQty();
+                //BigDecimal retnQty = detail.getRetnQty();
+                BigDecimal labelQty = detail.getLabelQty();
+                BigDecimal poPrice = detail.getPoPrice();
+                Integer dateCode = detail.getDateCode();
                 if (detail.getItemType() == null) {
                     checkItemType();
                 } else {
                     if (detail.getItemType() == 0) {
-                        String msrNo = input.getMsrNo();
-                        String poNo = input.getPoNo();
-                        String itemNo = detail.getItemNo();
-                        String partNo = detail.getPartNo();
-                        Integer poRecSeq = detail.getPoRecSeq();
-                        BigDecimal orderQty = detail.getOrderQty();
-                        Integer itemType = detail.getItemType();
-                        String projectNo = detail.getProjectNo();
-                        BigDecimal recdPrice = detail.getRecdPrice();
-                        BigDecimal recdQty = detail.getRecdQty();
-                        //BigDecimal retnQty = detail.getRetnQty();
-                        BigDecimal labelQty = detail.getLabelQty();
-                        BigDecimal poPrice = detail.getPoPrice();
-                        Integer dateCode = detail.getDateCode();
-
                         if (input.getSubType().equals("N")) {
                             if (input.getGrnDetails().size() > 1) {
                                 if (StringUtils.isNotBlank(partNo)) {
@@ -374,8 +373,7 @@ public class GrnServiceImpl implements GrnService {
                                     throw new ServerException("Received Qty cannot be empty or zero!");
                                 }
                                 if (orderQty != null) {
-                                    if (recdQty.compareTo(BigDecimal.ZERO) > 0 &&
-                                            recdQty.compareTo(orderQty) > 0) {
+                                    if (recdQty.compareTo(BigDecimal.ZERO) > 0 && recdQty.compareTo(orderQty) > 0) {
                                         throw new ServerException("Received more than Ordered is not allowed!");
                                     }
                                     BigDecimal recQty = recdQty;
@@ -683,6 +681,36 @@ public class GrnServiceImpl implements GrnService {
                                             throw new ServerException("Invalid Date Code ! The Date is in the future");
                                         }
                                     }
+                                }
+                            }
+                        }
+                    } else {
+                        if (detail.getItemType() == 1) {
+                            if (StringUtils.isNotBlank(partNo)) {
+                                if ((recdQty != null ? recdQty.compareTo(BigDecimal.ZERO) : 0) == 0) {
+                                    throw new ServerException("Received Qty cannot be empty or zero!");
+                                }
+                                if (orderQty != null) {
+                                    if (recdQty.compareTo(BigDecimal.ZERO) > 0 && recdQty.compareTo(orderQty) > 0) {
+                                        throw new ServerException("Received more than Ordered is not allowed!");
+                                    }
+                                    BigDecimal recQty = recdQty;
+                                    boolean isSuccess = true;
+                                    if (!poRecSeq.equals(poRecSeq)) {
+                                        recQty = recQty.add(recdQty);
+                                        if (recQty.compareTo(orderQty) > 0) {
+                                            isSuccess = false;
+                                        }
+                                    }
+
+                                    if (!isSuccess) {
+                                        throw new ServerException("Receiving more than Ordered is not allowed!");
+                                    }
+                                }
+                                if (labelQty.compareTo(BigDecimal.ZERO) == 0) {
+                                    throw new ServerException("Qty per label cannot be empty or zero");
+                                } else if (labelQty.compareTo(BigDecimal.ZERO) > 0 && labelQty.compareTo(recdQty) > 0) {
+                                    throw new ServerException("Qty per label is more than Received Qty !");
                                 }
                             }
                         }
