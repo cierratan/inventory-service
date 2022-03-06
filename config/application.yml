@@ -8,7 +8,7 @@ spring:
 #    username: inventoryuser
 #    password: Ue1car0
   flyway:
-    enabled: false
+    enabled: true
 #  jpa:
 #    show-sql: true
 #    properties:
