@@ -790,8 +790,10 @@ public class GrnServiceImpl implements GrnService {
         param.put("USERNAME", userProfile.getUsername());
         param.put("COMPANY_CODE", userProfile.getCompanyCode());
         param.put("PLANT_NO", userProfile.getPlantNo());
-        param.put("PROJECT_NO", projectOrderNo.getProjectNo());
-        param.put("ORDER_NO", projectOrderNo.getOrderNo());
+        if (projectOrderNo != null) {
+            param.put("PROJECT_NO", projectOrderNo.getProjectNo());
+            param.put("ORDER_NO", projectOrderNo.getOrderNo());
+        }
         param.put("SUB_REPORT", jasperSubReport);
         Connection source = dataSource.getConnection();
         JasperPrint jasperPrint = JasperFillManager.fillReport(jasperMainReport, param, source);
