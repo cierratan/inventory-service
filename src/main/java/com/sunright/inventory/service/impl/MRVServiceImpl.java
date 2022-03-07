@@ -7,14 +7,15 @@ import com.sunright.inventory.dto.mrv.MrvDetailDTO;
 import com.sunright.inventory.dto.search.Filter;
 import com.sunright.inventory.dto.search.SearchRequest;
 import com.sunright.inventory.dto.search.SearchResult;
-import com.sunright.inventory.entity.itemloc.ItemLoc;
-import com.sunright.inventory.entity.item.ItemProjection;
 import com.sunright.inventory.entity.bombypj.BombypjProjection;
 import com.sunright.inventory.entity.docmno.DocmNoProjection;
 import com.sunright.inventory.entity.enums.Status;
+import com.sunright.inventory.entity.item.ItemProjection;
+import com.sunright.inventory.entity.itemloc.ItemLoc;
 import com.sunright.inventory.entity.mrv.MRV;
 import com.sunright.inventory.entity.mrv.MRVDetail;
 import com.sunright.inventory.entity.sfcwip.SfcWipProjection;
+import com.sunright.inventory.entity.sfcwip.SfcWipTranProjection;
 import com.sunright.inventory.entity.siv.SIV;
 import com.sunright.inventory.entity.siv.SIVDetail;
 import com.sunright.inventory.entity.siv.SIVDetailSub;
@@ -68,6 +69,9 @@ public class MRVServiceImpl implements MRVService {
 
     @Autowired
     private SfcWipRepository sfcWipRepository;
+
+    @Autowired
+    private SfcWipTranRepository sfcWipTranRepository;
 
     @Autowired
     private QueryGenerator queryGenerator;
@@ -333,12 +337,21 @@ public class MRVServiceImpl implements MRVService {
 
         // update sfc wip
         if(StringUtils.startsWith(mrvDetail.getItemNo(), "01-") && mrvDetail.getProjectNo() != null) {
-            SfcWipProjection sfcWip = sfcWipRepository.wipCur(mrvDetail.getProjectNo(), mrvDetail.getPartNo());
+            SfcWipProjection sfcWip = sfcWipRepository.wipCurWithStatusCheck(mrvDetail.getProjectNo(), mrvDetail.getPartNo());
             if(sfcWip != null) {
-                String pcbPartNo = sfcWip.getPcbPartNo();
                 BigDecimal pcbQty = sfcWip.getPcbQty();
+                BigDecimal sfcRtnQty = mrvDetail.getRecdQty();
 
-                //TODO: existing logic in PL/SQL seems wrong. Need to double check
+                if(pcbQty.compareTo(sfcRtnQty) >= 0) {
+                    pcbQty = pcbQty.subtract(sfcRtnQty);
+
+                    sfcWipRepository.updatePcbQty(pcbQty, mrvDetail.getProjectNo(), mrvDetail.getPartNo());
+                    sfcRtnQty = BigDecimal.ZERO;
+
+                    List<SfcWipTranProjection> sfcWipTran = sfcWipTranRepository.getSfcWipTran(mrvDetail.getProjectNo(), mrvDetail.getPartNo());
+                } else {
+
+                }
             }
         }
     }
