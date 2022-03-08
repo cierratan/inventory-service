@@ -233,6 +233,13 @@ public class MRVServiceImpl implements MRVService {
     }
 
     private void mrvDetailPostSaving(MRVDetail mrvDetail) {
+        updateBombypj(mrvDetail);
+        updateSfcWip(mrvDetail);
+
+
+    }
+
+    private void updateBombypj(MRVDetail mrvDetail) {
         UserProfile userProfile = UserProfileContext.getUserProfile();
 
         BombypjProjection bombypj = bombypjRepository.getBombypjInfo(userProfile.getCompanyCode(),
@@ -334,8 +341,9 @@ public class MRVServiceImpl implements MRVService {
                 }
             }
         }
+    }
 
-        // update sfc wip
+    private void updateSfcWip(MRVDetail mrvDetail) {
         if(StringUtils.startsWith(mrvDetail.getItemNo(), "01-") && mrvDetail.getProjectNo() != null) {
             SfcWipProjection sfcWip = sfcWipRepository.wipCurWithStatusCheck(mrvDetail.getProjectNo(), mrvDetail.getPartNo());
             if(sfcWip != null) {
@@ -346,11 +354,20 @@ public class MRVServiceImpl implements MRVService {
                     pcbQty = pcbQty.subtract(sfcRtnQty);
 
                     sfcWipRepository.updatePcbQty(pcbQty, mrvDetail.getProjectNo(), mrvDetail.getPartNo());
-                    sfcRtnQty = BigDecimal.ZERO;
 
                     List<SfcWipTranProjection> sfcWipTran = sfcWipTranRepository.getSfcWipTran(mrvDetail.getProjectNo(), mrvDetail.getPartNo());
-                } else {
 
+                    if(!CollectionUtils.isEmpty(sfcWipTran)) {
+                        for (SfcWipTranProjection rec : sfcWipTran) {
+                            if(pcbQty.compareTo(new BigDecimal(rec.getCnt())) > 0
+                                && rec.getRowSeq() > rec.getCnt() && rec.getSeqNo() == 1
+                                && StringUtils.equals("O", rec.getStatus())) {
+                                sfcWipTranRepository.deleteSfcWipTranBy(rec.getProductId(), rec.getProjectNoSub(), rec.getPcbPartNo());
+                            }
+                        }
+                    }
+                } else {
+                    sfcWipRepository.updatePcbQty(BigDecimal.ZERO, mrvDetail.getProjectNo(), mrvDetail.getPartNo());
                 }
             }
         }

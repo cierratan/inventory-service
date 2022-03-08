@@ -101,6 +101,14 @@ public interface ItemRepository extends JpaRepository<Item, Long>, JpaSpecificat
                                                       String companyCode, Integer plantNo, String itemNo);
 
     @Modifying
+    @Query("UPDATE ITEM i set i.qoh = :qoh, i.stdMaterial = :newStdMat, i.costVariance = :newCostVar, " +
+            "i.ytdReceipt = :ytdReceipt, i.lastTranDate = :lastTranDate " +
+            "WHERE i.companyCode = :companyCode AND i.plantNo = :plantNo AND i.itemNo = :itemNo")
+    void updateQohStdMatCostVarYtdRecLTranDate(BigDecimal qoh, BigDecimal newStdMat, BigDecimal newCostVar,
+                                               BigDecimal ytdReceipt, Date lastTranDate, String companyCode,
+                                               Integer plantNo, String itemNo);
+
+    @Modifying
     @Query("UPDATE ITEM i set i.pickedQty = :pickedQty, i.prodnResv = :prodnResv WHERE i.companyCode = :companyCode " +
             "AND i.plantNo = :plantNo AND i.itemNo = :itemNo")
     void updatePickedQtyProdnResv(BigDecimal pickedQty, BigDecimal prodnResv, String companyCode, Integer plantNo, String itemNo);
