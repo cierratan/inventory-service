@@ -35,13 +35,8 @@ public class GrnDetDTO extends InvBaseDTO {
     private String poNo;
     private String doNo;
     private String itemNo;
-
-    @NotBlank(message = "Part No. Can Not be Blank !")
     private String partNo;
-
-    @NotBlank(message = "Location Can Not be Blank !")
     private String loc;
-
     private Integer itemType;
     private String projectNo;
     private Integer poRecSeq;

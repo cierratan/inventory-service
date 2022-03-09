@@ -12,5 +12,5 @@ public interface MRVDetailRepository extends JpaRepository<MRVDetail, Long>, Jpa
 
     @Query("SELECT md.projectNo as projectNo FROM MRVDET md WHERE md.companyCode = :companyCode AND md.plantNo = :plantNo " +
             "AND md.mrvNo = :mrvNo AND md.itemNo = :itemNo AND md.seqNo = :seqNo")
-    MRVDetailProjection mrvDetCur(String companyCode, Integer plantNo, String mrvNo, String itemNo, int seqNo);
+    MRVDetailProjection mrvDetCur(String companyCode, Integer plantNo, String mrvNo, String itemNo, Integer seqNo);
 }

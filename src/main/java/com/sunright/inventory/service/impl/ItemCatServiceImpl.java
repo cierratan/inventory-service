@@ -15,6 +15,7 @@ import com.sunright.inventory.interceptor.UserProfileContext;
 import com.sunright.inventory.repository.lov.ItemCatRepository;
 import com.sunright.inventory.service.ItemCatService;
 import com.sunright.inventory.util.QueryGenerator;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -22,8 +23,10 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
+import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -137,7 +140,7 @@ public class ItemCatServiceImpl implements ItemCatService {
 
         if (!CollectionUtils.isEmpty(searchRequest.getFilters())) {
             for (Filter filter : searchRequest.getFilters()) {
-                specs = specs.and(queryGenerator.createSpecification(filter));
+                specs = specs.and(createSpecificationItemCat(filter));
             }
         }
 
@@ -181,5 +184,64 @@ public class ItemCatServiceImpl implements ItemCatService {
             throw new NotFoundException("Record is not found");
         }
         return optionalItemCat.get();
+    }
+
+    private Specification createSpecificationItemCat(Filter input) {
+        if (input.getField().equals("mrpStatus")) {
+            switch (input.getOperator()) {
+                case EQUALS:
+                    return (root, query, criteriaBuilder) ->
+                            criteriaBuilder.equal(root.get(input.getField()),
+                                    castToRequiredType(root.get(input.getField()).getJavaType(), input.getValue()));
+                case LIKE:
+                    final String strValue;
+                    if (StringUtils.contains(input.getValue(), "_")) {
+                        strValue = StringUtils.replace(input.getValue(), "_", "\\_");
+                    } else if (StringUtils.contains(input.getValue(), "%")) {
+                        strValue = StringUtils.replace(input.getValue(), "%", "\\%");
+                    } else {
+                        strValue = input.getValue();
+                    }
+
+                    return (root, query, criteriaBuilder) -> // add by Arya (case-insensitive like matching anywhere)
+                            criteriaBuilder.like(criteriaBuilder.lower(root.get(input.getField()).as(String.class)), "%" + strValue.toLowerCase(Locale.ROOT) + "%", '\\');
+            }
+        }
+        switch (input.getOperator()) {
+            case EQUALS:
+                return (root, query, criteriaBuilder) ->
+                        criteriaBuilder.equal(root.get(input.getField()),
+                                castToRequiredType(root.get(input.getField()).getJavaType(), input.getValue()));
+            case LIKE:
+                final String strValue;
+                if (StringUtils.contains(input.getValue(), "_")) {
+                    strValue = StringUtils.replace(input.getValue(), "_", "\\_");
+                } else if (StringUtils.contains(input.getValue(), "%")) {
+                    strValue = StringUtils.replace(input.getValue(), "%", "\\%");
+                } else {
+                    strValue = input.getValue();
+                }
+
+                return (root, query, criteriaBuilder) -> // add by Arya (case-insensitive like matching anywhere)
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get(input.getField())), "%" + strValue.toLowerCase(Locale.ROOT) + "%", '\\');
+            default:
+                throw new RuntimeException("Operation not supported yet");
+        }
+    }
+
+    private Object castToRequiredType(Class fieldType, String value) {
+        if (fieldType.isAssignableFrom(Double.class)) {
+            return Double.valueOf(value);
+        } else if (fieldType.isAssignableFrom(Integer.class)) {
+            return Integer.valueOf(value);
+        } else if (Enum.class.isAssignableFrom(fieldType)) {
+            return Enum.valueOf(fieldType, value);
+        } else if (fieldType.isAssignableFrom(String.class)) {
+            return value;
+        } else if (fieldType.isAssignableFrom(BigDecimal.class)) {
+            return new BigDecimal(value);
+        }
+
+        return null;
     }
 }

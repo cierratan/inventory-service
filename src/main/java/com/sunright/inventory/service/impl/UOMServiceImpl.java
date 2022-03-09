@@ -175,7 +175,7 @@ public class UOMServiceImpl implements UOMService {
             switch (input.getOperator()) {
                 case EQUALS:
                     return (root, query, criteriaBuilder) ->
-                            criteriaBuilder.equal(root.get(input.getField()),
+                            criteriaBuilder.equal(root.get("id").get(input.getField()),
                                     castToRequiredType(root.get("id").get(input.getField()).getJavaType(), input.getValue()));
                 case LIKE:
                     final String strValue;
@@ -188,7 +188,7 @@ public class UOMServiceImpl implements UOMService {
                     }
 
                     return (root, query, criteriaBuilder) -> // add by Arya (case-insensitive like matching anywhere)
-                            criteriaBuilder.like(criteriaBuilder.lower(root.get(input.getField())), "%" + strValue.toLowerCase(Locale.ROOT) + "%", '\\');
+                            criteriaBuilder.like(criteriaBuilder.lower(root.get("id").get(input.getField())), "%" + strValue.toLowerCase(Locale.ROOT) + "%", '\\');
             }
 
         } else if (input.getField().equals("uomFactor")) {
