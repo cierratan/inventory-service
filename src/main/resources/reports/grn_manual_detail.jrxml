@@ -6,7 +6,7 @@
 	<parameter name="COMPANY_CODE" class="java.lang.String"/>
 	<parameter name="PLANT_NO" class="java.lang.Integer"/>
 	<parameter name="GRN_NO" class="java.lang.String"/>
-	<parameter name="SUB_REPORT" class="java.lang.String"/>
+	<parameter name="SUB_REPORT" class="net.sf.jasperreports.engine.JasperReport"/>
 	<queryString language="SQL">
 		<![CDATA[select grn.grn_no || decode(status_1, 'V', ' ( VOID )', '') grn_no_status,
        grndet.grn_no,
