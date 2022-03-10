@@ -59,8 +59,9 @@ public interface ItemRepository extends JpaRepository<Item, Long>, JpaSpecificat
 
     @Query("SELECT i.partNo as partNo, i.itemNo as itemNo, i.description as description, " +
             "i.loc as loc, i.uom as uom, COALESCE(i.pickedQty,0) as pickedQty, i.mrvResv as mrvResv, COALESCE(i.prodnResv,0) as prodnResv, " +
-            "COALESCE(i.qoh,0) as qoh, COALESCE(i.ytdProd,0) as ytdProd, COALESCE(i.ytdIssue,0) as ytdIssue, " +
-            "COALESCE(i.stdMaterial,0) as stdMaterial, COALESCE(i.orderQty,0) as orderQty, COALESCE(i.rpcResv, 0) as rpcResv, i.source as source " +
+            "COALESCE(i.qoh,0) as qoh, COALESCE(i.ytdProd,0) as ytdProd, COALESCE(i.ytdIssue,0) as ytdIssue, COALESCE(i.ytdReceipt,0) as ytdReceipt, " +
+            "COALESCE(i.stdMaterial,0) as stdMaterial, COALESCE(i.orderQty,0) as orderQty, COALESCE(i.rpcResv, 0) as rpcResv, i.source as source," +
+            "coalesce(i.costVariance,0) as costVariance " +
             "FROM ITEM i WHERE i.companyCode = :companyCode AND i.plantNo = :plantNo AND i.itemNo = :itemNo")
     ItemProjection itemInfo(String companyCode, Integer plantNo, String itemNo);
 

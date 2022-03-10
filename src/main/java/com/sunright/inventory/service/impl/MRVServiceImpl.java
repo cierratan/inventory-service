@@ -8,10 +8,12 @@ import com.sunright.inventory.dto.search.Filter;
 import com.sunright.inventory.dto.search.SearchRequest;
 import com.sunright.inventory.dto.search.SearchResult;
 import com.sunright.inventory.entity.bombypj.BombypjProjection;
+import com.sunright.inventory.entity.company.CompanyProjection;
 import com.sunright.inventory.entity.docmno.DocmNoProjection;
 import com.sunright.inventory.entity.enums.Status;
 import com.sunright.inventory.entity.item.ItemProjection;
 import com.sunright.inventory.entity.itemloc.ItemLoc;
+import com.sunright.inventory.entity.itemloc.ItemLocProjection;
 import com.sunright.inventory.entity.mrv.MRV;
 import com.sunright.inventory.entity.mrv.MRVDetail;
 import com.sunright.inventory.entity.sfcwip.SfcWipProjection;
@@ -35,8 +37,10 @@ import org.springframework.util.CollectionUtils;
 
 import javax.transaction.Transactional;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -72,6 +76,9 @@ public class MRVServiceImpl implements MRVService {
 
     @Autowired
     private SfcWipTranRepository sfcWipTranRepository;
+
+    @Autowired
+    private CompanyRepository companyRepository;
 
     @Autowired
     private QueryGenerator queryGenerator;
@@ -235,8 +242,139 @@ public class MRVServiceImpl implements MRVService {
     private void mrvDetailPostSaving(MRVDetail mrvDetail) {
         updateBombypj(mrvDetail);
         updateSfcWip(mrvDetail);
+        increaseItemInv(mrvDetail);
+    }
 
+    private void increaseItemInv(MRVDetail mrvDetail) {
+        ItemProjection itemInfo = itemRepository.itemInfo(mrvDetail.getCompanyCode(), mrvDetail.getPlantNo(), mrvDetail.getItemNo());
+        ItemLocProjection itemLocInfo = itemLocRepository.itemLocInfo(mrvDetail.getCompanyCode(), mrvDetail.getPlantNo(), itemInfo.getItemNo(), itemInfo.getLoc());
+        ItemLocProjection itemLocWithRecCnt = itemLocRepository.findItemLocWithRecCnt(mrvDetail.getCompanyCode(), mrvDetail.getPlantNo(), itemInfo.getItemNo(), itemInfo.getLoc());
 
+        BigDecimal uomFactor = BigDecimal.ONE;
+        BigDecimal currencyRate = mrvDetail.getMrv().getCurrencyRate();
+
+        BigDecimal mrvDetQty = mrvDetail.getRecdQty().multiply(uomFactor);
+        BigDecimal mrvDetPrice = mrvDetail.getRecdPrice().multiply(currencyRate).divide(uomFactor);
+
+        BigDecimal newStdMaterial;
+        BigDecimal newCostVariance;
+
+        BigDecimal convQty = mrvDetail.getRecdQty().multiply(uomFactor);
+        BigDecimal convPrice = mrvDetail.getRecdPrice().multiply(currencyRate).divide(uomFactor);
+
+        BigDecimal docValue = convQty.multiply(convPrice);
+        BigDecimal newQoh = itemInfo.getQoh().add(convQty);
+
+        BigDecimal itemValue = itemInfo.getQoh().multiply(itemInfo.getStdMaterial()).add(itemInfo.getCostVariance());
+        itemValue = itemValue.add(docValue);
+
+        if(itemInfo.getQoh().compareTo(BigDecimal.ZERO) < 0) {
+            newStdMaterial = (itemValue.subtract(itemInfo.getCostVariance())).divide(newQoh);
+            newCostVariance = itemValue.subtract((newQoh.multiply(newStdMaterial)));
+        } else {
+            newStdMaterial = itemValue.divide(newQoh);
+            BigDecimal fmtNewStdMaterial = newStdMaterial.setScale(4, RoundingMode.HALF_EVEN);
+            newCostVariance = (newStdMaterial.multiply(newQoh)).subtract((fmtNewStdMaterial.multiply(newQoh)).setScale(4, RoundingMode.HALF_EVEN));
+        }
+
+        itemRepository.updateQohStdMatCostVarYtdRecLTranDate(
+                itemInfo.getQoh().add(newQoh),
+                newStdMaterial,
+                newCostVariance,
+                itemInfo.getYtdReceipt().add(newQoh),
+                new Date(ZonedDateTime.now().toInstant().toEpochMilli()),
+                mrvDetail.getCompanyCode(),
+                mrvDetail.getPlantNo(),
+                mrvDetail.getItemNo()
+        );
+
+        BigDecimal costVariance = newCostVariance.subtract(itemInfo.getCostVariance());
+        BigDecimal locTtlQty = itemInfo.getQoh().add(newQoh);
+
+        CompanyProjection stockLoc = companyRepository.getStockLoc(mrvDetail.getCompanyCode(), mrvDetail.getPlantNo());
+
+        if(itemLocInfo.getRecCnt() == null) {
+
+            if(stockLoc != null && StringUtils.equals(stockLoc.getStockLoc(), mrvDetail.getLoc())) {
+                ItemLoc itemLoc = new ItemLoc();
+                itemLoc.setCompanyCode(mrvDetail.getCompanyCode());
+                itemLoc.setPlantNo(mrvDetail.getPlantNo());
+                itemLoc.setItemNo(mrvDetail.getItemNo());
+                itemLoc.setLoc(mrvDetail.getLoc());
+                itemLoc.setPartNo(itemInfo.getPartNo());
+                itemLoc.setDescription(itemInfo.getDescription());
+                itemLoc.setCategoryCode(itemInfo.getCategoryCode());
+                itemLoc.setQoh(mrvDetQty);
+                itemLoc.setBatchNo(itemInfo.getBatchNo());
+                itemLoc.setStdMaterial(mrvDetPrice);
+                itemLoc.setCostVariance(newCostVariance);
+                itemLoc.setLastTranDate(new Date(ZonedDateTime.now().toInstant().toEpochMilli()));
+                itemLoc.setStatus(Status.ACTIVE);
+                itemLoc.setCreatedBy(UserProfileContext.getUserProfile().getUsername());
+                itemLoc.setCreatedAt(ZonedDateTime.now());
+                itemLoc.setUpdatedBy(UserProfileContext.getUserProfile().getUsername());
+                itemLoc.setUpdatedAt(ZonedDateTime.now());
+
+                itemLocRepository.save(itemLoc);
+            } else {
+                ItemLoc itemLoc = new ItemLoc();
+                itemLoc.setCompanyCode(mrvDetail.getCompanyCode());
+                itemLoc.setPlantNo(mrvDetail.getPlantNo());
+                itemLoc.setItemNo(mrvDetail.getItemNo());
+                itemLoc.setLoc(stockLoc.getStockLoc());
+                itemLoc.setPartNo(itemInfo.getPartNo());
+                itemLoc.setDescription(itemInfo.getDescription());
+                itemLoc.setCategoryCode(itemInfo.getCategoryCode());
+                itemLoc.setQoh(BigDecimal.ZERO);
+                itemLoc.setBatchNo(itemInfo.getBatchNo());
+                itemLoc.setStdMaterial(mrvDetPrice);
+                itemLoc.setCostVariance(newCostVariance);
+                itemLoc.setLastTranDate(new Date(ZonedDateTime.now().toInstant().toEpochMilli()));
+                itemLoc.setStatus(Status.ACTIVE);
+                itemLoc.setCreatedBy(UserProfileContext.getUserProfile().getUsername());
+                itemLoc.setCreatedAt(ZonedDateTime.now());
+                itemLoc.setUpdatedBy(UserProfileContext.getUserProfile().getUsername());
+                itemLoc.setUpdatedAt(ZonedDateTime.now());
+
+                itemLocRepository.save(itemLoc);
+
+                itemLoc = new ItemLoc();
+                itemLoc.setCompanyCode(mrvDetail.getCompanyCode());
+                itemLoc.setPlantNo(mrvDetail.getPlantNo());
+                itemLoc.setItemNo(mrvDetail.getItemNo());
+                itemLoc.setLoc(mrvDetail.getLoc());
+                itemLoc.setPartNo(itemInfo.getPartNo());
+                itemLoc.setDescription(itemInfo.getDescription());
+                itemLoc.setCategoryCode(itemInfo.getCategoryCode());
+                itemLoc.setQoh(mrvDetQty);
+                itemLoc.setBatchNo(itemInfo.getBatchNo());
+                itemLoc.setStdMaterial(mrvDetPrice);
+                itemLoc.setCostVariance(BigDecimal.ZERO);
+                itemLoc.setLastTranDate(new Date(ZonedDateTime.now().toInstant().toEpochMilli()));
+                itemLoc.setStatus(Status.ACTIVE);
+                itemLoc.setCreatedBy(UserProfileContext.getUserProfile().getUsername());
+                itemLoc.setCreatedAt(ZonedDateTime.now());
+                itemLoc.setUpdatedBy(UserProfileContext.getUserProfile().getUsername());
+                itemLoc.setUpdatedAt(ZonedDateTime.now());
+
+                itemLocRepository.save(itemLoc);
+            }
+        } else if(itemLocInfo != null && itemLocInfo.getRecCnt() > 0) {
+            List<ItemLoc> itemLocFound = itemLocRepository.findByCompanyCodeAndPlantNoAndItemNoAndLoc(mrvDetail.getCompanyCode(), mrvDetail.getPlantNo(), mrvDetail.getItemNo(),
+                    stockLoc.getStockLoc());
+
+            if(!CollectionUtils.isEmpty(itemLocFound)) {
+                itemLocRepository.updateStdMatCostVarianceYtdRecLTranDate(newStdMaterial, newCostVariance,
+                        itemLocInfo.getYtdReceipt().add(mrvDetQty), new Date(ZonedDateTime.now().toInstant().toEpochMilli()),
+                        mrvDetail.getCompanyCode(), mrvDetail.getPlantNo(), mrvDetail.getItemNo(),
+                        stockLoc.getStockLoc());
+            }
+
+            itemLocRepository.updateStdMatYtdRecLTranDateWithNotEqualLoc(newStdMaterial,
+                    itemInfo.getYtdReceipt().add(newQoh), new Date(ZonedDateTime.now().toInstant().toEpochMilli()),
+                    mrvDetail.getCompanyCode(), mrvDetail.getPlantNo(), mrvDetail.getItemNo(),
+                    stockLoc.getStockLoc());
+        }
     }
 
     private void updateBombypj(MRVDetail mrvDetail) {
