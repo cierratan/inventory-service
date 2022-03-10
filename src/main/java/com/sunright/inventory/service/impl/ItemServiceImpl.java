@@ -222,6 +222,7 @@ public class ItemServiceImpl implements ItemService {
         item.setCreatedBy(found.getCreatedBy());
         item.setCreatedAt(found.getCreatedAt());
 
+        item.setStrRohsStatus(BooleanUtils.toString(input.getRohsStatus(), "1", "0"));
         item.setUpdatedBy(UserProfileContext.getUserProfile().getUsername());
         item.setUpdatedAt(ZonedDateTime.now());
         prePopulateBeforeSaving(item);
