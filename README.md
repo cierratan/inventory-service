@@ -13,6 +13,9 @@ Some docker command:
 
 ***Docker push***
 > docker push dedomena/inventory-service:latest
-> 
+ 
 ***Docker run***
-> docker run -p 80:8080 -v inventory_logs:/logs --env-file config/env.list a452a74f5771
+> docker pull dedomena/inventory-service:latest && docker rm -f inventory-service && docker run -d -p 3001:8080 -v inventory_logs:/logs --env-file env.list --name inventory-service dedomena/inventory-service:latest
+
+***Docker Log***
+> docker logs -f inventory-service

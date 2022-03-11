@@ -19,7 +19,7 @@ public interface PRDetailRepository extends JpaRepository<PRDetail, PRDetailId>,
             "              0, sum(nvl(b.resv_qty, 0) - nvl(b.in_transit_qty, 0) - nvl(b.picked_qty, 0))," +
             "              sum(nvl(b.short_qty, 0))) as shortQty," +
             "       sum(nvl(b.picked_qty, 0))        as pickedQty," +
-            "       ''                               as saleType," +
+            "       :saleType                               as saleType," +
             "       :docmNo                   as docmNo," +
             "       i.part_no                        as partNo," +
             "       i.uom                            as uom," +
@@ -60,7 +60,7 @@ public interface PRDetailRepository extends JpaRepository<PRDetail, PRDetailId>,
             "       pd.item_no                 as itemNo," +
             "       0                          as shortQty," +
             "       pd.qty                     as pickedQty," +
-            "       ''                         as saleType," +
+            "       :saleType                         as saleType," +
             "       :docmNo             as docmNo," +
             "       pd.part_no                 as partNo," +
             "       pd.uom                     as uom," +
@@ -74,7 +74,7 @@ public interface PRDetailRepository extends JpaRepository<PRDetail, PRDetailId>,
             "  and :tranType = 'PR'" +
             "  and docm_no = :docmNo " +
             "order by 2, 6", nativeQuery = true)
-    List<PRDetailProjection> bombypjCur(String docmNo, String remarks, String companyCode, Integer plantNo, String tranType);
+    List<PRDetailProjection> bombypjCur(String docmNo, String remarks, String companyCode, Integer plantNo, String tranType, String saleType);
 
     @Query(value = "select (sum(iss) / sum(req)) as issReq " +
             "from (select count(alternate) iss, 0 req" +

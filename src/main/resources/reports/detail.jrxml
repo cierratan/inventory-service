@@ -51,13 +51,13 @@ where cd.type(+) = 'INMSL'
   and grndet.grn_no = $P{GRN_NO}
 order by seq_no]]>
     </queryString>
-    <field name="ITEM_TYPE" class="java.math.BigDecimal">
+    <field name="ITEM_TYPE" class="java.lang.Integer">
         <property name="com.jaspersoft.studio.field.label" value="ITEM_TYPE"/>
     </field>
     <field name="GRN_NO" class="java.lang.String">
         <property name="com.jaspersoft.studio.field.label" value="GRN_NO"/>
     </field>
-    <field name="SEQ_NO" class="java.math.BigDecimal">
+    <field name="SEQ_NO" class="java.lang.Integer">
         <property name="com.jaspersoft.studio.field.label" value="SEQ_NO"/>
     </field>
     <field name="ITEM_NO" class="java.lang.String">
@@ -72,7 +72,7 @@ order by seq_no]]>
     <field name="PROJECT_NO" class="java.lang.String">
         <property name="com.jaspersoft.studio.field.label" value="PROJECT_NO"/>
     </field>
-    <field name="PO_SEQ" class="java.math.BigDecimal">
+    <field name="PO_SEQ" class="java.lang.Integer">
         <property name="com.jaspersoft.studio.field.label" value="PO_SEQ"/>
     </field>
     <field name="BATCH_NO" class="java.math.BigDecimal">
@@ -99,6 +99,9 @@ order by seq_no]]>
     <variable name="TotalPrice" class="java.lang.Double" calculation="Sum">
         <variableExpression><![CDATA[$F{RECD_QTY}.multiply($F{RECD_PRICE})]]></variableExpression>
     </variable>
+    <variable name="SerialNumber" class="java.lang.Integer" calculation="Count">
+        <variableExpression><![CDATA[$F{RECD_QTY}]]></variableExpression>
+    </variable>
     <columnHeader>
         <band height="31" splitType="Stretch">
             <staticText>
@@ -109,60 +112,60 @@ order by seq_no]]>
                 <text><![CDATA[Seq]]></text>
             </staticText>
             <staticText>
-                <reportElement x="30" y="1" width="120" height="30" uuid="1e881840-e8aa-4545-9824-eb260ba0bf7d">
+                <reportElement x="41" y="1" width="50" height="30" uuid="1e881840-e8aa-4545-9824-eb260ba0bf7d">
                     <property name="com.jaspersoft.studio.spreadsheet.connectionID"
                               value="7483a384-9165-41d2-a564-59e2076f0ba9"/>
                 </reportElement>
                 <text><![CDATA[Item No]]></text>
             </staticText>
             <staticText>
-                <reportElement x="152" y="1" width="20" height="30" uuid="eb5650e2-425b-4376-b00f-e7ffc58f62e0">
+                <reportElement x="122" y="1" width="20" height="30" uuid="eb5650e2-425b-4376-b00f-e7ffc58f62e0">
                     <property name="com.jaspersoft.studio.spreadsheet.connectionID"
                               value="80423595-6390-4e0d-a4a2-0938cd115c13"/>
                 </reportElement>
                 <text><![CDATA[Loc]]></text>
             </staticText>
             <staticText>
-                <reportElement x="173" y="1" width="80" height="30" uuid="d6fb3b9a-8b7c-40f8-84b0-407dacc3025b">
+                <reportElement x="160" y="1" width="57" height="30" uuid="d6fb3b9a-8b7c-40f8-84b0-407dacc3025b">
                     <property name="com.jaspersoft.studio.spreadsheet.connectionID"
                               value="1c4a3adf-e98b-4d9c-8ca6-cd7f054250d8"/>
                 </reportElement>
                 <text><![CDATA[Project No]]></text>
             </staticText>
             <staticText>
-                <reportElement x="256" y="1" width="30" height="30" uuid="7c5767b1-77fb-44d0-aa9c-b211c4e0285b">
+                <reportElement x="231" y="1" width="30" height="30" uuid="7c5767b1-77fb-44d0-aa9c-b211c4e0285b">
                     <property name="com.jaspersoft.studio.spreadsheet.connectionID"
                               value="2f0c98c9-52fa-4d31-bbfd-94a933b13b54"/>
                 </reportElement>
                 <text><![CDATA[PO]]></text>
             </staticText>
             <staticText>
-                <reportElement x="354" y="1" width="40" height="30" uuid="af3a8fb7-c5f2-482f-a9d2-a49b97b7a283">
+                <reportElement x="345" y="1" width="24" height="30" uuid="af3a8fb7-c5f2-482f-a9d2-a49b97b7a283">
                     <property name="com.jaspersoft.studio.spreadsheet.connectionID"
                               value="a57facae-ecaa-42ee-b12d-9b5cbad45191"/>
                 </reportElement>
                 <text><![CDATA[Qty]]></text>
             </staticText>
             <staticText>
-                <reportElement x="396" y="1" width="40" height="30" uuid="e6ed4a9e-fdae-494c-b6a4-56f3305ab900">
+                <reportElement x="383" y="1" width="24" height="30" uuid="e6ed4a9e-fdae-494c-b6a4-56f3305ab900">
                     <property name="com.jaspersoft.studio.spreadsheet.connectionID"
                               value="f0ad0354-6c2f-485c-82e6-710adebdc90f"/>
                 </reportElement>
                 <text><![CDATA[Uom]]></text>
             </staticText>
             <staticText>
-                <reportElement x="438" y="1" width="50" height="30" uuid="7537bdad-251e-4502-9cb2-27e41080ebd1">
+                <reportElement x="421" y="1" width="50" height="30" uuid="7537bdad-251e-4502-9cb2-27e41080ebd1">
                     <property name="com.jaspersoft.studio.spreadsheet.connectionID"
                               value="bd02b1b7-5ea6-4eaf-ace4-3245bf80d6c2"/>
                 </reportElement>
                 <text><![CDATA[Unit Price]]></text>
             </staticText>
             <staticText>
-                <reportElement x="490" y="1" width="58" height="30" uuid="55022ba8-1b75-4b64-af2e-56508fa94bf0"/>
+                <reportElement x="482" y="1" width="58" height="30" uuid="55022ba8-1b75-4b64-af2e-56508fa94bf0"/>
                 <text><![CDATA[Total Price]]></text>
             </staticText>
             <staticText>
-                <reportElement x="288" y="1" width="42" height="30" uuid="4c9682ce-8d16-43f2-84ab-370dcbf5e6d1">
+                <reportElement x="280" y="1" width="50" height="30" uuid="4c9682ce-8d16-43f2-84ab-370dcbf5e6d1">
                     <property name="com.jaspersoft.studio.spreadsheet.connectionID"
                               value="2f0c98c9-52fa-4d31-bbfd-94a933b13b54"/>
                 </reportElement>
@@ -176,63 +179,59 @@ order by seq_no]]>
     <detail>
         <band height="100" splitType="Stretch">
             <textField isBlankWhenNull="true">
-                <reportElement x="0" y="2" width="30" height="30" uuid="c31c2234-e46a-47fd-8061-0029ef58c5a4">
-                    <property name="com.jaspersoft.studio.spreadsheet.connectionID"
-                              value="142bbf2a-1db0-4e39-a666-417d1c26d619"/>
-                </reportElement>
-                <textFieldExpression><![CDATA[$F{SEQ_NO}]]></textFieldExpression>
-            </textField>
-            <textField isBlankWhenNull="true">
-                <reportElement x="30" y="2" width="120" height="30" uuid="248884c0-a4fd-4d89-bed4-ffcb0a89953c">
+                <reportElement x="30" y="2" width="100" height="28" uuid="248884c0-a4fd-4d89-bed4-ffcb0a89953c">
                     <property name="com.jaspersoft.studio.spreadsheet.connectionID"
                               value="7483a384-9165-41d2-a564-59e2076f0ba9"/>
                 </reportElement>
                 <textFieldExpression><![CDATA[$F{ITEM_NO}]]></textFieldExpression>
             </textField>
             <textField isBlankWhenNull="true">
-                <reportElement x="152" y="2" width="20" height="30" uuid="ed535120-fe57-4eaa-adc2-62a459f0809b">
+                <reportElement x="124" y="2" width="20" height="28" uuid="ed535120-fe57-4eaa-adc2-62a459f0809b">
                     <property name="com.jaspersoft.studio.spreadsheet.connectionID"
                               value="80423595-6390-4e0d-a4a2-0938cd115c13"/>
                 </reportElement>
                 <textFieldExpression><![CDATA[$F{LOC}]]></textFieldExpression>
             </textField>
             <textField isBlankWhenNull="true">
-                <reportElement x="174" y="2" width="80" height="30" uuid="8ca3ba43-97f9-470d-b02b-d88b38b6f23a">
+                <reportElement x="152" y="2" width="80" height="28" uuid="8ca3ba43-97f9-470d-b02b-d88b38b6f23a">
                     <property name="com.jaspersoft.studio.spreadsheet.connectionID"
                               value="1c4a3adf-e98b-4d9c-8ca6-cd7f054250d8"/>
                 </reportElement>
                 <textFieldExpression><![CDATA[$F{PROJECT_NO}]]></textFieldExpression>
             </textField>
             <textField isBlankWhenNull="true">
-                <reportElement x="256" y="2" width="31" height="30" uuid="2d9ff91d-d24f-40ae-becd-ab20b2eabbd7">
+                <reportElement x="235" y="2" width="31" height="28" uuid="2d9ff91d-d24f-40ae-becd-ab20b2eabbd7">
                     <property name="com.jaspersoft.studio.spreadsheet.connectionID"
                               value="2f0c98c9-52fa-4d31-bbfd-94a933b13b54"/>
                 </reportElement>
                 <textFieldExpression><![CDATA[$F{PO_SEQ}]]></textFieldExpression>
             </textField>
             <textField isBlankWhenNull="true">
-                <reportElement x="354" y="2" width="40" height="30" uuid="d519fc96-e1e6-49b1-8aa5-af4ae6ddc5d9">
+                <reportElement x="332" y="2" width="26" height="28" uuid="d519fc96-e1e6-49b1-8aa5-af4ae6ddc5d9">
                     <property name="com.jaspersoft.studio.spreadsheet.connectionID"
                               value="a57facae-ecaa-42ee-b12d-9b5cbad45191"/>
                 </reportElement>
-                <textFieldExpression><![CDATA[$F{RECD_QTY}.abs()]]></textFieldExpression>
+                <textElement textAlignment="Right"/>
+                <textFieldExpression><![CDATA[$F{RECD_QTY}]]></textFieldExpression>
             </textField>
             <textField isBlankWhenNull="true">
-                <reportElement x="396" y="2" width="40" height="30" uuid="dcd48678-51b6-463d-9493-4eb7b075d40c">
+                <reportElement x="387" y="2" width="40" height="28" uuid="dcd48678-51b6-463d-9493-4eb7b075d40c">
                     <property name="com.jaspersoft.studio.spreadsheet.connectionID"
                               value="f0ad0354-6c2f-485c-82e6-710adebdc90f"/>
                 </reportElement>
                 <textFieldExpression><![CDATA[$F{UOM}]]></textFieldExpression>
             </textField>
-            <textField isBlankWhenNull="true">
-                <reportElement x="438" y="2" width="51" height="30" uuid="5c08835e-0431-4081-8c97-c63464c8f9e9">
+            <textField pattern="#,##0.0000;(#,##0.0000-)" isBlankWhenNull="true">
+                <reportElement x="412" y="2" width="52" height="28" uuid="5c08835e-0431-4081-8c97-c63464c8f9e9">
                     <property name="com.jaspersoft.studio.spreadsheet.connectionID"
                               value="bd02b1b7-5ea6-4eaf-ace4-3245bf80d6c2"/>
                 </reportElement>
+                <textElement textAlignment="Right"/>
                 <textFieldExpression><![CDATA[$F{RECD_PRICE}]]></textFieldExpression>
             </textField>
-            <textField isBlankWhenNull="true">
-                <reportElement x="490" y="2" width="58" height="30" uuid="3b233eda-e952-49b2-af42-d3cc48dcf7ea"/>
+            <textField pattern="#,##0.0000;(#,##0.0000-)" isBlankWhenNull="true">
+                <reportElement x="475" y="2" width="56" height="28" uuid="3b233eda-e952-49b2-af42-d3cc48dcf7ea"/>
+                <textElement textAlignment="Right"/>
                 <textFieldExpression><![CDATA[$F{RECD_QTY}.multiply($F{RECD_PRICE})]]></textFieldExpression>
             </textField>
             <textField isBlankWhenNull="true">
@@ -247,22 +246,27 @@ order by seq_no]]>
                 <textFieldExpression><![CDATA[$F{PART_NO}]]></textFieldExpression>
             </textField>
             <textField isBlankWhenNull="true">
-                <reportElement x="289" y="2" width="62" height="30" uuid="29f9d593-4f90-47a4-aa65-65aec545fa05">
+                <reportElement x="275" y="2" width="62" height="28" uuid="29f9d593-4f90-47a4-aa65-65aec545fa05">
                     <property name="com.jaspersoft.studio.spreadsheet.connectionID"
                               value="f8614c2c-19ad-405f-a763-b42977ae5c65"/>
                 </reportElement>
                 <textFieldExpression><![CDATA[$F{BATCH_NO}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="0" y="2" width="30" height="28" uuid="469943f4-e1c1-4983-836d-e449d98099e3"/>
+                <textFieldExpression><![CDATA[$V{SerialNumber}]]></textFieldExpression>
             </textField>
         </band>
     </detail>
     <summary>
         <band height="32">
             <staticText>
-                <reportElement x="380" y="2" width="100" height="30" uuid="8e282797-fd6c-4576-b6f2-abd7a38650b9"/>
-                <text><![CDATA[Grand Total Price]]></text>
+                <reportElement x="386" y="2" width="90" height="30" uuid="8e282797-fd6c-4576-b6f2-abd7a38650b9"/>
+                <text><![CDATA[Grand Total Price:]]></text>
             </staticText>
-            <textField isBlankWhenNull="true">
-                <reportElement x="490" y="0" width="58" height="30" uuid="fc09d3b0-46b0-493d-95a6-42a4a215f2d0"/>
+            <textField pattern="#,##0.0000;(#,##0.0000-)" isBlankWhenNull="true">
+                <reportElement x="475" y="2" width="56" height="30" uuid="fc09d3b0-46b0-493d-95a6-42a4a215f2d0"/>
+                <textElement textAlignment="Right"/>
                 <textFieldExpression><![CDATA[$V{TotalPrice}]]></textFieldExpression>
             </textField>
         </band>
