@@ -180,8 +180,9 @@ public class GrnServiceImpl implements GrnService {
             grnDTO.setPoRemarks(purInfoList.getRemarks());
             grnDTO.setRecdDate(new Timestamp(System.currentTimeMillis()));
             SupplierDTO supName = supplierName(grnDTO.getSupplierCode(), userProfile);
-            grnDTO.setSupplierName(supName.getName());
-            if (StringUtils.isBlank(grnDTO.getSupplierName())) {
+            if (supName != null) {
+                grnDTO.setSupplierName(supName.getName());
+            } else {
                 throw new NotFoundException("Supplier Code not found");
             }
         }
@@ -846,15 +847,7 @@ public class GrnServiceImpl implements GrnService {
 
         UserProfile userProfile = UserProfileContext.getUserProfile();
         // get projectNo and orderNo
-        BombypjDetailProjection projectOrderNo = null;
-        if (input.getSubType().equals("N")) {
-            projectOrderNo = bombypjDetailRepository.getProjectOrderNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), input.getGrnNo());
-        } else {
-            for (GrnDetDTO dto : input.getGrnDetails()) {
-                projectOrderNo = bombypjDetailRepository.getProjectOrderNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), input.getGrnNo());
-            }
-        }
-
+        BombypjDetailProjection projectOrderNo = bombypjDetailRepository.getProjectOrderNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), input.getGrnNo());
         // Fetching the .jrxml file from the resources folder.
         InputStream resourceSubReport = this.getClass().getResourceAsStream("/reports/header_pick_list.jrxml");
         InputStream resourceMainReport = this.getClass().getResourceAsStream("/reports/pick_list.jrxml");
@@ -868,6 +861,9 @@ public class GrnServiceImpl implements GrnService {
         if (projectOrderNo != null) {
             param.put("PROJECT_NO", projectOrderNo.getProjectNo());
             param.put("ORDER_NO", projectOrderNo.getOrderNo());
+        } else {
+            param.put("PROJECT_NO", "");
+            param.put("ORDER_NO", "");
         }
         param.put("SUB_REPORT", jasperSubReport);
         Connection source = dataSource.getConnection();

@@ -1,5 +1,6 @@
 package com.sunright.inventory.controller;
 
+import com.sunright.inventory.dto.ItemDTO;
 import com.sunright.inventory.dto.lov.DocmValueDTO;
 import com.sunright.inventory.dto.search.SearchRequest;
 import com.sunright.inventory.dto.search.SearchResult;
@@ -61,19 +62,14 @@ public class SIVController {
         return new ResponseEntity<>(sivService.checkNextItem(input), HttpStatus.OK);
     }
 
-    @PostMapping("check-valid-item-no")
-    public ResponseEntity<SIVDetailDTO> checkItemNo(@RequestBody SIVDTO input) {
-        return new ResponseEntity<>(sivService.checkValidItemNo(input), HttpStatus.OK);
-    }
-
-    @PostMapping("check-valid-issued-qty")
-    public ResponseEntity<SIVDetailDTO> checkIssuedQty(@RequestBody SIVDTO input) {
-        return new ResponseEntity<>(sivService.checkValidIssuedQty(input), HttpStatus.OK);
+    @GetMapping("lov-item-no")
+    public ResponseEntity<List<ItemDTO>> lovItemNo() {
+        return new ResponseEntity<>(sivService.getAllItemNo(), HttpStatus.OK);
     }
 
     @GetMapping("populate-batch-list")
-    public ResponseEntity<List<SIVDetailDTO>> populateBatc(@RequestParam String projectNo) {
-        return new ResponseEntity<>(sivService.populateBatchList(projectNo), HttpStatus.OK);
+    public ResponseEntity<List<SIVDetailDTO>> populateBatc(@RequestParam String subType, @RequestParam String projectNo, @RequestParam String itemNo) {
+        return new ResponseEntity<>(sivService.populateBatchList(subType, projectNo, itemNo), HttpStatus.OK);
     }
 
     @GetMapping("populate-detail")

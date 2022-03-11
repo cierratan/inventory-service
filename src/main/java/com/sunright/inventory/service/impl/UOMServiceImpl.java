@@ -2,9 +2,7 @@ package com.sunright.inventory.service.impl;
 
 import com.sunright.inventory.dto.UomDTO;
 import com.sunright.inventory.dto.UserProfile;
-import com.sunright.inventory.dto.search.Filter;
-import com.sunright.inventory.dto.search.SearchRequest;
-import com.sunright.inventory.dto.search.SearchResult;
+import com.sunright.inventory.dto.search.*;
 import com.sunright.inventory.entity.enums.Status;
 import com.sunright.inventory.entity.uom.UOM;
 import com.sunright.inventory.entity.uom.UOMId;
@@ -18,6 +16,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -136,20 +137,32 @@ public class UOMServiceImpl implements UOMService {
             }
         }
 
-        Page<UOM> pgUOM = uomRepository.findAll(specs, queryGenerator.constructPageable(searchRequest));
+        Page<UOM> pgUOM = null;
+        if (!CollectionUtils.isEmpty(searchRequest.getSorts())) {
+            for (DataSorting rec : searchRequest.getSorts()) {
+                if (rec.getField().equals("uomFrom") || rec.getField().equals("uomTo")) {
+                    pgUOM = uomRepository.findAll(specs, constructPageableUom(searchRequest));
+                } else {
+                    pgUOM = uomRepository.findAll(specs, queryGenerator.constructPageable(searchRequest));
+                }
+            }
+        } else {
+            pgUOM = uomRepository.findAll(specs, queryGenerator.constructPageable(searchRequest));
+        }
 
         SearchResult<UomDTO> uom = new SearchResult<>();
-        uom.setTotalRows(pgUOM.getTotalElements());
-        uom.setTotalPages(pgUOM.getTotalPages());
-        uom.setCurrentPageNumber(pgUOM.getPageable().getPageNumber());
-        uom.setCurrentPageSize(pgUOM.getNumberOfElements());
-        uom.setRows(pgUOM.getContent().stream().map(location -> {
-            UomDTO uomDTO = new UomDTO();
-            BeanUtils.copyProperties(location.getId(), uomDTO);
-            BeanUtils.copyProperties(location, uomDTO);
-            return uomDTO;
-        }).collect(Collectors.toList()));
-
+        if (pgUOM != null) {
+            uom.setTotalRows(pgUOM.getTotalElements());
+            uom.setTotalPages(pgUOM.getTotalPages());
+            uom.setCurrentPageNumber(pgUOM.getPageable().getPageNumber());
+            uom.setCurrentPageSize(pgUOM.getNumberOfElements());
+            uom.setRows(pgUOM.getContent().stream().map(location -> {
+                UomDTO uomDTO = new UomDTO();
+                BeanUtils.copyProperties(location.getId(), uomDTO);
+                BeanUtils.copyProperties(location, uomDTO);
+                return uomDTO;
+            }).collect(Collectors.toList()));
+        }
         return uom;
     }
 
@@ -231,6 +244,26 @@ public class UOMServiceImpl implements UOMService {
             default:
                 throw new RuntimeException("Operation not supported yet");
         }
+    }
+
+    private Pageable constructPageableUom(SearchRequest searchRequest) {
+        Sort sort = null;
+
+        if (!CollectionUtils.isEmpty(searchRequest.getSorts())) {
+            for (DataSorting dataSort : searchRequest.getSorts()) {
+                if (dataSort.getField().equals("uomFrom")) {
+                    sort = Sort.by(dataSort.getSort() == SortOption.ASC ? Sort.Direction.ASC : Sort.Direction.DESC, "id.uomFrom");
+                } else if (dataSort.getField().equals("uomTo")) {
+                    sort = Sort.by(dataSort.getSort() == SortOption.ASC ? Sort.Direction.ASC : Sort.Direction.DESC, "id.uomTo");
+                } else {
+                    sort = Sort.by(dataSort.getSort() == SortOption.ASC ? Sort.Direction.ASC : Sort.Direction.DESC, dataSort.getField());
+                }
+            }
+        } else {
+            sort = Sort.by(Sort.Direction.DESC, "updatedAt");
+        }
+
+        return PageRequest.of(searchRequest.getPage(), searchRequest.getLimit(), sort);
     }
 
     private Object castToRequiredType(Class fieldType, String value) {

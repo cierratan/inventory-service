@@ -138,4 +138,6 @@ public interface ItemRepository extends JpaRepository<Item, Long>, JpaSpecificat
             "AND i.plantNo = :plantNo AND i.itemNo = :obsoleteItem")
     ItemProjection foundObsoleteItem(String companyCode, Integer plantNo, String obsoleteItem);
 
+    @Query("SELECT i.itemNo as itemNo FROM ITEM i")
+    List<ItemProjection> getAllItemNo();
 }

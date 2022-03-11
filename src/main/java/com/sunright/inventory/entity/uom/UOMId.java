@@ -1,6 +1,7 @@
 package com.sunright.inventory.entity.uom;
 
-import lombok.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.persistence.Embeddable;
 import java.io.Serializable;
