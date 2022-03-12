@@ -176,11 +176,11 @@ public class Item extends InvBaseEntity {
 
     private String mslCode;
 
-    @Enumerated(EnumType.STRING)
+    @Enumerated(EnumType.ORDINAL)
     private Closure openClose;
     private Date closeDate;
 
-    @Enumerated(EnumType.STRING)
+    @Enumerated(EnumType.ORDINAL)
     private Obsolete obsoleteCode;
     private String obsoleteItem;
     private Date obsoleteDate;
