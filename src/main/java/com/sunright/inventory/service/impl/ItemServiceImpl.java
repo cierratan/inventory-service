@@ -204,15 +204,17 @@ public class ItemServiceImpl implements ItemService {
         Item found = checkIfRecordExist(input.getId());
 
         Item item = new Item();
-        if (input.getSource().equals(found.getSource())) {
+
+        if (StringUtils.equals(input.getSource(), found.getSource())) {
             input.setSource(null);
         }
-        if (input.getPartNo().equals(found.getPartNo())) {
+        if (StringUtils.equals(input.getPartNo(), found.getPartNo())) {
             input.setPartNo(null);
         }
-        if (input.getObsoleteItem().equals(found.getObsoleteItem())) {
+        if (StringUtils.equals(input.getObsoleteItem(), found.getObsoleteItem())) {
             input.setObsoleteItem(null);
         }
+
         String process = "UPDATE";
         checkRecValid(userProfile, input, process);
         BeanUtils.copyProperties(input, item, "status", "createdBy", "createdAt");
