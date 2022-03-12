@@ -415,8 +415,8 @@ public class GrnServiceImpl implements GrnService {
 
                             if (dateCode != null) {
                                 if (dateCode != 0) {
-                                    int lengthOfDateCode = String.valueOf(dateCode).length();
-                                    if (lengthOfDateCode < 4) {
+                                    Integer lengthOfDateCode = String.valueOf(dateCode).length();
+                                    if (lengthOfDateCode != 4) {
                                         throw new ServerException("Invalid Date Code! Please provide in YYWW format.");
                                     }
                                     String strWK = detail.getDateCode().toString().substring(2);
@@ -667,8 +667,8 @@ public class GrnServiceImpl implements GrnService {
 
                                 if (dateCode != null) {
                                     if (dateCode != 0) {
-                                        int lengthOfDateCode = String.valueOf(dateCode).length();
-                                        if (lengthOfDateCode < 4) {
+                                        Integer lengthOfDateCode = String.valueOf(dateCode).length();
+                                        if (lengthOfDateCode != 4) {
                                             throw new ServerException("Invalid Date Code! Please provide in YYWW format.");
                                         }
                                         String strWK = detail.getDateCode().toString().substring(2);
@@ -755,8 +755,8 @@ public class GrnServiceImpl implements GrnService {
 
                                 if (dateCode != null) {
                                     if (dateCode != 0) {
-                                        int lengthOfDateCode = String.valueOf(dateCode).length();
-                                        if (lengthOfDateCode < 4) {
+                                        Integer lengthOfDateCode = String.valueOf(dateCode).length();
+                                        if (lengthOfDateCode != 4) {
                                             throw new ServerException("Invalid Date Code! Please provide in YYWW format.");
                                         }
                                         String strWK = detail.getDateCode().toString().substring(2);
@@ -1284,15 +1284,15 @@ public class GrnServiceImpl implements GrnService {
                 }
 
                 costVar = BigDecimal.ZERO;
-                convQty = grnDetail.getRecdQty().multiply(grnDetail.getStdPackQty());
-                convCost = (grnDetail.getRecdPrice().multiply(currRate)).divide(grnDetail.getStdPackQty(), 2, RoundingMode.HALF_EVEN);
+                convQty = (grnDetail.getRecdQty().multiply(grnDetail.getStdPackQty())).setScale(4, BigDecimal.ROUND_HALF_EVEN);
+                convCost = ((grnDetail.getRecdPrice().multiply(currRate)).divide(grnDetail.getStdPackQty(), 2, RoundingMode.HALF_UP)).setScale(4, BigDecimal.ROUND_HALF_EVEN);
                 if (convCost == null) {
                     throw new ServerException("The convented new Std Cost is null.");
                 }
-                grnValue = (grnDetail.getRecdQty().multiply(grnDetail.getRecdPrice().multiply(currRate)));
-                stockValue = (grnDetail.getRecdPrice().multiply(currRate).divide(grnDetail.getStdPackQty(), 2, BigDecimal.ROUND_HALF_EVEN))
-                        .multiply(grnDetail.getRecdQty().multiply(grnDetail.getStdPackQty()));
-                finalGrnVar = grnValue.subtract(stockValue);
+                grnValue = ((grnDetail.getRecdQty().multiply(grnDetail.getRecdPrice().multiply(currRate)))).setScale(4, BigDecimal.ROUND_HALF_EVEN);
+                stockValue = ((grnDetail.getRecdPrice().multiply(currRate).divide(grnDetail.getStdPackQty(), 2, RoundingMode.HALF_UP))
+                        .multiply(grnDetail.getRecdQty().multiply(grnDetail.getStdPackQty()))).setScale(4, BigDecimal.ROUND_HALF_EVEN);
+                finalGrnVar = (grnValue.subtract(stockValue)).setScale(4, BigDecimal.ROUND_HALF_EVEN);
             } else {
                 if (input.getSubType().equals("M")) {
                     UOMProjection uomFactor = uomRepository.getUomFactor(detail.getUom(), itemUom.getUom());
@@ -1301,20 +1301,22 @@ public class GrnServiceImpl implements GrnService {
                     } else {
                         convUom = uomFactor.getUomFactor();
                     }
-                    grnValue = (grnDetail.getRecdQty().multiply(convUom)).multiply(detail.getRecdPrice().multiply(currRate)
-                            .divide(convUom, 2, BigDecimal.ROUND_HALF_EVEN));
-                    stockValue = (grnDetail.getRecdPrice().multiply(currRate).divide(convUom, 2, BigDecimal.ROUND_HALF_EVEN))
-                            .multiply(grnDetail.getRecdQty().multiply(convUom));
-                    finalGrnVar = grnValue.subtract(stockValue);
-                    grnQty = grnDetail.getRecdQty().multiply(convUom);
-                    grnPrice = (grnDetail.getRecdPrice().multiply(currRate)).divide(convUom, 2, RoundingMode.HALF_EVEN);
+                    grnValue = ((grnDetail.getRecdQty().multiply(convUom)).multiply(detail.getRecdPrice().multiply(currRate)
+                            .divide(convUom, 2, RoundingMode.HALF_UP))).setScale(4, BigDecimal.ROUND_HALF_EVEN);
+                    stockValue = ((grnDetail.getRecdPrice().multiply(currRate).divide(convUom, 2, RoundingMode.HALF_UP))
+                            .multiply(grnDetail.getRecdQty().multiply(convUom))).setScale(4, BigDecimal.ROUND_HALF_EVEN);
+                    finalGrnVar = (grnValue.subtract(stockValue)).setScale(4, BigDecimal.ROUND_HALF_EVEN);
+                    grnQty = (grnDetail.getRecdQty().multiply(convUom)).setScale(4, BigDecimal.ROUND_HALF_EVEN);
+                    grnPrice = ((grnDetail.getRecdPrice().multiply(currRate)).divide(convUom, 2, RoundingMode.HALF_UP)).setScale(4, BigDecimal.ROUND_HALF_EVEN);
                 }
             }
 
             NLCTLProjection batchYear = nlctlRepository.getBatchYear(userProfile.getCompanyCode(), userProfile.getPlantNo());
             BigDecimal newBatchNo = null;
-            if (itemCur.getBatchNo() == null) {
-                newBatchNo = (batchYear.getBatchNo().multiply(BigDecimal.valueOf(10000))).add(BigDecimal.valueOf(1));
+            if (itemCur == null) {
+                if (itemCur.getBatchNo() == null) {
+                    newBatchNo = (batchYear.getBatchNo().multiply(BigDecimal.valueOf(10000))).add(BigDecimal.valueOf(1));
+                }
             } else {
                 String batchYr = itemCur.getBatchNo().toString().substring(0, 4);
                 String batchNo = itemCur.getBatchNo().toString().substring(7);
@@ -1347,26 +1349,26 @@ public class GrnServiceImpl implements GrnService {
 
             if (itemCur != null) {
                 if (input.getSubType().equals("N")) {
-                    itemValue = (itemQoh.multiply(itemStdMat)).add(convQty.multiply(convCost)).add(itemCostVar);
+                    itemValue = ((itemQoh.multiply(itemStdMat)).add(convQty.multiply(convCost)).add(itemCostVar)).setScale(4, BigDecimal.ROUND_HALF_EVEN);
                     if (itemQoh.compareTo(BigDecimal.ZERO) <= 0) {
-                        newStdMat = (itemValue.subtract(itemCostVar)).divide(convQty.add(itemQoh), 2, RoundingMode.HALF_EVEN);
+                        newStdMat = ((itemValue.subtract(itemCostVar)).divide(convQty.add(itemQoh), 2, RoundingMode.HALF_UP)).setScale(4, BigDecimal.ROUND_HALF_EVEN);
                     } else {
-                        newStdMat = (convQty.add(itemQoh)).divide(itemValue, 2, RoundingMode.HALF_EVEN);
+                        newStdMat = ((convQty.add(itemQoh)).divide(itemValue, 2, RoundingMode.HALF_UP)).setScale(4, BigDecimal.ROUND_HALF_EVEN);
                     }
 
-                    newQoh = itemQoh.add(convQty);
-                    itemOrderQty = itemCur.getOrderQty().subtract(convQty);
-                    newCostVar = (itemValue.subtract(newQoh.multiply(newStdMat))).add(finalGrnVar);
-                    costVar = (itemValue.subtract(newQoh.multiply(newStdMat))).subtract(itemCostVar);
+                    newQoh = (itemQoh.add(convQty)).setScale(4, BigDecimal.ROUND_HALF_EVEN);
+                    itemOrderQty = (itemCur.getOrderQty().subtract(convQty)).setScale(4, BigDecimal.ROUND_HALF_EVEN);
+                    newCostVar = ((itemValue.subtract(newQoh.multiply(newStdMat))).add(finalGrnVar)).setScale(4, BigDecimal.ROUND_HALF_EVEN);
+                    costVar = ((itemValue.subtract(newQoh.multiply(newStdMat))).subtract(itemCostVar)).setScale(4, BigDecimal.ROUND_HALF_EVEN);
 
-                    ytdReceipt = (itemLocInfo.getYtdReceipt() == null ? BigDecimal.ZERO : itemLocInfo.getYtdReceipt().add(convQty));
-                    qoh = (itemLocInfo.getQoh() == null ? BigDecimal.ZERO : itemLocInfo.getQoh().add(convQty));
+                    ytdReceipt = (itemLocInfo.getYtdReceipt() == null ? BigDecimal.ZERO : (itemLocInfo.getYtdReceipt().add(convQty)).setScale(4, BigDecimal.ROUND_HALF_EVEN));
+                    qoh = (itemLocInfo.getQoh() == null ? BigDecimal.ZERO : (itemLocInfo.getQoh().add(convQty)).setScale(4, BigDecimal.ROUND_HALF_EVEN));
                 }
 
                 if (input.getSubType().equals("M")) {
                     /*inpCalStdMaterial(itemQoh, itemStdMat, itemCostVar, currRate, grnDetail.getRecdQty(),
                             grnDetail.getRecdPrice(), convUom, newStdMat, newCostVar, newQoh);*/
-                    costVar = newCostVar.subtract(finalGrnVar).subtract(itemCostVar);
+                    costVar = (newCostVar.subtract(finalGrnVar).subtract(itemCostVar)).setScale(4, BigDecimal.ROUND_HALF_EVEN);
                     itemRepository.updateQohStdMatCostVarYtdRecLTranDateBatchNo(newQoh, newStdMat, newCostVar, ytdReceipt, lastTranDate, newBatchNo,
                             userProfile.getCompanyCode(), userProfile.getPlantNo(), grnDetail.getItemNo());
                 } else {
@@ -1624,7 +1626,7 @@ public class GrnServiceImpl implements GrnService {
 
             BigDecimal balQoh = BigDecimal.ZERO;
             if (input.getSubType().equals("M")) {
-                balQoh = itemQoh.add(qoh);
+                balQoh = (itemQoh.add(qoh)).setScale(4, BigDecimal.ROUND_HALF_EVEN);
             }
 
             /** INSERT INAUDIT  **/
