@@ -12,6 +12,7 @@ import com.sunright.inventory.entity.company.CompanyProjection;
 import com.sunright.inventory.entity.docmno.DocmNoProjection;
 import com.sunright.inventory.entity.enums.Status;
 import com.sunright.inventory.entity.item.ItemProjection;
+import com.sunright.inventory.entity.itembatclog.ItemBatcLogProjection;
 import com.sunright.inventory.entity.itemloc.ItemLoc;
 import com.sunright.inventory.entity.itemloc.ItemLocProjection;
 import com.sunright.inventory.entity.mrv.MRV;
@@ -79,6 +80,9 @@ public class MRVServiceImpl implements MRVService {
 
     @Autowired
     private CompanyRepository companyRepository;
+
+    @Autowired
+    private ItemBatcLogRepository itemBatcLogRepository;
 
     @Autowired
     private QueryGenerator queryGenerator;
@@ -374,7 +378,42 @@ public class MRVServiceImpl implements MRVService {
                     itemInfo.getYtdReceipt().add(newQoh), new Date(ZonedDateTime.now().toInstant().toEpochMilli()),
                     mrvDetail.getCompanyCode(), mrvDetail.getPlantNo(), mrvDetail.getItemNo(),
                     stockLoc.getStockLoc());
+
+            if(itemInfo.getLoc() == null) {
+                ItemLoc itemLoc = new ItemLoc();
+                itemLoc.setCompanyCode(mrvDetail.getCompanyCode());
+                itemLoc.setPlantNo(mrvDetail.getPlantNo());
+                itemLoc.setItemNo(itemInfo.getItemNo());
+                itemLoc.setLoc(mrvDetail.getLoc());
+                itemLoc.setPartNo(itemInfo.getPartNo());
+                itemLoc.setDescription(itemInfo.getDescription());
+                itemLoc.setCategoryCode(itemInfo.getDescription());
+                itemLoc.setQoh(mrvDetQty);
+                itemLoc.setBatchNo(itemInfo.getBatchNo());
+                itemLoc.setStdMaterial(newStdMaterial);
+                itemLoc.setCostVariance(BigDecimal.ZERO);
+                itemLoc.setLastTranDate(new Date(ZonedDateTime.now().toInstant().toEpochMilli()));
+                itemLoc.setStatus(Status.ACTIVE);
+                itemLoc.setCreatedBy(UserProfileContext.getUserProfile().getUsername());
+                itemLoc.setCreatedAt(ZonedDateTime.now());
+                itemLoc.setUpdatedBy(UserProfileContext.getUserProfile().getUsername());
+                itemLoc.setUpdatedAt(ZonedDateTime.now());
+
+                itemLocRepository.save(itemLoc);
+            } else {
+                itemLocRepository.updateQoh(itemLocInfo.getQoh().add(mrvDetQty), itemLocWithRecCnt.getId());
+            }
         }
+
+        ItemBatcLogProjection sivQty = itemBatcLogRepository.getSivQty(mrvDetail.getCompanyCode(),
+                mrvDetail.getPlantNo(), mrvDetail.getItemNo(),
+                mrvDetail.getBatchNo(), mrvDetail.getSivNo());
+
+        ItemBatcLogProjection batchLog = itemBatcLogRepository.getBatchLog(mrvDetail.getCompanyCode(),
+                mrvDetail.getPlantNo(), mrvDetail.getItemNo(),
+                mrvDetail.getBatchNo(), mrvDetail.getSivNo());
+
+
     }
 
     private void updateBombypj(MRVDetail mrvDetail) {

@@ -119,6 +119,10 @@ public interface ItemLocRepository extends JpaRepository<ItemLoc, Long> {
     void updateQoh(BigDecimal qoh, String companyCode, Integer plantNo, String itemNo);
 
     @Modifying
+    @Query("UPDATE ITEMLOC i set i.qoh = :qoh WHERE i.id = :id")
+    void updateQoh(BigDecimal qoh, Long id);
+
+    @Modifying
     @Query("UPDATE ITEMLOC i set i.pickedQty = :pickedQtyUpdate, " +
             "i.prodnResv = :prodnResvUpdate WHERE i.companyCode = :companyCode " +
             "AND i.plantNo = :plantNo AND i.itemNo = :itemNo AND i.loc = :loc")
