@@ -85,18 +85,9 @@ public class ItemServiceImpl implements ItemService {
                 if (optionalItem.isPresent() && foundItemLoc != null) {
                     if (optionalItem.get().getStatus() == Status.DELETED) {
                         Item item = new Item();
-                        if (input.getSource().equals(rec.getSource())) {
-                            input.setSource(null);
-                        }
-                        if (input.getPartNo().equals(rec.getPartNo())) {
-                            input.setPartNo(null);
-                        }
-                        if (input.getObsoleteItem().equals(rec.getObsoleteItem())) {
-                            input.setObsoleteItem(null);
-                        }
+                        BeanUtils.copyProperties(input, item);
                         String process = "CREATE";
                         checkRecValid(userProfile, input, process);
-                        BeanUtils.copyProperties(input, item);
                         item.setCompanyCode(UserProfileContext.getUserProfile().getCompanyCode());
                         item.setPlantNo(UserProfileContext.getUserProfile().getPlantNo());
                         item.setStrRohsStatus(BooleanUtils.toString(input.getRohsStatus(), "1", "0"));
@@ -135,9 +126,8 @@ public class ItemServiceImpl implements ItemService {
         } else {
             Item item = new Item();
             String process = "CREATE";
-            checkRecValid(userProfile, input, process);
             BeanUtils.copyProperties(input, item);
-
+            checkRecValid(userProfile, input, process);
             item.setCompanyCode(userProfile.getCompanyCode());
             item.setPlantNo(userProfile.getPlantNo());
             item.setStrRohsStatus(BooleanUtils.toString(input.getRohsStatus(), "1", "0"));
@@ -200,30 +190,18 @@ public class ItemServiceImpl implements ItemService {
     @Override
     @Transactional
     public ItemDTO editItem(ItemDTO input) {
+
         UserProfile userProfile = UserProfileContext.getUserProfile();
         Item found = checkIfRecordExist(input.getId());
-
         Item item = new Item();
-
-        if (StringUtils.equals(input.getSource(), found.getSource())) {
-            input.setSource(null);
-        }
-        if (StringUtils.equals(input.getPartNo(), found.getPartNo())) {
-            input.setPartNo(null);
-        }
-        if (StringUtils.equals(input.getObsoleteItem(), found.getObsoleteItem())) {
-            input.setObsoleteItem(null);
-        }
-
+        BeanUtils.copyProperties(input, item, "status", "createdBy", "createdAt");
         String process = "UPDATE";
         checkRecValid(userProfile, input, process);
-        BeanUtils.copyProperties(input, item, "status", "createdBy", "createdAt");
         item.setCompanyCode(UserProfileContext.getUserProfile().getCompanyCode());
         item.setPlantNo(UserProfileContext.getUserProfile().getPlantNo());
         item.setStatus(found.getStatus());
         item.setCreatedBy(found.getCreatedBy());
         item.setCreatedAt(found.getCreatedAt());
-
         item.setStrRohsStatus(BooleanUtils.toString(input.getRohsStatus(), "1", "0"));
         item.setUpdatedBy(UserProfileContext.getUserProfile().getUsername());
         item.setUpdatedAt(ZonedDateTime.now());

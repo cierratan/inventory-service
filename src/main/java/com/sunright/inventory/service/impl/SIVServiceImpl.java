@@ -269,7 +269,7 @@ public class SIVServiceImpl implements SIVService {
         if (detail.getSubType().equals("M")) {
             if (detail.getItemType() == 0) {
                 reduceItemInv(userProfile, input, detail);
-                postBombypj(userProfile, siv, sivDetail, detail);
+                postBombypj(userProfile, siv, detail);
                 if (input.getTranType().equals("PR")) {
                     if (StringUtils.isNotBlank(detail.getProjectNo1())) {
                         procBombProjUpdate(userProfile.getCompanyCode(), userProfile.getPlantNo(), detail.getItemNo(),
@@ -419,7 +419,7 @@ public class SIVServiceImpl implements SIVService {
                 }
             }
         } else {
-            postBombypj(userProfile, siv, sivDetail, detail);
+            postBombypj(userProfile, siv, detail);
             postCoq(userProfile.getCompanyCode(), userProfile.getPlantNo(), input.getProjectNo(), input.getDocmNo(), detail.getItemNo(),
                     detail.getBatchNo(), input.getSivNo(), detail.getIssuedQty(), detail.getIssuedPrice(), input.getSubType());
         }
@@ -432,7 +432,7 @@ public class SIVServiceImpl implements SIVService {
         bombypjRepository.updateIssuedQty(issuedQtyUpdt, companyCode, plantNo, projectNo, projectNo, itemNo);
     }
 
-    private void postBombypj(UserProfile userProfile, SIV siv, SIVDetail sivDetail, SIVDetailDTO detail) {
+    private void postBombypj(UserProfile userProfile, SIV siv, SIVDetailDTO detail) {
 
         BigDecimal shortQty = detail.getBomShortQtyL().add(detail.getBomShortQtyF());
         List<BombypjProjection> bombypjInfoByStatus = bombypjRepository.getBombypjInfoByStatus(userProfile.getCompanyCode(),
