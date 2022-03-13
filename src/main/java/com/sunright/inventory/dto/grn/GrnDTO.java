@@ -1,5 +1,7 @@
 package com.sunright.inventory.dto.grn;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.sunright.inventory.dto.InvBaseDTO;
 import lombok.Builder;
@@ -13,6 +15,7 @@ import java.util.Date;
 import java.util.Set;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties("recdDate")
 @Getter
 @Setter
 @Builder
@@ -33,7 +36,10 @@ public class GrnDTO extends InvBaseDTO {
     private String supplierCode;
     private String currencyCode;
     private BigDecimal currencyRate;
+
+    @JsonIgnore
     private Date recdDate;
+
     private String statuz;
     private String entryUser;
     private Date entryDate;
