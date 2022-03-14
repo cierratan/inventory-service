@@ -68,10 +68,7 @@ public class ItemCatServiceImpl implements ItemCatService {
                         itemCat.setVersion(rec.getVersion());
                         itemCatRepository.save(itemCat);
                     } else {
-                        throw new DuplicateException(String.format(
-                                "Duplicate record categoryCode: %s, categorySubCode: %s, categoryGroup: %s",
-                                input.getCategoryCode(), input.getCategorySubCode(), input.getCategoryGroup()
-                        ));
+                        throw new DuplicateException("Duplicate record");
                     }
                 }
             }
