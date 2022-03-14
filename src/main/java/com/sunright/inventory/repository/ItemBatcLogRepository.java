@@ -21,7 +21,7 @@ public interface ItemBatcLogRepository extends JpaRepository<ItemBatcLog, ItemBa
             "and id.itemNo = :itemNo and id.batchNo = :batchNo and id.sivNo = :sivNo ")
     ItemBatcLogProjection getSivQty(String companyCode, Integer plantNo, String itemNo, Long batchNo, String sivNo);
 
-    @Query("SELECT l.id.sivNo, l.id.batchNo, l.sivQty, l.id.itemNo, " +
+    @Query("SELECT l.id.sivNo as sivNo, l.id.batchNo as batchNo, l.sivQty as sivQty, l.id.itemNo as itemNo, " +
             "l.createdAt as itembatcLogCreatedAt, g.createdAt as grnCreatedAt, s.createdAt as sivCreatedAt " +
             "FROM ITEMBATC_LOG l " +
             "   left join GRN g on g.companyCode = l.id.companyCode and g.plantNo = l.id.plantNo and g.grnNo = l.grnNo " +

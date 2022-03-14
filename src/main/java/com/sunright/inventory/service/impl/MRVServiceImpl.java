@@ -12,6 +12,8 @@ import com.sunright.inventory.entity.company.CompanyProjection;
 import com.sunright.inventory.entity.docmno.DocmNoProjection;
 import com.sunright.inventory.entity.enums.Status;
 import com.sunright.inventory.entity.item.ItemProjection;
+import com.sunright.inventory.entity.itembatc.ItemBatc;
+import com.sunright.inventory.entity.itembatc.ItemBatcId;
 import com.sunright.inventory.entity.itembatclog.ItemBatcLogProjection;
 import com.sunright.inventory.entity.itemloc.ItemLoc;
 import com.sunright.inventory.entity.itemloc.ItemLocProjection;
@@ -83,6 +85,9 @@ public class MRVServiceImpl implements MRVService {
 
     @Autowired
     private ItemBatcLogRepository itemBatcLogRepository;
+
+    @Autowired
+    private ItemBatcRepository itemBatcRepository;
 
     @Autowired
     private QueryGenerator queryGenerator;
@@ -413,6 +418,15 @@ public class MRVServiceImpl implements MRVService {
                 mrvDetail.getPlantNo(), mrvDetail.getItemNo(),
                 mrvDetail.getBatchNo(), mrvDetail.getSivNo());
 
+        ItemBatcId itemBatcId = new ItemBatcId();
+        itemBatcId.setCompanyCode(mrvDetail.getCompanyCode());
+        itemBatcId.setPlantNo(mrvDetail.getPlantNo());
+        itemBatcId.setItemNo(mrvDetail.getItemNo());
+        itemBatcId.setLoc(mrvDetail.getLoc());
+        itemBatcId.setBatchNo(mrvDetail.getBatchNo());
+
+        Optional<ItemBatc> itembatcFound = itemBatcRepository.findById(itemBatcId);
+        Optional<SIV> sivFound = sivRepository.findSIVByCompanyCodeAndPlantNoAndSivNo(mrvDetail.getCompanyCode(), mrvDetail.getPlantNo(), mrvDetail.getSivNo());
 
     }
 
