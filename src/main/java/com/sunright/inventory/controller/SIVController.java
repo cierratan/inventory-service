@@ -47,6 +47,16 @@ public class SIVController {
         return new ResponseEntity<>(sivService.generatedReportSIV(input), headers, HttpStatus.OK);
     }
 
+    @PostMapping("populate-detail-combine")
+    public ResponseEntity<List<SIVDTO>> populateDetCombine(@RequestBody SIVDTO input) {
+        return new ResponseEntity<>(sivService.populateSIVCombineDetails(input), HttpStatus.OK);
+    }
+
+    @GetMapping("project-no-combine")
+    public ResponseEntity<List<SIVDTO>> lovPJNo() {
+        return new ResponseEntity<>(sivService.getProjectNoSivCombine(), HttpStatus.OK);
+    }
+
     @PostMapping("populate-detail-manual")
     public ResponseEntity<List<SIVDetailDTO>> populateDetManual(@RequestBody SIVDTO input) {
         return new ResponseEntity<>(sivService.populateSIVManualDetails(input), HttpStatus.OK);

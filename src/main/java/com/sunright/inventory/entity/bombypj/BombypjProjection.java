@@ -24,4 +24,5 @@ public interface BombypjProjection {
     BigDecimal getRecdQty();
     BigDecimal getMrvQty();
     BigDecimal getMrvResv();
+    Long getCountAlternate();
 }

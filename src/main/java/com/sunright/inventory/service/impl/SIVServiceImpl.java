@@ -1368,6 +1368,130 @@ public class SIVServiceImpl implements SIVService {
         return list;
     }
 
+    @Override
+    public List<SIVDTO> populateSIVCombineDetails(SIVDTO input) {
+        UserProfile userProfile = UserProfileContext.getUserProfile();
+        List<SIVDTO> list = new ArrayList<>();
+        SIVDTO dto = projValidate(userProfile, input);
+        if (!CollectionUtils.isEmpty(input.getSivDetails())) {
+            for (SIVDetailDTO dtoDet : input.getSivDetails()) {
+
+            }
+        } else {
+            list.add(dto);
+        }
+        return list;
+    }
+
+    @Override
+    public List<SIVDTO> getProjectNoSivCombine() {
+        List<BombypjProjection> prjNoProjection = bombypjRepository.getPrjNoByStatus(
+                UserProfileContext.getUserProfile().getCompanyCode(),
+                UserProfileContext.getUserProfile().getPlantNo());
+        List<SIVDTO> list = new ArrayList<>();
+        for (BombypjProjection bProj : prjNoProjection) {
+            list.add(SIVDTO.builder().projectNo(bProj.getProjectNo()).build());
+        }
+
+        return list;
+    }
+
+    private SIVDTO projValidate(UserProfile userProfile, SIVDTO input) {
+        String projectNoA = input.getProjNoA();
+        String projectNoB = input.getProjNoB();
+        String projectNoC = input.getProjNoC();
+        String projectNoD = input.getProjNoD();
+        String projectNoE = input.getProjNoE();
+        BombypjProjection cBombypj = null;
+        if (StringUtils.isNotBlank(projectNoA)) {
+            cBombypj = bombypjRepository.projValidate(userProfile.getCompanyCode(), userProfile.getPlantNo(), projectNoA);
+            if (cBombypj == null) {
+                throw new ServerException(String.format("%s is either an invaild project or no outstanding/enough picked qty!", projectNoA));
+            }
+        }
+        if (StringUtils.isNotBlank(projectNoB)) {
+            cBombypj = bombypjRepository.projValidate(userProfile.getCompanyCode(), userProfile.getPlantNo(), projectNoB);
+        }
+        if (StringUtils.isNotBlank(projectNoC)) {
+            cBombypj = bombypjRepository.projValidate(userProfile.getCompanyCode(), userProfile.getPlantNo(), projectNoC);
+        }
+        if (StringUtils.isNotBlank(projectNoD)) {
+            cBombypj = bombypjRepository.projValidate(userProfile.getCompanyCode(), userProfile.getPlantNo(), projectNoD);
+        }
+        if (StringUtils.isNotBlank(projectNoE)) {
+            cBombypj = bombypjRepository.projValidate(userProfile.getCompanyCode(), userProfile.getPlantNo(), projectNoE);
+        }
+
+        if (StringUtils.isNotBlank(projectNoA)) {
+            if (StringUtils.isNotBlank(projectNoB) && projectNoB != projectNoA && !projectNoA.substring(0, 1).equals(projectNoB.substring(0, 1))) {
+                throw new ServerException(String.format("%s is not same project type with %s", projectNoB, projectNoA));
+            }
+            if (StringUtils.isNotBlank(projectNoC) && projectNoC != projectNoA && !projectNoA.substring(0, 1).equals(projectNoC.substring(0, 1))) {
+                throw new ServerException(String.format("%s is not same project type with %s", projectNoC, projectNoA));
+            }
+            if (StringUtils.isNotBlank(projectNoD) && projectNoD != projectNoA && !projectNoA.substring(0, 1).equals(projectNoD.substring(0, 1))) {
+                throw new ServerException(String.format("%s is not same project type with %s", projectNoD, projectNoA));
+            }
+            if (StringUtils.isNotBlank(projectNoE) && projectNoE != projectNoA && !projectNoA.substring(0, 1).equals(projectNoE.substring(0, 1))) {
+                throw new ServerException(String.format("%s is not same project type with %s", projectNoE, projectNoA));
+            }
+        }
+
+        if (cBombypj == null) {
+            if (StringUtils.isNotBlank(projectNoB)) {
+                throw new ServerException(String.format("%s is either an invaild project or no outstanding/enough picked qty!", projectNoB));
+            }
+            if (StringUtils.isNotBlank(projectNoC)) {
+                throw new ServerException(String.format("%s is either an invaild project or no outstanding/enough picked qty!", projectNoC));
+            }
+            if (StringUtils.isNotBlank(projectNoD)) {
+                throw new ServerException(String.format("%s is either an invaild project or no outstanding/enough picked qty!", projectNoD));
+            }
+            if (StringUtils.isNotBlank(projectNoE)) {
+                throw new ServerException(String.format("%s is either an invaild project or no outstanding/enough picked qty!", projectNoE));
+            }
+        }
+
+        if (StringUtils.isNotBlank(projectNoA)) {
+            if (projectNoA.equals(projectNoB) || projectNoA.equals(projectNoC) || projectNoA.equals(projectNoD) || projectNoA.equals(projectNoE)) {
+                throw new ServerException(String.format("Duplicate project, %s, found!", projectNoA));
+            }
+        } else {
+            if (StringUtils.isBlank(projectNoA) || StringUtils.isNotBlank(projectNoB)) {
+                projectNoA = projectNoB;
+                projectNoB = null;
+            } else if (StringUtils.isBlank(projectNoA) && StringUtils.isNotBlank(projectNoC)) {
+                projectNoA = projectNoC;
+                projectNoC = null;
+            } else if (StringUtils.isBlank(projectNoA) && StringUtils.isNotBlank(projectNoD)) {
+                projectNoA = projectNoD;
+                projectNoD = null;
+            } else if (StringUtils.isBlank(projectNoA) && StringUtils.isNotBlank(projectNoE)) {
+                projectNoA = projectNoE;
+                projectNoE = null;
+            }
+        }
+
+        if (StringUtils.isNotBlank(projectNoA)) {
+            if (StringUtils.isNotBlank(projectNoB)) {
+                projectNoB = projectNoB;
+            } else if (StringUtils.isNotBlank(projectNoC)) {
+                projectNoB = projectNoC;
+            } else if (StringUtils.isNotBlank(projectNoD)) {
+                projectNoB = projectNoD;
+            } else if (StringUtils.isNotBlank(projectNoE)) {
+                projectNoB = projectNoE;
+            }
+            BombypjProjection commonItem = bombypjRepository.bomComp(userProfile.getCompanyCode(), userProfile.getPlantNo(), projectNoA, projectNoB);
+            if(commonItem.getCountAlternate() == 0){
+                throw new ServerException(String.format("%s has no common item with other project!", projectNoA));
+            }
+        }
+
+        return SIVDTO.builder().projNoA(projectNoA).projNoB(projectNoB).projNoC(projectNoC).projNoD(projectNoD).projNoE(projectNoE).build();
+    }
+
+
     private SIVDetailDTO checkValidPRWKItemNo(UserProfile userProfile, SIVDTO input) {
 
         SIVDetailDTO detailDTO = SIVDetailDTO.builder().build();

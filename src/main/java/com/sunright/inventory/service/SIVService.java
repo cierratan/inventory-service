@@ -38,4 +38,8 @@ public interface SIVService {
     SIVDetailDTO checkNextItem(SIVDTO input);
 
     List<ItemDTO> getAllItemNo();
+
+    List<SIVDTO> populateSIVCombineDetails(SIVDTO input);
+
+    List<SIVDTO> getProjectNoSivCombine();
 }

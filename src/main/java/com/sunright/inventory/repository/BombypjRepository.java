@@ -53,11 +53,11 @@ public interface BombypjRepository extends JpaRepository<Bombypj, BombypjId>, Jp
             "and b.id.alternate = :alternate and b.id.projectNo = :projectNo " +
             "and b.id.assemblyNo = :assemblyNo ")
     void updateResvQtyAndPickedQtyAndShortQtyAndMrvQtyAndMrvResv(BigDecimal resvQty, BigDecimal pickedQty, BigDecimal shortQty,
-                                    BigDecimal mrvQty, BigDecimal mrvResv,
-                                    String companyCode, Integer plantNo,
-                                    String component, String orderNo,
-                                    String alternate, String projectNo,
-                                    String assemblyNo);
+                                                                 BigDecimal mrvQty, BigDecimal mrvResv,
+                                                                 String companyCode, Integer plantNo,
+                                                                 String component, String orderNo,
+                                                                 String alternate, String projectNo,
+                                                                 String assemblyNo);
 
     @Query("SELECT DISTINCT b.id.projectNo as projectNo FROM BOMBYPJ b WHERE b.id.companyCode = :companyCode " +
             "AND b.id.plantNo = :plantNo AND (b.statuz IN ('R','B','E','C') OR b.statuz is null) " +
@@ -166,4 +166,23 @@ public interface BombypjRepository extends JpaRepository<Bombypj, BombypjId>, Jp
     @Query("SELECT DISTINCT b.id.projectNo as projectNo FROM BOMBYPJ b WHERE b.id.companyCode = :companyCode " +
             "AND b.id.plantNo = :plantNo AND b.id.alternate = :itemNo")
     List<BombypjProjection> bombypjCur(String companyCode, Integer plantNo, String itemNo);
+
+    @Query("SELECT DISTINCT b.id.projectNo as projectNo FROM BOMBYPJ b WHERE b.id.companyCode = :companyCode " +
+            "AND b.id.plantNo = :plantNo AND COALESCE(b.statuz, 'R') NOT IN ('X', 'D') " +
+            "AND COALESCE(b.pickedQty, 0) = COALESCE(b.resvQty, 0) AND COALESCE(b.pickedQty, 0) > 0 " +
+            "AND b.tranType = 'PRJ' AND b.id.projectNo = :projectNo")
+    BombypjProjection projValidate(String companyCode, Integer plantNo, String projectNo);
+
+    @Query("SELECT DISTINCT b.id.projectNo as projectNo FROM BOMBYPJ b WHERE b.id.companyCode = :companyCode " +
+            "AND b.id.plantNo = :plantNo AND COALESCE(b.statuz,'R') NOT IN ('X', 'D') AND COALESCE(b.pickedQty, 0) = COALESCE(b.resvQty, 0) " +
+            "AND COALESCE(b.pickedQty, 0) > 0 AND SUBSTRING(b.id.projectNo, 0, 1) in ('B', 'S') AND b.tranType = 'PRJ' ORDER BY b.id.projectNo")
+    List<BombypjProjection> lovPJNo(String companyCode, Integer plantNo);
+
+    @Query("SELECT count(b.id.alternate) as countAlternate FROM BOMBYPJ b WHERE b.id.companyCode = :companyCode " +
+            "AND b.id.plantNo = :plantNo AND b.id.projectNo = :projectNoA AND COALESCE(b.statuz,'R') NOT IN ('X', 'D') " +
+            "AND COALESCE(b.pickedQty, 0) = COALESCE(b.resvQty, 0) AND COALESCE(b.pickedQty, 0) > 0 AND b.id.alternate IN " +
+            "(SELECT bpj.id.alternate FROM BOMBYPJ bpj WHERE bpj.id.companyCode = :companyCode " +
+            "AND bpj.id.plantNo = :plantNo AND bpj.id.projectNo = :projectNoB AND COALESCE(bpj.statuz,'R') NOT IN ('X', 'D') " +
+            "AND COALESCE(bpj.pickedQty, 0) = COALESCE(bpj.resvQty, 0) AND COALESCE(bpj.pickedQty, 0) > 0)")
+    BombypjProjection bomComp(String companyCode, Integer plantNo, String projectNoA, String projectNoB);
 }
