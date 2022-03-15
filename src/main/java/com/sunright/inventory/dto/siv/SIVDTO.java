@@ -34,4 +34,10 @@ public class SIVDTO extends InvBaseDTO {
 
     private String entryUser;
     private Date entryDate;
+
+    private String projNoA;
+    private String projNoB;
+    private String projNoC;
+    private String projNoD;
+    private String projNoE;
 }

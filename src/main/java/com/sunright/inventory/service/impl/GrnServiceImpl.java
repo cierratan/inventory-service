@@ -546,15 +546,6 @@ public class GrnServiceImpl implements GrnService {
                                     }
                                 } else {
                                     if (StringUtils.isNotBlank(itemNo)) {
-                                        ItemProjection src = itemRepository.getSource(userProfile.getCompanyCode(), userProfile.getPlantNo(), itemNo);
-                                        if (src == null) {
-                                            checkSourceStockItem();
-                                        }
-                                        if (src.getSource().equalsIgnoreCase("C")) {
-                                            if (recdPrice.compareTo(BigDecimal.ZERO) > 0) {
-                                                checkValidRecdPriceForConsignedItem();
-                                            }
-                                        }
                                         ItemProjection countItemNo = itemRepository.getCountByItemNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), itemNo);
                                         if (countItemNo.getCountItemNo() == 0) {
                                             checkValidItemNo();
@@ -639,25 +630,19 @@ public class GrnServiceImpl implements GrnService {
                                     }
                                 }
 
-                                if (recdPrice == null) {
-                                    throw new ServerException("Recd Price Can Not be Blank!");
-                                } else {
+                                if (recdPrice != null) {
                                     if (recdPrice.compareTo(BigDecimal.ZERO) < 0) {
                                         checkValidRecdPrice();
                                     }
                                 }
 
-                                if (recdQty == null) {
-                                    checkRecdQty();
-                                } else {
+                                if (recdQty != null) {
                                     if (recdQty.compareTo(BigDecimal.ZERO) <= 0) {
                                         checkRecdQty();
                                     }
                                 }
 
-                                if (labelQty == null) {
-                                    checkLabelQty();
-                                } else {
+                                if (labelQty != null) {
                                     if (labelQty.compareTo(BigDecimal.ZERO) <= 0) {
                                         checkLabelQty();
                                     } else if (recdQty.compareTo(labelQty) < 0) {
