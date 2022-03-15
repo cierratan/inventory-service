@@ -17,4 +17,5 @@ public interface ItemBatchProjection {
     BigDecimal getOriQoh();
     Long getCountItemBatc();
     String getItemNo();
+    Long getMaxBatchNo();
 }
