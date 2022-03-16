@@ -185,4 +185,125 @@ public interface BombypjRepository extends JpaRepository<Bombypj, BombypjId>, Jp
             "AND bpj.id.plantNo = :plantNo AND bpj.id.projectNo = :projectNoB AND COALESCE(bpj.statuz,'R') NOT IN ('X', 'D') " +
             "AND COALESCE(bpj.pickedQty, 0) = COALESCE(bpj.resvQty, 0) AND COALESCE(bpj.pickedQty, 0) > 0)")
     BombypjProjection bomComp(String companyCode, Integer plantNo, String projectNoA, String projectNoB);
+
+    @Query("SELECT bpj.id.alternate as alternate FROM BOMBYPJ bpj WHERE bpj.id.companyCode = :companyCode " +
+            "AND bpj.id.plantNo = :plantNo AND bpj.id.projectNo = :projectNo AND COALESCE(bpj.statuz,'R') NOT IN ('X', 'D') " +
+            "AND COALESCE(bpj.pickedQty, 0) = COALESCE(bpj.resvQty, 0) AND COALESCE(bpj.pickedQty, 0) > 0")
+    List<BombypjProjection> bomAltrnt(String companyCode, Integer plantNo, String projectNo);
+
+    @Query("SELECT count(bpj.id.alternate) as countAlternate FROM BOMBYPJ bpj WHERE bpj.id.companyCode = :companyCode " +
+            "AND bpj.id.plantNo = :plantNo AND bpj.id.projectNo = :projectNo AND COALESCE(bpj.statuz,'R') NOT IN ('X', 'D') " +
+            "AND COALESCE(bpj.pickedQty, 0) = COALESCE(bpj.resvQty, 0) AND COALESCE(bpj.pickedQty, 0) > 0")
+    BombypjProjection bomCountAltrnt(String companyCode, Integer plantNo, String projectNo);
+
+    @Query(value = "select * " +
+            "from (select distinct b.alternate as alternate, " +
+            "i.part_no as partNo, " +
+            "i.loc as loc, " +
+            "i.uom as uom, " +
+            "l.std_material as stdMaterial, " +
+            "(nvl(p1.picked_qty, 0) + nvl(p2.picked_qty, 0) + nvl(p3.picked_qty, 0) + nvl(p4.picked_qty, 0) + nvl(p5.picked_qty, 0)) as ttlSivQty, " +
+            "p1.project_no as projNoA, " +
+            "nvl(p1.picked_qty, 0) as paQty," +
+            "decode(p1.project_no, null, 0, 1) as cntA, " +
+            "p2.project_no as projNoB, " +
+            "nvl(p2.picked_qty, 0) as pbQty, " +
+            "decode(p2.project_no, null, 0, 1) as cntB, " +
+            "p3.project_no as projNoC, " +
+            "nvl(p3.picked_qty, 0) as pcQty, " +
+            "decode(p3.project_no, null, 0, 1) as cntC, " +
+            "p4.project_no as projNoD, " +
+            "nvl(p4.picked_qty, 0) as pdQty, " +
+            "decode(p4.project_no, null, 0, 1) as cntD, " +
+            "p5.project_no as projNoE, " +
+            "nvl(p5.picked_qty, 0) as peQty, " +
+            "decode(p5.project_no, null, 0, 1) as cntE " +
+            "from bombypj b," +
+            "item i," +
+            "itemloc l," +
+            "(select j.project_no," +
+            "j.alternate," +
+            "sum(nvl(j.resv_qty, 0)) resv_qty," +
+            "sum(nvl(j.picked_qty, 0)) picked_qty " +
+            "from bombypj j " +
+            "where company_code = :companyCode " +
+            "and plant_no = :plantNo " +
+            "and nvl(j.status, 'R') NOT IN ('D', 'X') " +
+            "and nvl(j.picked_qty, 0) > 0 " +
+            "and j.project_no = nvl(:projectNoA, 'X') " +
+            "group by j.project_no, j.alternate) p1," +
+            "(select j.project_no," +
+            "j.alternate," +
+            "sum(nvl(j.resv_qty, 0))   resv_qty," +
+            "sum(nvl(j.picked_qty, 0)) picked_qty " +
+            "from bombypj j " +
+            "where company_code = :companyCode " +
+            "and plant_no = :plantNo " +
+            "and nvl(j.status, 'R') NOT IN ('D', 'X') " +
+            "and nvl(j.picked_qty, 0) > 0 " +
+            "and j.project_no = nvl(:projectNoB, 'X') " +
+            "group by j.project_no, j.alternate) p2," +
+            "(select j.project_no," +
+            "j.alternate," +
+            "sum(nvl(j.resv_qty, 0)) resv_qty," +
+            "sum(nvl(j.picked_qty, 0)) picked_qty " +
+            "from bombypj j " +
+            "where company_code = :companyCode " +
+            "and plant_no = :plantNo " +
+            "and nvl(j.status, 'R') NOT IN ('D', 'X') " +
+            "and nvl(j.picked_qty, 0) > 0 " +
+            "and j.project_no = nvl(:projectNoC, 'X') " +
+            "group by j.project_no, j.alternate) p3," +
+            "(select j.project_no," +
+            "j.alternate," +
+            "sum(nvl(j.resv_qty, 0))   resv_qty," +
+            "sum(nvl(j.picked_qty, 0)) picked_qty " +
+            "from bombypj j " +
+            "where company_code = :companyCode " +
+            "and plant_no = :plantNo " +
+            "and nvl(j.status, 'R') NOT IN ('D', 'X') " +
+            "and nvl(j.picked_qty, 0) > 0 " +
+            "and j.project_no = nvl(:projectNoD, 'X') " +
+            "group by j.project_no, j.alternate) p4," +
+            "(select j.project_no," +
+            "j.alternate," +
+            "sum(nvl(j.resv_qty, 0))   resv_qty," +
+            "sum(nvl(j.picked_qty, 0)) picked_qty " +
+            "from bombypj j " +
+            "where company_code = :companyCode " +
+            "and plant_no = :plantNo " +
+            "and nvl(j.status, 'R') NOT IN ('D', 'X') " +
+            "and nvl(j.picked_qty, 0) > 0 " +
+            "and j.project_no = nvl(:projectNoE, 'X') " +
+            "group by j.project_no, j.alternate) p5 " +
+            "where l.company_code = :companyCode " +
+            "and l.plant_no = :plantNo " +
+            "and l.item_no = i.item_no " +
+            "and l.loc = i.loc " +
+            "and i.company_code = :companyCode " +
+            "and i.plant_no = :plantNo " +
+            "and i.item_no = b.alternate " +
+            "and (nvl(p1.picked_qty, 0) = nvl(p1.resv_qty, 0) and " +
+            "nvl(p2.picked_qty, 0) = nvl(p2.resv_qty, 0) and " +
+            "nvl(p3.picked_qty, 0) = nvl(p3.resv_qty, 0) and " +
+            "nvl(p4.picked_qty, 0) = nvl(p4.resv_qty, 0) and " +
+            "nvl(p5.picked_qty, 0) = nvl(p5.resv_qty, 0)) " +
+            "and p5.alternate(+) = b.alternate " +
+            "and p4.alternate(+) = b.alternate " +
+            "and p3.alternate(+) = b.alternate " +
+            "and p2.alternate(+) = b.alternate " +
+            "and p1.alternate(+) = b.alternate " +
+            "and b.company_code = :companyCode " +
+            "and b.plant_no = :plantNo " +
+            "and nvl(b.status, 'R') NOT IN ('D', 'X') " +
+            "and nvl(b.picked_qty, 0) > 0 " +
+            "and b.project_no in (nvl(:projectNoA, 'X'), " +
+            "nvl(:projectNoB, 'X'), " +
+            "nvl(:projectNoC, 'X'), " +
+            "nvl(:projectNoD, 'X'), " +
+            "nvl(:projectNoE, 'X')) " +
+            "order by b.alternate)" +
+            "where (cntA + cntB + cntC + cntD + cntE) > 1", nativeQuery = true)
+    List<BombypjProjection> sivCur(String companyCode, Integer plantNo, String projectNoA, String projectNoB, String projectNoC,
+                                   String projectNoD, String projectNoE);
 }

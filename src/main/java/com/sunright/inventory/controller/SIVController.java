@@ -78,8 +78,8 @@ public class SIVController {
     }
 
     @GetMapping("populate-batch-list")
-    public ResponseEntity<List<SIVDetailDTO>> populateBatc(@RequestParam String subType, @RequestParam String projectNo, @RequestParam String itemNo) {
-        return new ResponseEntity<>(sivService.populateBatchList(subType, projectNo, itemNo), HttpStatus.OK);
+    public ResponseEntity<List<SIVDetailDTO>> populateBatc(@RequestParam String subType, @RequestParam String projectNo, @RequestParam String itemNo, @RequestParam String sivType) {
+        return new ResponseEntity<>(sivService.populateBatchList(subType, projectNo, itemNo, sivType), HttpStatus.OK);
     }
 
     @GetMapping("populate-detail")

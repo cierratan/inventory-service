@@ -40,4 +40,10 @@ public class SIVDTO extends InvBaseDTO {
     private String projNoC;
     private String projNoD;
     private String projNoE;
+
+    private String sivNoA;
+    private String sivNoB;
+    private String sivNoC;
+    private String sivNoD;
+    private String sivNoE;
 }
