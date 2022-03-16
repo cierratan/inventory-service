@@ -27,7 +27,7 @@ public interface SIVService {
 
     SIVDTO getDefaultValueSIV(String subType) throws ParseException;
 
-    List<SIVDetailDTO> populateBatchList(String subType, String projectNo, String itemNo);
+    List<SIVDetailDTO> populateBatchList(String subType, String projectNo, String itemNo, String sivType);
 
     List<SIVDetailDTO> populateSIVManualDetails(SIVDTO input);
 

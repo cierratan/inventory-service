@@ -1373,13 +1373,7 @@ public class SIVServiceImpl implements SIVService {
         UserProfile userProfile = UserProfileContext.getUserProfile();
         List<SIVDTO> list = new ArrayList<>();
         SIVDTO dto = projValidate(userProfile, input);
-        if (!CollectionUtils.isEmpty(input.getSivDetails())) {
-            for (SIVDetailDTO dtoDet : input.getSivDetails()) {
-
-            }
-        } else {
-            list.add(dto);
-        }
+        list.add(dto);
         return list;
     }
 
@@ -1397,12 +1391,16 @@ public class SIVServiceImpl implements SIVService {
     }
 
     private SIVDTO projValidate(UserProfile userProfile, SIVDTO input) {
+
         String projectNoA = input.getProjNoA();
         String projectNoB = input.getProjNoB();
         String projectNoC = input.getProjNoC();
         String projectNoD = input.getProjNoD();
         String projectNoE = input.getProjNoE();
         BombypjProjection cBombypj = null;
+        String sivNoA = null, sivNoB = null, sivNoC = null, sivNoD = null, sivNoE = null;
+        Set<SIVDetailDTO> listDet = null;
+
         if (StringUtils.isNotBlank(projectNoA)) {
             cBombypj = bombypjRepository.projValidate(userProfile.getCompanyCode(), userProfile.getPlantNo(), projectNoA);
             if (cBombypj == null) {
@@ -1456,20 +1454,6 @@ public class SIVServiceImpl implements SIVService {
             if (projectNoA.equals(projectNoB) || projectNoA.equals(projectNoC) || projectNoA.equals(projectNoD) || projectNoA.equals(projectNoE)) {
                 throw new ServerException(String.format("Duplicate project, %s, found!", projectNoA));
             }
-        } else {
-            if (StringUtils.isBlank(projectNoA) || StringUtils.isNotBlank(projectNoB)) {
-                projectNoA = projectNoB;
-                projectNoB = null;
-            } else if (StringUtils.isBlank(projectNoA) && StringUtils.isNotBlank(projectNoC)) {
-                projectNoA = projectNoC;
-                projectNoC = null;
-            } else if (StringUtils.isBlank(projectNoA) && StringUtils.isNotBlank(projectNoD)) {
-                projectNoA = projectNoD;
-                projectNoD = null;
-            } else if (StringUtils.isBlank(projectNoA) && StringUtils.isNotBlank(projectNoE)) {
-                projectNoA = projectNoE;
-                projectNoE = null;
-            }
         }
 
         if (StringUtils.isNotBlank(projectNoA)) {
@@ -1482,15 +1466,170 @@ public class SIVServiceImpl implements SIVService {
             } else if (StringUtils.isNotBlank(projectNoE)) {
                 projectNoB = projectNoE;
             }
+
+            BombypjProjection countA = bombypjRepository.bomCountAltrnt(userProfile.getCompanyCode(), userProfile.getPlantNo(), projectNoA);
+            BombypjProjection countB = bombypjRepository.bomCountAltrnt(userProfile.getCompanyCode(), userProfile.getPlantNo(), projectNoB);
+            List<BombypjProjection> alternateA = bombypjRepository.bomAltrnt(userProfile.getCompanyCode(), userProfile.getPlantNo(), projectNoA);
+            List<BombypjProjection> alternateB = bombypjRepository.bomAltrnt(userProfile.getCompanyCode(), userProfile.getPlantNo(), projectNoB);
             BombypjProjection commonItem = bombypjRepository.bomComp(userProfile.getCompanyCode(), userProfile.getPlantNo(), projectNoA, projectNoB);
-            if(commonItem.getCountAlternate() == 0){
-                throw new ServerException(String.format("%s has no common item with other project!", projectNoA));
+            if (countA.getCountAlternate() > countB.getCountAlternate()) {
+                for (BombypjProjection recA : alternateA) {
+                    for (BombypjProjection recB : alternateB) {
+                        if (!StringUtils.equals(recA.getAlternate(), recB.getAlternate())) {
+                            if (commonItem.getCountAlternate() == 0) {
+                                throw new ServerException(String.format("%s has no common item with other project!", projectNoB));
+                            }
+                        }
+                    }
+                }
+            } else {
+                for (BombypjProjection recB : alternateA) {
+                    for (BombypjProjection recA : alternateB) {
+                        if (!StringUtils.equals(recA.getAlternate(), recB.getAlternate())) {
+                            if (commonItem.getCountAlternate() == 0) {
+                                throw new ServerException(String.format("%s has no common item with other project!", projectNoA));
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (StringUtils.isBlank(projectNoA)) {
+                if (StringUtils.isNotBlank(projectNoB)) {
+                    projectNoA = projectNoB;
+                    projectNoB = null;
+                } else if (StringUtils.isNotBlank(projectNoC)) {
+                    projectNoA = projectNoC;
+                    projectNoC = null;
+                } else if (StringUtils.isNotBlank(projectNoD)) {
+                    projectNoA = projectNoD;
+                    projectNoD = null;
+                } else if (StringUtils.isNotBlank(projectNoE)) {
+                    projectNoA = projectNoE;
+                    projectNoE = null;
+                }
+            }
+
+            String type = "SIV";
+            String subType = null;
+            DocmNoProjection sivGeneratedNo = null;
+            Integer docmNo = 1;
+
+            if (StringUtils.isNotBlank(input.getProjNoA())) {
+                subType = input.getProjNoA().substring(0, 1);
+                sivGeneratedNo = docmNoRepository.getSivGeneratedNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), type, subType);
+                docmNo = sivGeneratedNo.getDocmNo() + 1;
+                sivNoA = (sivGeneratedNo.getGeneratedNo().substring(0, 12) + docmNo + sivGeneratedNo.getPostfix());
+            } else {
+                projectNoA = null;
+                input.setProjNoA("");
+            }
+
+            if (StringUtils.isNotBlank(input.getProjNoB())) {
+                subType = input.getProjNoB().substring(0, 1);
+                sivGeneratedNo = docmNoRepository.getSivGeneratedNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), type, subType);
+                if (docmNo != null) {
+                    docmNo = docmNo + 1;
+                    sivNoB = (sivGeneratedNo.getGeneratedNo().substring(0, 12) + docmNo + sivGeneratedNo.getPostfix());
+                }
+            } else {
+                projectNoB = null;
+                input.setProjNoB("");
+            }
+
+            if (StringUtils.isNotBlank(input.getProjNoC())) {
+                subType = input.getProjNoC().substring(0, 1);
+                sivGeneratedNo = docmNoRepository.getSivGeneratedNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), type, subType);
+                if (docmNo != null) {
+                    docmNo = docmNo + 1;
+                    sivNoC = (sivGeneratedNo.getGeneratedNo().substring(0, 12) + docmNo + sivGeneratedNo.getPostfix());
+                }
+            } else {
+                projectNoC = null;
+                input.setProjNoC("");
+            }
+
+            if (StringUtils.isNotBlank(input.getProjNoD())) {
+                subType = input.getProjNoD().substring(0, 1);
+                sivGeneratedNo = docmNoRepository.getSivGeneratedNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), type, subType);
+                if (docmNo != null) {
+                    docmNo = docmNo + 1;
+                    sivNoD = (sivGeneratedNo.getGeneratedNo().substring(0, 12) + docmNo + sivGeneratedNo.getPostfix());
+                }
+            } else {
+                projectNoD = null;
+                input.setProjNoD("");
+            }
+
+            if (StringUtils.isNotBlank(input.getProjNoE())) {
+                subType = input.getProjNoE().substring(0, 1);
+                sivGeneratedNo = docmNoRepository.getSivGeneratedNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), type, subType);
+                if (docmNo != null) {
+                    docmNo = docmNo + 1;
+                    sivNoE = (sivGeneratedNo.getGeneratedNo().substring(0, 12) + docmNo + sivGeneratedNo.getPostfix());
+                }
+            } else {
+                projectNoE = null;
+                input.setProjNoE("");
+            }
+
+            listDet = populateSivDetCombine(userProfile, input);
+        }
+
+        return SIVDTO.builder().projNoA(projectNoA).projNoB(projectNoB)
+                .projNoC(projectNoC).projNoD(projectNoD)
+                .projNoE(projectNoE)
+                .sivNoA(sivNoA)
+                .sivNoB(sivNoB)
+                .sivNoC(sivNoC)
+                .sivNoD(sivNoD)
+                .sivNoE(sivNoE)
+                .sivDetails(listDet).build();
+    }
+
+    private Set<SIVDetailDTO> populateSivDetCombine(UserProfile userProfile, SIVDTO input) {
+
+        Set<SIVDetailDTO> sivDetails = new HashSet<>();
+        List<BombypjProjection> populateDetComb = bombypjRepository.sivCur(userProfile.getCompanyCode(), userProfile.getPlantNo(), input.getProjNoA(),
+                input.getProjNoB(), input.getProjNoC(), input.getProjNoD(), input.getProjNoE());
+
+        Integer seqNo = 1;
+        for (BombypjProjection rec : populateDetComb) {
+            List<ItemBatchProjection> checkBatcQoh = itemBatcRepository.cBatch(userProfile.getCompanyCode(), userProfile.getPlantNo(),
+                    rec.getAlternate(), rec.getTtlSivQty());
+            for (ItemBatchProjection recIBatc : checkBatcQoh) {
+                if (checkBatcQoh != null) {
+                    sivDetails.add(SIVDetailDTO.builder()
+                            .seqNo(seqNo++)
+                            .itemType(0)
+                            .itemNo(rec.getAlternate())
+                            .partNo(rec.getPartNo())
+                            .loc(rec.getLoc())
+                            .uom(rec.getUom())
+                            .batchNo(recIBatc.getBatchNo())
+                            .batchLoc(recIBatc.getBatchNo() + "/" + rec.getLoc())
+                            .batchQty(recIBatc.getQoh())
+                            .issuedQty(rec.getTtlSivQty())
+                            .extraQty(BigDecimal.ZERO)
+                            .issuedPrice(rec.getStdMaterial())
+                            .issuedQtyA(rec.getPaQty())
+                            .issuedQtyB(rec.getPbQty())
+                            .issuedQtyC(rec.getPcQty())
+                            .issuedQtyD(rec.getPdQty())
+                            .issuedQtyE(rec.getPeQty())
+                            .bomPickQty(rec.getTtlSivQty())
+                            .bomQtyA(rec.getPaQty())
+                            .bomQtyB(rec.getPbQty())
+                            .bomQtyC(rec.getPcQty())
+                            .bomQtyD(rec.getPdQty())
+                            .bomQtyE(rec.getPeQty())
+                            .remarks(rec.getPartNo()).build());
+                }
             }
         }
 
-        return SIVDTO.builder().projNoA(projectNoA).projNoB(projectNoB).projNoC(projectNoC).projNoD(projectNoD).projNoE(projectNoE).build();
+        return sivDetails;
     }
-
 
     private SIVDetailDTO checkValidPRWKItemNo(UserProfile userProfile, SIVDTO input) {
 
@@ -1808,7 +1947,7 @@ public class SIVServiceImpl implements SIVService {
 
 
     @Override
-    public List<SIVDetailDTO> populateBatchList(String subType, String projectNo, String itemNo) {
+    public List<SIVDetailDTO> populateBatchList(String subType, String projectNo, String itemNo, String sivType) {
 
         UserProfile userProfile = UserProfileContext.getUserProfile();
         List<SIVDetailDTO> populateDetails = populateDetails(userProfile, projectNo);
@@ -1817,13 +1956,13 @@ public class SIVServiceImpl implements SIVService {
         int countSeqNo = 1;
         int countGrnDetSeqNo = 1;
 
-        if (subType.equals("N")) {
+        if (subType.equals("N") && sivType.equalsIgnoreCase("Entry")) {
             for (SIVDetailDTO dto : populateDetails) {
                 if (StringUtils.isNotBlank(dto.getItemNo())) {
                     List<ItemBatchProjection> itemBatchFLoc = itemBatcRepository.getItemBatchFLocByItemNo(userProfile.getCompanyCode(),
-                            userProfile.getPlantNo(), dto.getItemNo());
+                            userProfile.getPlantNo(), itemNo);
                     List<ItemBatchProjection> itemBatch = itemBatcRepository.getItemBatchByItemNo(userProfile.getCompanyCode(),
-                            userProfile.getPlantNo(), dto.getItemNo());
+                            userProfile.getPlantNo(), itemNo);
 
                     if (dto.getBomShortQtyF().compareTo(BigDecimal.ZERO) > 0) {
                         for (ItemBatchProjection ib : itemBatchFLoc) {
@@ -1846,6 +1985,20 @@ public class SIVServiceImpl implements SIVService {
                             listPopulateBatch.add(iBatch);
                         }
                     }
+                }
+            }
+        } else if (subType.equals("N") && sivType.equalsIgnoreCase("Combine")) {
+            if (StringUtils.isNotBlank(itemNo)) {
+                List<ItemBatchProjection> itemBatch = itemBatcRepository.getItemBatchByItemNo(userProfile.getCompanyCode(),
+                        userProfile.getPlantNo(), itemNo);
+                for (ItemBatchProjection ib : itemBatch) {
+                    SIVDetailDTO iBatch = SIVDetailDTO.builder().build();
+                    iBatch.setSeqNo(countSeqNo++);
+                    iBatch.setGrndetSeqNo(countGrnDetSeqNo++);
+                    iBatch.setItemNo(itemNo);
+                    iBatch.setBatchDesc(ib.getBatchDesc());
+                    iBatch.setBatchNoLoc(ib.getBatchNoLoc());
+                    listPopulateBatch.add(iBatch);
                 }
             }
         } else {

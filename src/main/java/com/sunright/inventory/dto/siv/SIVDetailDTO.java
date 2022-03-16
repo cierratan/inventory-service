@@ -55,4 +55,16 @@ public class SIVDetailDTO extends InvBaseDTO {
     private String projectNo3;
     private String projectNo4;
     private String projectNo5;
+
+    private BigDecimal issuedQtyA;
+    private BigDecimal issuedQtyB;
+    private BigDecimal issuedQtyC;
+    private BigDecimal issuedQtyD;
+    private BigDecimal issuedQtyE;
+
+    private BigDecimal bomQtyA;
+    private BigDecimal bomQtyB;
+    private BigDecimal bomQtyC;
+    private BigDecimal bomQtyD;
+    private BigDecimal bomQtyE;
 }
