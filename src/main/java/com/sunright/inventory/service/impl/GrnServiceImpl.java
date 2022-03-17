@@ -1011,7 +1011,7 @@ public class GrnServiceImpl implements GrnService {
         Collections.sort(listB);
         boolean isEqual = listA.equals(listB);
         if (isEqual) {
-            throw new DuplicateException("Duplicate Part No found!'");
+            throw new DuplicateException("Duplicate Part No found!");
         }
     }
 
@@ -1978,6 +1978,12 @@ public class GrnServiceImpl implements GrnService {
     }
 
     private void preSavingGrn(GrnDTO input) {
+
+        if (StringUtils.isBlank(input.getGrnNo())) {
+            throw new ServerException("Grn No Can Not be Blank !");
+        } else if (StringUtils.isBlank(input.getSubType())){
+            throw new ServerException("Sub Type Can Not be Blank !");
+        }
 
         Optional<Grn> grnOptional = grnRepository.findGrnByGrnNo(input.getGrnNo());
         if (grnOptional.isPresent()) {
