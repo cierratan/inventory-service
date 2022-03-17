@@ -22,15 +22,8 @@ import java.util.Set;
 public class GrnDTO extends InvBaseDTO {
 
     private Long id;
-
-    @NotBlank(message = "Grn No Can Not be Blank !")
-    @Size(max = 15, message = "Maximum Grn No {max} characters")
     private String grnNo;
-
-    @NotBlank(message = "Sub Type Can Not be Blank !")
-    @Size(max = 10, message = "Maximum Sub Type {max} characters")
     private String subType;
-
     private String poNo;
     private String doNo;
     private String supplierCode;

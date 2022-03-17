@@ -21,19 +21,9 @@ import java.util.Date;
 public class GrnDetDTO extends InvBaseDTO {
 
     private Long id;
-
-    @NotBlank(message = "Grn No Can Not be Blank !")
-    @Size(max = 15, message = "Maximum Grn No {max} characters")
     private String grnNo;
-
-    @NotBlank(message = "Sub Type Can Not be Blank !")
-    @Size(max = 10, message = "Maximum Sub Type {max} characters")
     private String subType;
-
-    @NotBlank
-    @Size(max = 3, message = "Maximum Seq No {max} characters")
     private Integer seqNo;
-
     private String poNo;
     private String doNo;
     private String itemNo;
