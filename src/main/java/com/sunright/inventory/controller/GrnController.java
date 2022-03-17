@@ -119,7 +119,7 @@ public class GrnController {
     }
 
     @PostMapping
-    public ResponseEntity<GrnDTO> create(@Valid @RequestBody GrnDTO grn) throws ParseException {
+    public ResponseEntity<GrnDTO> create(@RequestBody GrnDTO grn) throws ParseException {
         return new ResponseEntity<>(grnService.createGrn(grn), HttpStatus.CREATED);
     }
 
