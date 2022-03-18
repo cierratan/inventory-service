@@ -357,11 +357,11 @@ public class GrnServiceImpl implements GrnService {
                 } else {
                     if (detail.getItemType() == 0) {
                         if (input.getSubType().equals("N")) {
-                            if (input.getGrnDetails().size() > 1) {
+                            /*if (input.getGrnDetails().size() > 1) {
                                 if (StringUtils.isNotBlank(partNo)) {
                                     checkDuplicatePartNo(input);
                                 }
-                            }
+                            }*/
                             if (StringUtils.isNotBlank(partNo)) {
                                 checkDataFromPartNo(poNo, partNo, userProfile);
                             }
@@ -994,7 +994,7 @@ public class GrnServiceImpl implements GrnService {
         }
     }
 
-    private void checkDuplicatePartNo(GrnDTO input) {
+    /*private void checkDuplicatePartNo(GrnDTO input) {
 
         List<String> listA = new ArrayList<>();
         List<String> listB = new ArrayList<>();
@@ -1013,7 +1013,7 @@ public class GrnServiceImpl implements GrnService {
         if (isEqual) {
             throw new DuplicateException("Duplicate Part No found!");
         }
-    }
+    }*/
 
     private PurDetDTO getDetailInfo(String poNo, String itemNo, String partNo, Integer poRecSeq, UserProfile
             userProfile) {
