@@ -72,6 +72,7 @@ public interface ItemBatcRepository extends JpaRepository<ItemBatc, ItemBatcId> 
             "and ib.id.plantNo = :plantNo and ib.id.itemNo = :itemNo")
     ItemBatchProjection itembatcCur(String companyCode, Integer plantNo, String itemNo);
 
-    @Query()
-    ItemBatchProjection getMaxBatchNo();
+    @Query("select max(i.id.batchNo) as maxBatchNo from ITEMBATC i " +
+            "where i.id.companyCode = :companyCode and i.id.plantNo = :plantNo and i.id.itemNo = :itemNo")
+    ItemBatchProjection getMaxBatchNo(String companyCode, Integer plantNo, String itemNo);
 }

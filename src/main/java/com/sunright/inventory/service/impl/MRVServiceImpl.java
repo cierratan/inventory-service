@@ -14,6 +14,7 @@ import com.sunright.inventory.entity.enums.Status;
 import com.sunright.inventory.entity.item.ItemProjection;
 import com.sunright.inventory.entity.itembatc.ItemBatc;
 import com.sunright.inventory.entity.itembatc.ItemBatcId;
+import com.sunright.inventory.entity.itembatc.ItemBatchProjection;
 import com.sunright.inventory.entity.itembatclog.ItemBatcLogProjection;
 import com.sunright.inventory.entity.itemloc.ItemLoc;
 import com.sunright.inventory.entity.itemloc.ItemLocProjection;
@@ -414,7 +415,7 @@ public class MRVServiceImpl implements MRVService {
                 mrvDetail.getPlantNo(), mrvDetail.getItemNo(),
                 mrvDetail.getBatchNo(), mrvDetail.getSivNo());
 
-        ItemBatcLogProjection batchLog = itemBatcLogRepository.getBatchLog(mrvDetail.getCompanyCode(),
+        List<ItemBatcLogProjection> batchLogs = itemBatcLogRepository.getBatchLog(mrvDetail.getCompanyCode(),
                 mrvDetail.getPlantNo(), mrvDetail.getItemNo(),
                 mrvDetail.getBatchNo(), mrvDetail.getSivNo());
 
@@ -427,6 +428,63 @@ public class MRVServiceImpl implements MRVService {
 
         Optional<ItemBatc> itembatcFound = itemBatcRepository.findById(itemBatcId);
         Optional<SIV> sivFound = sivRepository.findSIVByCompanyCodeAndPlantNoAndSivNo(mrvDetail.getCompanyCode(), mrvDetail.getPlantNo(), mrvDetail.getSivNo());
+        ItemBatchProjection maxBatchNo = itemBatcRepository.getMaxBatchNo(mrvDetail.getCompanyCode(), mrvDetail.getPlantNo(), mrvDetail.getItemNo());
+        List<ItemLoc> itemLocFound = itemLocRepository.findByCompanyCodeAndPlantNoAndItemNoAndLoc(mrvDetail.getCompanyCode(), mrvDetail.getPlantNo(), mrvDetail.getItemNo(),
+                stockLoc.getStockLoc());
+
+        if(sivQty != null && mrvDetQty.compareTo(sivQty.getSivQty()) > 0) {
+            throw new ServerException(String.format("Return Qty > Issued Qty for %s", mrvDetail.getItemNo()));
+        }
+
+        BigDecimal vRtnQty = BigDecimal.ZERO;
+        BigDecimal vMrvQty = BigDecimal.ZERO;
+        Long vNewBatchNo = 1l;
+
+        if(!CollectionUtils.isEmpty(batchLogs)) {
+            for (ItemBatcLogProjection batchLog : batchLogs) {
+                if(mrvDetQty.compareTo(batchLog.getSivQty()) > 0) {
+                    vRtnQty = batchLog.getSivQty();
+                } else {
+                    vRtnQty = mrvDetQty;
+                }
+                vMrvQty = mrvDetQty.subtract(batchLog.getSivQty());
+
+                List<ItemBatchProjection> itemBatchByBatchNo = itemBatcRepository.getItemBatchByBatchNo(mrvDetail.getCompanyCode(),
+                        mrvDetail.getPlantNo(), mrvDetail.getItemNo(), batchLog.getBatchNo(), mrvDetail.getLoc());
+
+                if(!CollectionUtils.isEmpty(itemBatchByBatchNo) && itemBatchByBatchNo.get(0) != null) {
+                    itemBatcRepository.updateQoh(itemBatchByBatchNo.get(0).getQoh().add(vRtnQty),
+                            mrvDetail.getCompanyCode(), mrvDetail.getPlantNo(), mrvDetail.getBatchNo(),
+                            mrvDetail.getItemNo(), mrvDetail.getLoc());
+                } else {
+                    ItemBatcId newItemBatcId = new ItemBatcId();
+                    newItemBatcId.setCompanyCode(mrvDetail.getCompanyCode());
+                    newItemBatcId.setPlantNo(mrvDetail.getPlantNo());
+                    newItemBatcId.setItemNo(batchLog.getItemNo());
+                    newItemBatcId.setLoc(mrvDetail.getLoc());
+                    newItemBatcId.setBatchNo(batchLog.getBatchNo());
+
+                    ItemBatc newItemBatc = new ItemBatc();
+                    newItemBatc.setId(newItemBatcId);
+                    newItemBatc.setTranDate(batchLog.getGrnCreatedAt() != null ? Date.from(batchLog.getGrnCreatedAt().toInstant()) :
+                            Date.from(batchLog.getSivCreatedAt().toInstant()));
+                    newItemBatc.setDateCode(batchLog.getDateCode());
+                    newItemBatc.setPoNo(batchLog.getPoNo());
+                    newItemBatc.setPoRecSeq(batchLog.getPoRecSeq());
+                    newItemBatc.setGrnNo(batchLog.getGrnNo());
+                    newItemBatc.setGrnSeq(batchLog.getGrnSeq());
+                    newItemBatc.setQoh(vRtnQty);
+                    newItemBatc.setOriQoh(batchLog.getGrnQty());
+                    newItemBatc.setStdMaterial(newStdMaterial);
+
+                    itemBatcRepository.save(newItemBatc);
+                }
+
+                if(vNewBatchNo < batchLog.getBatchNo()) {
+                    vNewBatchNo = batchLog.getBatchNo();
+                }
+            }
+        }
 
     }
 

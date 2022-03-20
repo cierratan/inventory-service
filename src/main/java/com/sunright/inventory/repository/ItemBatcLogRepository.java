@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface ItemBatcLogRepository extends JpaRepository<ItemBatcLog, ItemBatcLogId> {
 
@@ -21,7 +23,8 @@ public interface ItemBatcLogRepository extends JpaRepository<ItemBatcLog, ItemBa
             "and id.itemNo = :itemNo and id.batchNo = :batchNo and id.sivNo = :sivNo ")
     ItemBatcLogProjection getSivQty(String companyCode, Integer plantNo, String itemNo, Long batchNo, String sivNo);
 
-    @Query("SELECT l.id.sivNo as sivNo, l.id.batchNo as batchNo, l.sivQty as sivQty, l.id.itemNo as itemNo, " +
+    @Query("SELECT l.id.sivNo as sivNo, l.id.batchNo as batchNo, l.sivQty as sivQty, l.id.itemNo as itemNo, l.dateCode as dateCode, " +
+            " l.poNo as poNo, l.poRecSeq as poRecSeq, l.grnNo as grnNo, l.grnSeq as grnSeq, l.grnQty as grnQty, " +
             "l.createdAt as itembatcLogCreatedAt, g.createdAt as grnCreatedAt, s.createdAt as sivCreatedAt " +
             "FROM ITEMBATC_LOG l " +
             "   left join GRN g on g.companyCode = l.id.companyCode and g.plantNo = l.id.plantNo and g.grnNo = l.grnNo " +
@@ -29,5 +32,5 @@ public interface ItemBatcLogRepository extends JpaRepository<ItemBatcLog, ItemBa
             "WHERE l.id.companyCode = :companyCode and l.id.plantNo = :plantNo " +
             "and l.id.itemNo = :itemNo and l.id.batchNo = :batchNo and l.id.sivNo = :sivNo " +
             "order by g.createdAt desc ")
-    ItemBatcLogProjection getBatchLog(String companyCode, Integer plantNo, String itemNo, Long batchNo, String sivNo);
+    List<ItemBatcLogProjection> getBatchLog(String companyCode, Integer plantNo, String itemNo, Long batchNo, String sivNo);
 }
