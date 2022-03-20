@@ -102,6 +102,11 @@ public interface ItemRepository extends JpaRepository<Item, Long>, JpaSpecificat
                                                       String companyCode, Integer plantNo, String itemNo);
 
     @Modifying
+    @Query("UPDATE ITEM i set i.batchNo = :batchNo " +
+            "WHERE i.companyCode = :companyCode AND i.plantNo = :plantNo AND i.itemNo = :itemNo")
+    void updateBatchNo(BigDecimal batchNo, String companyCode, Integer plantNo, String itemNo);
+
+    @Modifying
     @Query("UPDATE ITEM i set i.qoh = :qoh, i.stdMaterial = :newStdMat, i.costVariance = :newCostVar, " +
             "i.ytdReceipt = :ytdReceipt, i.lastTranDate = :lastTranDate " +
             "WHERE i.companyCode = :companyCode AND i.plantNo = :plantNo AND i.itemNo = :itemNo")

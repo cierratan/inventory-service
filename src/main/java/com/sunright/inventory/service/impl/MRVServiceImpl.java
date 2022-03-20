@@ -11,6 +11,7 @@ import com.sunright.inventory.entity.bombypj.BombypjProjection;
 import com.sunright.inventory.entity.company.CompanyProjection;
 import com.sunright.inventory.entity.docmno.DocmNoProjection;
 import com.sunright.inventory.entity.enums.Status;
+import com.sunright.inventory.entity.inaudit.InAudit;
 import com.sunright.inventory.entity.item.ItemProjection;
 import com.sunright.inventory.entity.itembatc.ItemBatc;
 import com.sunright.inventory.entity.itembatc.ItemBatcId;
@@ -30,6 +31,7 @@ import com.sunright.inventory.exception.ServerException;
 import com.sunright.inventory.interceptor.UserProfileContext;
 import com.sunright.inventory.repository.*;
 import com.sunright.inventory.service.MRVService;
+import com.sunright.inventory.util.IdentifierGeneratorUtil;
 import com.sunright.inventory.util.QueryGenerator;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
@@ -91,7 +93,13 @@ public class MRVServiceImpl implements MRVService {
     private ItemBatcRepository itemBatcRepository;
 
     @Autowired
+    private InAuditRepository inAuditRepository;
+
+    @Autowired
     private QueryGenerator queryGenerator;
+
+    @Autowired
+    private IdentifierGeneratorUtil identifierGeneratorUtil;
 
     @Override
     public DocmValueDTO getGeneratedNo() {
@@ -287,19 +295,19 @@ public class MRVServiceImpl implements MRVService {
             newCostVariance = (newStdMaterial.multiply(newQoh)).subtract((fmtNewStdMaterial.multiply(newQoh)).setScale(4, RoundingMode.HALF_EVEN));
         }
 
+        ZonedDateTime zdtNow = ZonedDateTime.now();
         itemRepository.updateQohStdMatCostVarYtdRecLTranDate(
                 itemInfo.getQoh().add(newQoh),
                 newStdMaterial,
                 newCostVariance,
                 itemInfo.getYtdReceipt().add(newQoh),
-                new Date(ZonedDateTime.now().toInstant().toEpochMilli()),
+                new Date(zdtNow.toInstant().toEpochMilli()),
                 mrvDetail.getCompanyCode(),
                 mrvDetail.getPlantNo(),
                 mrvDetail.getItemNo()
         );
 
         BigDecimal costVariance = newCostVariance.subtract(itemInfo.getCostVariance());
-        BigDecimal locTtlQty = itemInfo.getQoh().add(newQoh);
 
         CompanyProjection stockLoc = companyRepository.getStockLoc(mrvDetail.getCompanyCode(), mrvDetail.getPlantNo());
 
@@ -318,12 +326,12 @@ public class MRVServiceImpl implements MRVService {
                 itemLoc.setBatchNo(itemInfo.getBatchNo());
                 itemLoc.setStdMaterial(mrvDetPrice);
                 itemLoc.setCostVariance(newCostVariance);
-                itemLoc.setLastTranDate(new Date(ZonedDateTime.now().toInstant().toEpochMilli()));
+                itemLoc.setLastTranDate(new Date(zdtNow.toInstant().toEpochMilli()));
                 itemLoc.setStatus(Status.ACTIVE);
                 itemLoc.setCreatedBy(UserProfileContext.getUserProfile().getUsername());
-                itemLoc.setCreatedAt(ZonedDateTime.now());
+                itemLoc.setCreatedAt(zdtNow);
                 itemLoc.setUpdatedBy(UserProfileContext.getUserProfile().getUsername());
-                itemLoc.setUpdatedAt(ZonedDateTime.now());
+                itemLoc.setUpdatedAt(zdtNow);
 
                 itemLocRepository.save(itemLoc);
             } else {
@@ -339,12 +347,12 @@ public class MRVServiceImpl implements MRVService {
                 itemLoc.setBatchNo(itemInfo.getBatchNo());
                 itemLoc.setStdMaterial(mrvDetPrice);
                 itemLoc.setCostVariance(newCostVariance);
-                itemLoc.setLastTranDate(new Date(ZonedDateTime.now().toInstant().toEpochMilli()));
+                itemLoc.setLastTranDate(new Date(zdtNow.toInstant().toEpochMilli()));
                 itemLoc.setStatus(Status.ACTIVE);
                 itemLoc.setCreatedBy(UserProfileContext.getUserProfile().getUsername());
-                itemLoc.setCreatedAt(ZonedDateTime.now());
+                itemLoc.setCreatedAt(zdtNow);
                 itemLoc.setUpdatedBy(UserProfileContext.getUserProfile().getUsername());
-                itemLoc.setUpdatedAt(ZonedDateTime.now());
+                itemLoc.setUpdatedAt(zdtNow);
 
                 itemLocRepository.save(itemLoc);
 
@@ -360,12 +368,12 @@ public class MRVServiceImpl implements MRVService {
                 itemLoc.setBatchNo(itemInfo.getBatchNo());
                 itemLoc.setStdMaterial(mrvDetPrice);
                 itemLoc.setCostVariance(BigDecimal.ZERO);
-                itemLoc.setLastTranDate(new Date(ZonedDateTime.now().toInstant().toEpochMilli()));
+                itemLoc.setLastTranDate(new Date(zdtNow.toInstant().toEpochMilli()));
                 itemLoc.setStatus(Status.ACTIVE);
                 itemLoc.setCreatedBy(UserProfileContext.getUserProfile().getUsername());
-                itemLoc.setCreatedAt(ZonedDateTime.now());
+                itemLoc.setCreatedAt(zdtNow);
                 itemLoc.setUpdatedBy(UserProfileContext.getUserProfile().getUsername());
-                itemLoc.setUpdatedAt(ZonedDateTime.now());
+                itemLoc.setUpdatedAt(zdtNow);
 
                 itemLocRepository.save(itemLoc);
             }
@@ -375,13 +383,13 @@ public class MRVServiceImpl implements MRVService {
 
             if(!CollectionUtils.isEmpty(itemLocFound)) {
                 itemLocRepository.updateStdMatCostVarianceYtdRecLTranDate(newStdMaterial, newCostVariance,
-                        itemLocInfo.getYtdReceipt().add(mrvDetQty), new Date(ZonedDateTime.now().toInstant().toEpochMilli()),
+                        itemLocInfo.getYtdReceipt().add(mrvDetQty), new Date(zdtNow.toInstant().toEpochMilli()),
                         mrvDetail.getCompanyCode(), mrvDetail.getPlantNo(), mrvDetail.getItemNo(),
                         stockLoc.getStockLoc());
             }
 
             itemLocRepository.updateStdMatYtdRecLTranDateWithNotEqualLoc(newStdMaterial,
-                    itemInfo.getYtdReceipt().add(newQoh), new Date(ZonedDateTime.now().toInstant().toEpochMilli()),
+                    itemInfo.getYtdReceipt().add(newQoh), new Date(zdtNow.toInstant().toEpochMilli()),
                     mrvDetail.getCompanyCode(), mrvDetail.getPlantNo(), mrvDetail.getItemNo(),
                     stockLoc.getStockLoc());
 
@@ -398,12 +406,12 @@ public class MRVServiceImpl implements MRVService {
                 itemLoc.setBatchNo(itemInfo.getBatchNo());
                 itemLoc.setStdMaterial(newStdMaterial);
                 itemLoc.setCostVariance(BigDecimal.ZERO);
-                itemLoc.setLastTranDate(new Date(ZonedDateTime.now().toInstant().toEpochMilli()));
+                itemLoc.setLastTranDate(new Date(zdtNow.toInstant().toEpochMilli()));
                 itemLoc.setStatus(Status.ACTIVE);
                 itemLoc.setCreatedBy(UserProfileContext.getUserProfile().getUsername());
-                itemLoc.setCreatedAt(ZonedDateTime.now());
+                itemLoc.setCreatedAt(zdtNow);
                 itemLoc.setUpdatedBy(UserProfileContext.getUserProfile().getUsername());
-                itemLoc.setUpdatedAt(ZonedDateTime.now());
+                itemLoc.setUpdatedAt(zdtNow);
 
                 itemLocRepository.save(itemLoc);
             } else {
@@ -425,8 +433,7 @@ public class MRVServiceImpl implements MRVService {
         itemBatcId.setItemNo(mrvDetail.getItemNo());
         itemBatcId.setLoc(mrvDetail.getLoc());
         itemBatcId.setBatchNo(mrvDetail.getBatchNo());
-
-        Optional<ItemBatc> itembatcFound = itemBatcRepository.findById(itemBatcId);
+        
         Optional<SIV> sivFound = sivRepository.findSIVByCompanyCodeAndPlantNoAndSivNo(mrvDetail.getCompanyCode(), mrvDetail.getPlantNo(), mrvDetail.getSivNo());
         ItemBatchProjection maxBatchNo = itemBatcRepository.getMaxBatchNo(mrvDetail.getCompanyCode(), mrvDetail.getPlantNo(), mrvDetail.getItemNo());
         List<ItemLoc> itemLocFound = itemLocRepository.findByCompanyCodeAndPlantNoAndItemNoAndLoc(mrvDetail.getCompanyCode(), mrvDetail.getPlantNo(), mrvDetail.getItemNo(),
@@ -439,6 +446,7 @@ public class MRVServiceImpl implements MRVService {
         BigDecimal vRtnQty = BigDecimal.ZERO;
         BigDecimal vMrvQty = BigDecimal.ZERO;
         Long vNewBatchNo = 1l;
+        Long newBatchNo = identifierGeneratorUtil.getNewBatchNo(maxBatchNo.getMaxBatchNo());
 
         if(!CollectionUtils.isEmpty(batchLogs)) {
             for (ItemBatcLogProjection batchLog : batchLogs) {
@@ -483,9 +491,76 @@ public class MRVServiceImpl implements MRVService {
                 if(vNewBatchNo < batchLog.getBatchNo()) {
                     vNewBatchNo = batchLog.getBatchNo();
                 }
+
+                if(vMrvQty.compareTo(BigDecimal.ZERO) < 0) {
+                    break;
+                }
+            }
+        } else {
+            if(StringUtils.isNotBlank(mrvDetail.getSivNo())) {
+                ZonedDateTime sivCreatedAt = sivFound.get().getCreatedAt();
+
+                ItemBatcId newItemBatcId = new ItemBatcId();
+                newItemBatcId.setCompanyCode(mrvDetail.getCompanyCode());
+                newItemBatcId.setPlantNo(mrvDetail.getPlantNo());
+                newItemBatcId.setItemNo(mrvDetail.getItemNo());
+                newItemBatcId.setLoc(mrvDetail.getLoc());
+                newItemBatcId.setBatchNo(newBatchNo);
+
+                ItemBatc newItemBatc = new ItemBatc();
+                newItemBatc.setId(newItemBatcId);
+                newItemBatc.setTranDate(Date.from(sivCreatedAt.toInstant()));
+                newItemBatc.setDateCode(0);
+                newItemBatc.setGrnNo(mrvDetail.getMrvNo());
+                newItemBatc.setGrnSeq(mrvDetail.getSeqNo());
+                newItemBatc.setQoh(mrvDetQty);
+                newItemBatc.setOriQoh(mrvDetQty);
+                newItemBatc.setStdMaterial(newStdMaterial);
+
+                itemBatcRepository.save(newItemBatc);
             }
         }
 
+        if(!CollectionUtils.isEmpty(itemLocFound)) {
+            if(itemLocFound.get(0).getBatchNo().longValue() < newBatchNo) {
+                itemRepository.updateBatchNo(new BigDecimal(newBatchNo), mrvDetail.getCompanyCode(),
+                        mrvDetail.getPlantNo(), mrvDetail.getItemNo());
+
+                itemLocRepository.updateBatchNo(new BigDecimal(newBatchNo), mrvDetail.getCompanyCode(),
+                        mrvDetail.getPlantNo(), mrvDetail.getItemNo(), mrvDetail.getLoc());
+            }
+        }
+
+        // create inaudit
+        BigDecimal balQoh = itemInfo.getQoh().add(newQoh);
+        InAudit inAudit = new InAudit();
+        inAudit.setCompanyCode(mrvDetail.getCompanyCode());
+        inAudit.setPlantNo(mrvDetail.getPlantNo());
+        inAudit.setItemNo(mrvDetail.getItemNo());
+        inAudit.setLoc(mrvDetail.getLoc());
+        inAudit.setTranDate(new Date(zdtNow.toInstant().toEpochMilli()));
+        inAudit.setTranTime("" + zdtNow.getHour() + zdtNow.getMinute() + zdtNow.getSecond());
+        inAudit.setTranType("RV");
+        inAudit.setDocmNo(mrvDetail.getMrvNo());
+        inAudit.setInQty(mrvDetQty);
+        inAudit.setOrderQty(mrvDetQty);
+        inAudit.setBalQty(balQoh);
+        inAudit.setProjectNo(mrvDetail.getProjectNo() != null ? mrvDetail.getProjectNo() : mrvDetail.getDocmNo());
+        inAudit.setCurrencyCode("SGD");
+        inAudit.setCurrencyRate(new BigDecimal(1l));
+        inAudit.setActualCost(mrvDetPrice);
+        inAudit.setNewStdMaterial(newStdMaterial);
+        inAudit.setOriStdMaterial(itemLocInfo.getStdMaterial());
+        inAudit.setCostVariance(costVariance);
+        inAudit.setGrnVariance(BigDecimal.ZERO);
+        inAudit.setStatus(Status.ACTIVE);
+        inAudit.setCreatedBy(UserProfileContext.getUserProfile().getUsername());
+        inAudit.setCreatedAt(ZonedDateTime.now());
+        inAudit.setUpdatedBy(UserProfileContext.getUserProfile().getUsername());
+        inAudit.setUpdatedAt(ZonedDateTime.now());
+        inAudit.setRemarks("Received thru INM00007 (MRV)");
+
+        inAuditRepository.save(inAudit);
     }
 
     private void updateBombypj(MRVDetail mrvDetail) {

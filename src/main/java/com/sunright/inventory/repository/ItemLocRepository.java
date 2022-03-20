@@ -71,6 +71,12 @@ public interface ItemLocRepository extends JpaRepository<ItemLoc, Long> {
                                                                 Integer plantNo, String itemNo, String loc);
 
     @Modifying
+    @Query("UPDATE ITEMLOC i set i.batchNo = :batchNo " +
+            "WHERE i.companyCode = :companyCode " +
+            "AND i.plantNo = :plantNo AND i.itemNo = :itemNo AND i.loc = :loc")
+    void updateBatchNo(BigDecimal batchNo, String companyCode, Integer plantNo, String itemNo, String loc);
+
+    @Modifying
     @Query("UPDATE ITEMLOC i set i.costVariance = :newCostVar, i.stdMaterial = :newStdMat, " +
             "i.ytdReceipt = :ytdReceipt, i.batchNo = :newBatchNo, i.lastTranDate = :lastTranDate " +
             "WHERE i.companyCode = :companyCode " +
