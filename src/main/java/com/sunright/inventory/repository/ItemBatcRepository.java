@@ -75,4 +75,8 @@ public interface ItemBatcRepository extends JpaRepository<ItemBatc, ItemBatcId> 
     @Query("select ib.id.batchNo as batchNo, ib.qoh as qoh from ITEMBATC ib where ib.id.companyCode = :companyCode " +
             "and ib.id.plantNo = :plantNo and ib.id.itemNo = :itemNo and ib.qoh >= :ttlSivQty")
     List<ItemBatchProjection> cBatch(String companyCode, Integer plantNo, String itemNo, BigDecimal ttlSivQty);
+
+    @Query("select max(i.id.batchNo) as maxBatchNo from ITEMBATC i " +
+            "where i.id.companyCode = :companyCode and i.id.plantNo = :plantNo and i.id.itemNo = :itemNo")
+    ItemBatchProjection getMaxBatchNo(String companyCode, Integer plantNo, String itemNo);
 }

@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface ItemBatcLogRepository extends JpaRepository<ItemBatcLog, ItemBatcLogId> {
 
@@ -15,4 +17,20 @@ public interface ItemBatcLogRepository extends JpaRepository<ItemBatcLog, ItemBa
             "AND il.id.companyCode = :companyCode AND il.id.plantNo = :plantNo AND il.id.sivNo = :sivNo " +
             "AND il.id.batchNo = :batchNo AND il.id.itemNo = :itemNo")
     ItemBatcLogProjection getPoNoRecdPrice(String companyCode, Integer plantNo, String sivNo, Long batchNo, String itemNo);
+
+    @Query("SELECT sum(sivQty) as sivQty from ITEMBATC_LOG " +
+            "where id.companyCode = :companyCode and id.plantNo = :plantNo " +
+            "and id.itemNo = :itemNo and id.batchNo = :batchNo and id.sivNo = :sivNo ")
+    ItemBatcLogProjection getSivQty(String companyCode, Integer plantNo, String itemNo, Long batchNo, String sivNo);
+
+    @Query("SELECT l.id.sivNo as sivNo, l.id.batchNo as batchNo, l.sivQty as sivQty, l.id.itemNo as itemNo, l.dateCode as dateCode, " +
+            " l.poNo as poNo, l.poRecSeq as poRecSeq, l.grnNo as grnNo, l.grnSeq as grnSeq, l.grnQty as grnQty, " +
+            "l.createdAt as itembatcLogCreatedAt, g.createdAt as grnCreatedAt, s.createdAt as sivCreatedAt " +
+            "FROM ITEMBATC_LOG l " +
+            "   left join GRN g on g.companyCode = l.id.companyCode and g.plantNo = l.id.plantNo and g.grnNo = l.grnNo " +
+            "   inner join SIV s on s.companyCode = l.id.companyCode and s.plantNo = l.id.plantNo and s.sivNo = l.id.sivNo " +
+            "WHERE l.id.companyCode = :companyCode and l.id.plantNo = :plantNo " +
+            "and l.id.itemNo = :itemNo and l.id.batchNo = :batchNo and l.id.sivNo = :sivNo " +
+            "order by g.createdAt desc ")
+    List<ItemBatcLogProjection> getBatchLog(String companyCode, Integer plantNo, String itemNo, Long batchNo, String sivNo);
 }

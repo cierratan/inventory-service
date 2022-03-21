@@ -71,6 +71,12 @@ public interface ItemLocRepository extends JpaRepository<ItemLoc, Long> {
                                                                 Integer plantNo, String itemNo, String loc);
 
     @Modifying
+    @Query("UPDATE ITEMLOC i set i.batchNo = :batchNo " +
+            "WHERE i.companyCode = :companyCode " +
+            "AND i.plantNo = :plantNo AND i.itemNo = :itemNo AND i.loc = :loc")
+    void updateBatchNo(BigDecimal batchNo, String companyCode, Integer plantNo, String itemNo, String loc);
+
+    @Modifying
     @Query("UPDATE ITEMLOC i set i.costVariance = :newCostVar, i.stdMaterial = :newStdMat, " +
             "i.ytdReceipt = :ytdReceipt, i.batchNo = :newBatchNo, i.lastTranDate = :lastTranDate " +
             "WHERE i.companyCode = :companyCode " +
@@ -98,9 +104,29 @@ public interface ItemLocRepository extends JpaRepository<ItemLoc, Long> {
                                             Integer plantNo, String itemNo, String loc);
 
     @Modifying
+    @Query("UPDATE ITEMLOC i set i.stdMaterial = :newStdMat, i.costVariance = :costVariance, i.ytdReceipt = :ytdReceipt, " +
+            "i.lastTranDate = :lastTranDate WHERE i.companyCode = :companyCode " +
+            "AND i.plantNo = :plantNo AND i.itemNo = :itemNo AND i.loc = :loc")
+    void updateStdMatCostVarianceYtdRecLTranDate(BigDecimal newStdMat, BigDecimal costVariance, BigDecimal ytdReceipt,
+                                            Date lastTranDate, String companyCode,
+                                            Integer plantNo, String itemNo, String loc);
+
+    @Modifying
+    @Query("UPDATE ITEMLOC i set i.stdMaterial = :newStdMat, i.ytdReceipt = :ytdReceipt, " +
+            "i.lastTranDate = :lastTranDate WHERE i.companyCode = :companyCode " +
+            "AND i.plantNo = :plantNo AND i.itemNo = :itemNo AND i.loc <> :loc")
+    void updateStdMatYtdRecLTranDateWithNotEqualLoc(BigDecimal newStdMat, BigDecimal ytdReceipt,
+                                                 Date lastTranDate, String companyCode,
+                                                 Integer plantNo, String itemNo, String loc);
+
+    @Modifying
     @Query("UPDATE ITEMLOC i set i.qoh = :qoh WHERE i.companyCode = :companyCode " +
             "AND i.plantNo = :plantNo AND i.itemNo = :itemNo")
     void updateQoh(BigDecimal qoh, String companyCode, Integer plantNo, String itemNo);
+
+    @Modifying
+    @Query("UPDATE ITEMLOC i set i.qoh = :qoh WHERE i.id = :id")
+    void updateQoh(BigDecimal qoh, Long id);
 
     @Modifying
     @Query("UPDATE ITEMLOC i set i.pickedQty = :pickedQtyUpdate, " +
@@ -157,4 +183,10 @@ public interface ItemLocRepository extends JpaRepository<ItemLoc, Long> {
     ItemLocProjection getResv(String companyCode, Integer plantNo, String itemNo);
 
     ItemLoc findItemLocByCompanyCodeAndPlantNoAndItemId(String companyCode, Integer plantNo, Long id);
+
+    @Query(value = "SELECT il.recCnt as recCnt, l.ID as id, l.LOC as loc " +
+            "FROM (select count(*) as recCnt, i.COMPANY_CODE, i.PLANT_NO, i.ITEM_NO, i.LOC from ITEMLOC i ) il left join" +
+            "   ITEMLOC l on l.COMPANY_CODE = il.COMPANY_CODE and l.PLANT_NO = il.PLANT_NO and l.ITEM_NO = il.PLANT_NO and l.LOC = il.LOC " +
+            "WHERE il.COMPANY_CODE = :companyCode and il.PLANT_NO = :plantNo and il.ITEM_NO = :itemNo and il.LOC = :loc", nativeQuery = true)
+    ItemLocProjection findItemLocWithRecCnt(String companyCode, Integer plantNo, String itemNo, String loc);
 }

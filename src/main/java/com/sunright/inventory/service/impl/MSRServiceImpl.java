@@ -398,10 +398,6 @@ public class MSRServiceImpl implements MSRService {
             inAudit.setPoNo(itemBatc.getPoNo());
             inAudit.setDoNo("");
             inAudit.setRemarks(msrDetail.getRemarks());
-            inAudit.setCreatedBy(userProfile.getUsername());
-            inAudit.setCreatedAt(ZonedDateTime.now());
-            inAudit.setUpdatedBy(userProfile.getUsername());
-            inAudit.setUpdatedAt(ZonedDateTime.now());
             inAudit.setStatus(Status.ACTIVE);
             inAudit.setCreatedBy(userProfile.getUsername());
             inAudit.setCreatedAt(ZonedDateTime.now());
