@@ -315,6 +315,7 @@ public class MRVServiceImpl implements MRVService {
 
             if(stockLoc != null && StringUtils.equals(stockLoc.getStockLoc(), mrvDetail.getLoc())) {
                 ItemLoc itemLoc = new ItemLoc();
+                itemLoc.setItemId(itemInfo.getItemId());
                 itemLoc.setCompanyCode(mrvDetail.getCompanyCode());
                 itemLoc.setPlantNo(mrvDetail.getPlantNo());
                 itemLoc.setItemNo(mrvDetail.getItemNo());
@@ -336,6 +337,7 @@ public class MRVServiceImpl implements MRVService {
                 itemLocRepository.save(itemLoc);
             } else {
                 ItemLoc itemLoc = new ItemLoc();
+                itemLoc.setItemId(itemInfo.getItemId());
                 itemLoc.setCompanyCode(mrvDetail.getCompanyCode());
                 itemLoc.setPlantNo(mrvDetail.getPlantNo());
                 itemLoc.setItemNo(mrvDetail.getItemNo());
@@ -357,6 +359,7 @@ public class MRVServiceImpl implements MRVService {
                 itemLocRepository.save(itemLoc);
 
                 itemLoc = new ItemLoc();
+                itemLoc.setItemId(itemInfo.getItemId());
                 itemLoc.setCompanyCode(mrvDetail.getCompanyCode());
                 itemLoc.setPlantNo(mrvDetail.getPlantNo());
                 itemLoc.setItemNo(mrvDetail.getItemNo());
@@ -395,6 +398,7 @@ public class MRVServiceImpl implements MRVService {
 
             if(itemInfo.getLoc() == null) {
                 ItemLoc itemLoc = new ItemLoc();
+                itemLoc.setItemId(itemInfo.getItemId());
                 itemLoc.setCompanyCode(mrvDetail.getCompanyCode());
                 itemLoc.setPlantNo(mrvDetail.getPlantNo());
                 itemLoc.setItemNo(itemInfo.getItemNo());
@@ -592,10 +596,10 @@ public class MRVServiceImpl implements MRVService {
         if(!CollectionUtils.isEmpty(itemLocs)) {
             ItemLoc itemLoc = itemLocs.get(0);
 
-            BigDecimal mrvResv = bombypj.getMrvResv();
-            BigDecimal itemLocMrvResv = itemLoc.getMrvResv();
-            BigDecimal itemLocProdnResv = itemLoc.getProdnResv();
-            BigDecimal itemLocPickedQty = itemLoc.getPickedQty();
+            BigDecimal mrvResv = bombypj.getMrvResv() == null ? BigDecimal.ZERO : bombypj.getMrvResv();
+            BigDecimal itemLocMrvResv = itemLoc.getMrvResv() == null ? BigDecimal.ZERO : itemLoc.getMrvResv();
+            BigDecimal itemLocProdnResv = itemLoc.getProdnResv() == null ? itemLoc.getProdnResv() : itemLoc.getProdnResv();
+            BigDecimal itemLocPickedQty = itemLoc.getPickedQty() == null ? BigDecimal.ZERO : itemLoc.getPickedQty();
             BigDecimal shortQty = bombypj.getShortQty() == null ? BigDecimal.ZERO : bombypj.getShortQty();
             BigDecimal resvQty = bombypj.getResvQty() == null ? BigDecimal.ZERO : bombypj.getResvQty();
             BigDecimal pickedQty = bombypj.getPickedQty() == null ? BigDecimal.ZERO : bombypj.getPickedQty();

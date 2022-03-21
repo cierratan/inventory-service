@@ -6,6 +6,7 @@ public interface ItemProjection {
 
     Long getCountItemNo();
     Long getCountPartNo();
+    Long getItemId();
     String getItemNo();
     String getPartNo();
     String getSource();
