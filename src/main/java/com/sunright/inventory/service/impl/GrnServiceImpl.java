@@ -1298,10 +1298,8 @@ public class GrnServiceImpl implements GrnService {
 
             NLCTLProjection batchYear = nlctlRepository.getBatchYear(userProfile.getCompanyCode(), userProfile.getPlantNo());
             BigDecimal newBatchNo = null;
-            if (itemCur == null) {
-                if (itemCur.getBatchNo() == null) {
-                    newBatchNo = (batchYear.getBatchNo().multiply(BigDecimal.valueOf(10000))).add(BigDecimal.valueOf(1));
-                }
+            if (itemCur.getBatchNo() == null) {
+                newBatchNo = (batchYear.getBatchNo().multiply(BigDecimal.valueOf(10000))).add(BigDecimal.valueOf(1));
             } else {
                 String batchYr = itemCur.getBatchNo().toString().substring(0, 4);
                 String batchNo = itemCur.getBatchNo().toString().substring(7);
