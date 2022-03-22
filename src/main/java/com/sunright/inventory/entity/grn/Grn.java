@@ -50,6 +50,5 @@ public class Grn extends InvBaseEntity {
     private Date reqSubmitDate;
 
     @OneToMany(fetch = FetchType.EAGER, mappedBy = "grn", orphanRemoval = true, cascade = CascadeType.ALL)
-    @JsonIgnore
     private Set<GrnDet> grnDetails;
 }

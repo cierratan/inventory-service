@@ -15,7 +15,7 @@ import java.util.Date;
 import java.util.Set;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonIgnoreProperties("recdDate")
+@JsonIgnoreProperties(value = "recdDate")
 @Getter
 @Setter
 @Builder
@@ -29,10 +29,8 @@ public class GrnDTO extends InvBaseDTO {
     private String supplierCode;
     private String currencyCode;
     private BigDecimal currencyRate;
-
     @JsonIgnore
     private Date recdDate;
-
     private String statuz;
     private String entryUser;
     private Date entryDate;

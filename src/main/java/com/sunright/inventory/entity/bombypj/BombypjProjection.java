@@ -1,7 +1,5 @@
 package com.sunright.inventory.entity.bombypj;
 
-import io.swagger.models.auth.In;
-
 import java.math.BigDecimal;
 
 public interface BombypjProjection {
@@ -43,4 +41,5 @@ public interface BombypjProjection {
     String getProjNoC();
     String getProjNoD();
     String getProjNoE();
+    BigDecimal getGreatestQty();
 }
