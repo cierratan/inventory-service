@@ -185,8 +185,8 @@ public interface ItemLocRepository extends JpaRepository<ItemLoc, Long> {
     ItemLoc findItemLocByCompanyCodeAndPlantNoAndItemId(String companyCode, Integer plantNo, Long id);
 
     @Query(value = "SELECT il.recCnt as recCnt, l.ID as id, l.LOC as loc " +
-            "FROM (select count(*) as recCnt, i.COMPANY_CODE, i.PLANT_NO, i.ITEM_NO, i.LOC from ITEMLOC i ) il left join" +
-            "   ITEMLOC l on l.COMPANY_CODE = il.COMPANY_CODE and l.PLANT_NO = il.PLANT_NO and l.ITEM_NO = il.PLANT_NO and l.LOC = il.LOC " +
+            "FROM (select count(*) as recCnt, i.COMPANY_CODE, i.PLANT_NO, i.ITEM_NO, i.LOC from ITEMLOC i group by i.company_code, i.plant_no, i.item_no, i.loc) il left join" +
+            "   ITEMLOC l on l.COMPANY_CODE = il.COMPANY_CODE and l.PLANT_NO = il.PLANT_NO and l.ITEM_NO = il.ITEM_NO and l.LOC = il.LOC " +
             "WHERE il.COMPANY_CODE = :companyCode and il.PLANT_NO = :plantNo and il.ITEM_NO = :itemNo and il.LOC = :loc", nativeQuery = true)
     ItemLocProjection findItemLocWithRecCnt(String companyCode, Integer plantNo, String itemNo, String loc);
 }
