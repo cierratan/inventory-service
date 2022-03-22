@@ -832,7 +832,8 @@ public class GrnServiceImpl implements GrnService {
 
         UserProfile userProfile = UserProfileContext.getUserProfile();
         // get projectNo and orderNo
-        BombypjDetailProjection projectOrderNo = bombypjDetailRepository.getProjectOrderNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), input.getGrnNo());
+        List<BombypjDetailProjection> projectOrderNo = bombypjDetailRepository.getProjectOrderNo(userProfile.getCompanyCode(),
+                userProfile.getPlantNo(), input.getGrnNo());
         // Fetching the .jrxml file from the resources folder.
         InputStream resourceSubReport = this.getClass().getResourceAsStream("/reports/header_pick_list.jrxml");
         InputStream resourceMainReport = this.getClass().getResourceAsStream("/reports/pick_list.jrxml");
@@ -840,20 +841,32 @@ public class GrnServiceImpl implements GrnService {
         JasperReport jasperSubReport = JasperCompileManager.compileReport(resourceSubReport);
         JasperReport jasperMainReport = JasperCompileManager.compileReport(resourceMainReport);
         Map<String, Object> param = new HashMap<>();
-        param.put("USERNAME", userProfile.getUsername());
-        param.put("COMPANY_CODE", userProfile.getCompanyCode());
-        param.put("PLANT_NO", userProfile.getPlantNo());
-        if (projectOrderNo != null) {
-            param.put("PROJECT_NO", projectOrderNo.getProjectNo());
-            param.put("ORDER_NO", projectOrderNo.getOrderNo());
-        } else {
-            param.put("PROJECT_NO", "");
-            param.put("ORDER_NO", "");
+        byte[] jasperReport = null;
+        for (BombypjDetailProjection rec : projectOrderNo) {
+            param.put("USERNAME", userProfile.getUsername());
+            param.put("COMPANY_CODE", userProfile.getCompanyCode());
+            param.put("PLANT_NO", userProfile.getPlantNo());
+            if (projectOrderNo != null) {
+                param.put("PROJECT_NO", rec.getProjectNo());
+                param.put("ORDER_NO", rec.getOrderNo());
+            } else {
+                param.put("PROJECT_NO", "");
+                param.put("ORDER_NO", "");
+            }
+            param.put("SUB_REPORT", jasperSubReport);
+            Connection source = dataSource.getConnection();
+            JasperPrint jasperPrint = JasperFillManager.fillReport(jasperMainReport, param, source);
+            JasperPrint jasperPrint1 = JasperFillManager.fillReport(jasperMainReport, param, source);
+            List<JRPrintPage> pages = jasperPrint1.getPages();
+            if (pages.size() > 1) {
+                for (int j = 0; j < pages.size(); j++) {
+                    JRPrintPage object = (JRPrintPage) pages.get(j);
+                    jasperPrint.addPage(object);
+                }
+            }
+            jasperReport = JasperExportManager.exportReportToPdf(jasperPrint);
         }
-        param.put("SUB_REPORT", jasperSubReport);
-        Connection source = dataSource.getConnection();
-        JasperPrint jasperPrint = JasperFillManager.fillReport(jasperMainReport, param, source);
-        return JasperExportManager.exportReportToPdf(jasperPrint);
+        return jasperReport;
     }
 
     @Override
