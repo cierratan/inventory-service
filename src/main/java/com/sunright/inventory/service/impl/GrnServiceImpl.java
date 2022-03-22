@@ -2012,15 +2012,25 @@ public class GrnServiceImpl implements GrnService {
         Set<GrnDetDTO> grnDetails = new HashSet<>();
         if (!CollectionUtils.isEmpty(grn.getGrnDetails())) {
             grnDetails = grn.getGrnDetails().stream().map(detail -> {
-                PurDetProjection detailInfo = purDetRepository.getDataFromItemAndPartNo(detail.getCompanyCode(), detail.getPlantNo(), detail.getPoNo(),
-                        detail.getItemNo(), detail.getPartNo(), detail.getPoRecSeq());
-                GrnDetDTO grnDetail = GrnDetDTO.builder()
-                        .grnNo(detail.getGrnNo())
-                        .subType(detail.getSubType())
-                        .orderQty(detailInfo.getOrderQty())
-                        .description(detailInfo.getDescription())
-                        .dueDate(detailInfo.getDueDate())
-                        .build();
+                GrnDetDTO grnDetail = GrnDetDTO.builder().build();
+                if (detail.getSubType().equals("N")) {
+                    PurDetProjection detailInfo = purDetRepository.getDataFromItemAndPartNo(detail.getCompanyCode(), detail.getPlantNo(), detail.getPoNo(),
+                            detail.getItemNo(), detail.getPartNo(), detail.getPoRecSeq());
+                    if (detailInfo != null) {
+                        grnDetail = GrnDetDTO.builder()
+                                .grnNo(detail.getGrnNo())
+                                .subType(detail.getSubType())
+                                .orderQty(detailInfo.getOrderQty())
+                                .description(detailInfo.getDescription())
+                                .dueDate(detailInfo.getDueDate())
+                                .build();
+                    }
+                } else {
+                    grnDetail = GrnDetDTO.builder()
+                            .grnNo(detail.getGrnNo())
+                            .subType(detail.getSubType())
+                            .build();
+                }
 
                 BeanUtils.copyProperties(detail, grnDetail);
 
@@ -2028,13 +2038,19 @@ public class GrnServiceImpl implements GrnService {
             }).collect(Collectors.toSet());
         }
 
-        PurProjection purInfo = purRepository.getPurInfo(grn.getCompanyCode(), grn.getPlantNo(), grn.getPoNo());
-        GrnSupplierProjection supplierNameInfo = supplierRepository.getSupplierName(grn.getCompanyCode(), grn.getPlantNo(), grn.getSupplierCode());
-
-        GrnDTO grnDTO = GrnDTO.builder()
-                .poRemarks(purInfo.getRemarks())
-                .buyer(purInfo.getBuyer())
-                .supplierName(supplierNameInfo.getName()).build();
+        GrnDTO grnDTO = GrnDTO.builder().build();
+        if (grn.getSubType().equals("N")) {
+            PurProjection purInfo = purRepository.getPurInfo(grn.getCompanyCode(), grn.getPlantNo(), grn.getPoNo());
+            GrnSupplierProjection supplierNameInfo = supplierRepository.getSupplierName(grn.getCompanyCode(), grn.getPlantNo(), grn.getSupplierCode());
+            if (purInfo != null && supplierNameInfo != null) {
+                grnDTO = GrnDTO.builder()
+                        .poRemarks(purInfo.getRemarks())
+                        .buyer(purInfo.getBuyer())
+                        .supplierName(supplierNameInfo.getName()).build();
+            }
+        } else {
+            grnDTO = GrnDTO.builder().build();
+        }
 
         BeanUtils.copyProperties(grn.getId(), grnDTO);
         BeanUtils.copyProperties(grn, grnDTO);
