@@ -8,7 +8,6 @@ import lombok.Setter;
 
 import javax.validation.constraints.NotBlank;
 import java.math.BigDecimal;
-import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.Set;
 
@@ -46,4 +45,6 @@ public class SIVDTO extends InvBaseDTO {
     private String sivNoC;
     private String sivNoD;
     private String sivNoE;
+
+    private String sivType;
 }

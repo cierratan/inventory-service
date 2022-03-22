@@ -8,13 +8,11 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.util.Date;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonIgnoreProperties("recdDate")
+@JsonIgnoreProperties(value = "recdDate")
 @Getter
 @Setter
 @Builder
@@ -34,10 +32,8 @@ public class GrnDetDTO extends InvBaseDTO {
     private Integer poRecSeq;
     private String sivNo;
     private String uom;
-
     @JsonIgnore
     private Date recdDate;
-
     private BigDecimal recdQty;
     private BigDecimal recdPrice;
     private BigDecimal poPrice;

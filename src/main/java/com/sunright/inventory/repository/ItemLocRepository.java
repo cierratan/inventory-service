@@ -52,7 +52,8 @@ public interface ItemLocRepository extends JpaRepository<ItemLoc, Long> {
     ItemLocProjection getQohCur(String companyCode, Integer plantNo, String itemNo, String loc);
 
     @Query("select coalesce(l.qoh,0) as qoh, coalesce(l.orderQty,0) as orderQty, coalesce(l.prodnResv,0) as prodnResv, " +
-            "l.stdMaterial as stdMaterial from ITEMLOC l where l.companyCode = :companyCode and l.plantNo = :plantNo " +
+            "l.stdMaterial as stdMaterial, (coalesce(l.qoh,0) - coalesce(l.prodnResv,0) - coalesce(l.rpcResv,0) - coalesce(l.mrvResv,0)) as eoh " +
+            "from ITEMLOC l where l.companyCode = :companyCode and l.plantNo = :plantNo " +
             "and l.itemNo = :itemNo and l.loc = :loc")
     List<ItemLocProjection> qohCur(String companyCode, Integer plantNo, String itemNo, String loc);
 

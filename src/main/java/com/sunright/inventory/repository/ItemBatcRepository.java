@@ -44,12 +44,13 @@ public interface ItemBatcRepository extends JpaRepository<ItemBatc, ItemBatcId> 
             "       and nvl(qoh,0) > 0 order by 1,2", nativeQuery = true)
     List<ItemBatchProjection> getBatchNoByItemNo(String companyCode, Integer plantNo, String alternate);
 
-    @Query("select distinct concat(ib.id.batchNo,'/',ib.id.loc,'/',ib.qoh) as batchDesc, " +
-            "concat(ib.id.batchNo,'/',ib.id.loc) as batchNoLoc from ITEMBATC ib where ib.id.companyCode = :companyCode " +
+    @Query("select concat(ib.id.batchNo,'/',ib.id.loc,'/',ib.qoh) as batchDesc, " +
+            "concat(ib.id.batchNo,'/',ib.id.loc) as batchNoLoc, ib.id.batchNo as batchNo " +
+            "from ITEMBATC ib where ib.id.companyCode = :companyCode " +
             "and ib.id.plantNo = :plantNo and ib.id.itemNo = :itemNo")
     List<ItemBatchProjection> getItemBatchByItemNo(String companyCode, Integer plantNo, String itemNo);
 
-    @Query("select distinct concat(ib.id.batchNo,'/',ib.id.loc,'/',ib.qoh) as batchDesc, " +
+    @Query("select concat(ib.id.batchNo,'/',ib.id.loc,'/',ib.qoh) as batchDesc, " +
             "concat(ib.id.batchNo,'/',ib.id.loc) as batchNoLoc from ITEMBATC ib where ib.id.companyCode = :companyCode " +
             "and ib.id.plantNo = :plantNo and ib.id.itemNo = :itemNo and ib.id.loc <> (select c.stockLoc from COMPANY c " +
             "where c.id.companyCode = :companyCode and c.id.plantNo = :plantNo)")
@@ -72,11 +73,15 @@ public interface ItemBatcRepository extends JpaRepository<ItemBatc, ItemBatcId> 
             "and ib.id.plantNo = :plantNo and ib.id.itemNo = :itemNo")
     ItemBatchProjection itembatcCur(String companyCode, Integer plantNo, String itemNo);
 
-    @Query("select ib.id.batchNo as batchNo, ib.qoh as qoh from ITEMBATC ib where ib.id.companyCode = :companyCode " +
+    @Query("select distinct ib.id.itemNo as itemNo from ITEMBATC ib where ib.id.companyCode = :companyCode " +
             "and ib.id.plantNo = :plantNo and ib.id.itemNo = :itemNo and ib.qoh >= :ttlSivQty")
-    List<ItemBatchProjection> cBatch(String companyCode, Integer plantNo, String itemNo, BigDecimal ttlSivQty);
+    ItemBatchProjection cBatch(String companyCode, Integer plantNo, String itemNo, BigDecimal ttlSivQty);
 
     @Query("select max(i.id.batchNo) as maxBatchNo from ITEMBATC i " +
             "where i.id.companyCode = :companyCode and i.id.plantNo = :plantNo and i.id.itemNo = :itemNo")
     ItemBatchProjection getMaxBatchNo(String companyCode, Integer plantNo, String itemNo);
+
+    @Query("select ib.qoh as qoh from ITEMBATC ib where ib.id.companyCode = :companyCode " +
+            "and ib.id.plantNo = :plantNo and ib.id.itemNo = :itemNo and ib.id.batchNo = :batchNo and ib.id.loc = :loc")
+    ItemBatchProjection cBatchQoh(String companyCode, Integer plantNo, String itemNo, Long batchNo, String loc);
 }

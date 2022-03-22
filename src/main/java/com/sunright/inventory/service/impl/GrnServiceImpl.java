@@ -1981,7 +1981,7 @@ public class GrnServiceImpl implements GrnService {
 
         if (StringUtils.isBlank(input.getGrnNo())) {
             throw new ServerException("Grn No Can Not be Blank !");
-        } else if (StringUtils.isBlank(input.getSubType())){
+        } else if (StringUtils.isBlank(input.getSubType())) {
             throw new ServerException("Sub Type Can Not be Blank !");
         }
 
@@ -2012,9 +2012,14 @@ public class GrnServiceImpl implements GrnService {
         Set<GrnDetDTO> grnDetails = new HashSet<>();
         if (!CollectionUtils.isEmpty(grn.getGrnDetails())) {
             grnDetails = grn.getGrnDetails().stream().map(detail -> {
+                PurDetProjection detailInfo = purDetRepository.getDataFromItemAndPartNo(detail.getCompanyCode(), detail.getPlantNo(), detail.getPoNo(),
+                        detail.getItemNo(), detail.getPartNo(), detail.getPoRecSeq());
                 GrnDetDTO grnDetail = GrnDetDTO.builder()
                         .grnNo(detail.getGrnNo())
                         .subType(detail.getSubType())
+                        .orderQty(detailInfo.getOrderQty())
+                        .description(detailInfo.getDescription())
+                        .dueDate(detailInfo.getDueDate())
                         .build();
 
                 BeanUtils.copyProperties(detail, grnDetail);
@@ -2023,7 +2028,13 @@ public class GrnServiceImpl implements GrnService {
             }).collect(Collectors.toSet());
         }
 
-        GrnDTO grnDTO = GrnDTO.builder().build();
+        PurProjection purInfo = purRepository.getPurInfo(grn.getCompanyCode(), grn.getPlantNo(), grn.getPoNo());
+        GrnSupplierProjection supplierNameInfo = supplierRepository.getSupplierName(grn.getCompanyCode(), grn.getPlantNo(), grn.getSupplierCode());
+
+        GrnDTO grnDTO = GrnDTO.builder()
+                .poRemarks(purInfo.getRemarks())
+                .buyer(purInfo.getBuyer())
+                .supplierName(supplierNameInfo.getName()).build();
 
         BeanUtils.copyProperties(grn.getId(), grnDTO);
         BeanUtils.copyProperties(grn, grnDTO);

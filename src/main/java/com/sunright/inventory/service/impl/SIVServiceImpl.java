@@ -57,6 +57,7 @@ import javax.sql.DataSource;
 import javax.transaction.Transactional;
 import java.io.InputStream;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -165,9 +166,57 @@ public class SIVServiceImpl implements SIVService {
         siv.setUpdatedBy(userProfile.getUsername());
         siv.setUpdatedAt(ZonedDateTime.now());
         checkRecNull(input);
-        checkIfSivNoExist(userProfile, input);
         checkRecValid(input);
-        SIV saved = sivRepository.save(siv);
+        checkIfSivNoExist(userProfile, input);
+        SIV saved = null, savedA = null, savedB = null, savedC = null, savedD = null, savedE = null;
+        // Insert SIV Combine
+        if (input.getSivType().equalsIgnoreCase("Combine")) {
+            if (StringUtils.isNotBlank(input.getProjNoA())) {
+                if (StringUtils.isNotBlank(input.getSivNoA())) {
+                    postBomproj(userProfile, input.getSivNoA(), input.getProjNoA());
+                    siv.setSivNo(input.getSivNoA());
+                    siv.setProjectNo(input.getProjNoA());
+                    savedA = sivRepository.save(siv);
+                    input.setId(savedA.getId());
+                    input.setVersion(savedA.getVersion());
+                }
+                if (StringUtils.isNotBlank(input.getSivNoB())) {
+                    postBomproj(userProfile, input.getSivNoB(), input.getProjNoB());
+                    siv.setSivNo(input.getSivNoB());
+                    siv.setProjectNo(input.getProjNoB());
+                    savedB = sivRepository.save(siv);
+                    input.setId(savedB.getId());
+                    input.setVersion(savedB.getVersion());
+                }
+                if (StringUtils.isNotBlank(input.getSivNoC())) {
+                    postBomproj(userProfile, input.getSivNoC(), input.getProjNoC());
+                    siv.setSivNo(input.getSivNoC());
+                    siv.setProjectNo(input.getProjNoC());
+                    savedC = sivRepository.save(siv);
+                    input.setId(savedC.getId());
+                    input.setVersion(savedC.getVersion());
+                }
+                if (StringUtils.isNotBlank(input.getSivNoD())) {
+                    postBomproj(userProfile, input.getSivNoD(), input.getProjNoD());
+                    siv.setSivNo(input.getSivNoD());
+                    siv.setProjectNo(input.getProjNoD());
+                    savedD = sivRepository.save(siv);
+                    input.setId(savedD.getId());
+                    input.setVersion(savedD.getVersion());
+                }
+                if (StringUtils.isNotBlank(input.getSivNoE())) {
+                    postBomproj(userProfile, input.getSivNoE(), input.getProjNoE());
+                    siv.setSivNo(input.getSivNoE());
+                    siv.setProjectNo(input.getProjNoE());
+                    savedE = sivRepository.save(siv);
+                    input.setId(savedE.getId());
+                    input.setVersion(savedE.getVersion());
+                }
+            }
+        } else {
+            // Insert SIV Entry & Manual
+            saved = sivRepository.save(siv);
+        }
         if (!CollectionUtils.isEmpty(input.getSivDetails())) {
             for (SIVDetailDTO detail : input.getSivDetails()) {
                 SIVDetail sivDetail = new SIVDetail();
@@ -176,22 +225,93 @@ public class SIVServiceImpl implements SIVService {
                 BeanUtils.copyProperties(detail, sivDetail);
                 sivDetail.setCompanyCode(userProfile.getCompanyCode());
                 sivDetail.setPlantNo(userProfile.getPlantNo());
-                sivDetail.setSiv(saved);
-                SIVDetail savedDetail = sivDetailRepository.save(sivDetail);
+                String remarksCombine = "Issued Thru SIV-N, Prg : INM00024";
+                if (StringUtils.isNotBlank(input.getSivNoA()) && detail.getIssuedQtyA().compareTo(BigDecimal.ZERO) > 0) {
+                    postGrn(userProfile, detail.getSivNoA(), detail.getIssuedQtyA(), detail);
+                    postSfc(userProfile, detail.getProjNoA(), detail.getItemNo(), detail.getIssuedQtyA());
+                    postItemInv(userProfile, detail.getItemNo(), detail.getLoc(), detail.getIssuedQtyA(),
+                            detail.getIssuedQtyA().subtract(detail.getBomQtyA()), detail.getBatchNo(),
+                            detail.getSivNoA(), detail.getProjNoA(), remarksCombine);
+                    postBombypj(userProfile, savedA, detail);
+                    postCoqCombine(userProfile, detail.getProjNoA(), detail.getItemNo(), detail.getBatchNo(),
+                            detail.getSivNoA(), detail.getIssuedQtyA(), detail.getIssuedPrice());
+                    sivDetail.setSivNo(detail.getSivNoA());
+                    sivDetail.setIssuedQty(detail.getIssuedQtyA());
+                    sivDetail.setSiv(savedA);
+                    SIVDetail savedDetail = sivDetailRepository.save(sivDetail);
+                }
+                if (StringUtils.isNotBlank(input.getSivNoB())) {
+                    postGrn(userProfile, detail.getSivNoB(), detail.getIssuedQtyB(), detail);
+                    postSfc(userProfile, detail.getProjNoB(), detail.getItemNo(), detail.getIssuedQtyB());
+                    postItemInv(userProfile, detail.getItemNo(), detail.getLoc(), detail.getIssuedQtyB(),
+                            detail.getIssuedQtyB().subtract(detail.getBomQtyB()), detail.getBatchNo(),
+                            detail.getSivNoB(), detail.getProjNoB(), remarksCombine);
+                    postBombypj(userProfile, savedB, detail);
+                    postCoqCombine(userProfile, detail.getProjNoB(), detail.getItemNo(), detail.getBatchNo(),
+                            detail.getSivNoB(), detail.getIssuedQtyB(), detail.getIssuedPrice());
+                    sivDetail.setSivNo(detail.getSivNoB());
+                    sivDetail.setIssuedQty(detail.getIssuedQtyB());
+                    sivDetail.setSiv(savedB);
+                    SIVDetail savedDetail = sivDetailRepository.save(sivDetail);
+                }
+                if (StringUtils.isNotBlank(input.getSivNoC())) {
+                    sivDetail.setSiv(savedC);
+                    SIVDetail savedDetail = sivDetailRepository.save(sivDetail);
+                }
+                if (StringUtils.isNotBlank(input.getSivNoD())) {
+                    sivDetail.setSiv(savedD);
+                    SIVDetail savedDetail = sivDetailRepository.save(sivDetail);
+                }
+                if (StringUtils.isNotBlank(input.getSivNoE())) {
+                    sivDetail.setSiv(savedE);
+                    SIVDetail savedDetail = sivDetailRepository.save(sivDetail);
+                }
+                if (StringUtils.isBlank(input.getSivNoA())) {
+                    sivDetail.setSiv(saved);
+                    SIVDetail savedDetail = sivDetailRepository.save(sivDetail);
+                    sivDetailPostSaving(userProfile, saved, sivDetail, detail, input, savedDetail);
+                }
                 if (input.getSubType().equals("M")) {
                     procPRClosure(userProfile, input);
                 } else {
-                    procBatchConsolidate(sivDetail, detail);
-                    procUpdateSfcWip(userProfile, sivDetail, detail, input);
+                    if (!input.getSivType().equalsIgnoreCase("Combine")) {
+                        procBatchConsolidate(sivDetail, detail);
+                        procUpdateSfcWip(userProfile, sivDetail, detail, input);
+                    }
                 }
-                sivDetailPostSaving(userProfile, saved, sivDetail, detail, input, savedDetail);
             }
         }
 
-        sivPostSaving(userProfile, saved);
+        sivPostSaving(userProfile, saved, input);
         populateAfterSaving(input, saved);
 
         return input;
+    }
+
+    private void postCoqCombine(UserProfile userProfile, String projNoA, String itemNo, Long batchNo,
+                                String sivNoA, BigDecimal issuedQtyA, BigDecimal issuedPrice) {
+    }
+
+    private void postItemInv(UserProfile userProfile, String itemNo, String loc, BigDecimal issuedQtyA,
+                             BigDecimal issQtySubtractBomQty, Long batchNo, String sivNoA, String projNoA, String remarks) {
+    }
+
+    private void postSfc(UserProfile userProfile, String projNoA, String itemNo, BigDecimal issuedQtyA) {
+    }
+
+    private SIVDetailDTO postGrn(UserProfile userProfile, String sivNo, BigDecimal issuedQty, SIVDetailDTO detail) {
+        List<GrnDetailProjection> grnDetCurs = grnDetRepository.getGrndetCur(userProfile.getCompanyCode(),
+                userProfile.getPlantNo(), detail.getBatchNo(), detail.getItemNo());
+        if (grnDetCurs.size() != 0) {
+            for (GrnDetailProjection rec : grnDetCurs) {
+                detail.setGrnNo(rec.getGrnNo());
+                detail.setGrndetSeqNo(rec.getSeqNo());
+                if (rec.getIssuedQty().compareTo(BigDecimal.ZERO) == 0) {
+                    grnDetRepository.updateSivNoIssuedQty(sivNo, issuedQty, rec.getGrnNo(), rec.getSeqNo());
+                }
+            }
+        }
+        return detail;
     }
 
     private void procPRClosure(UserProfile userProfile, SIVDTO input) {
@@ -422,6 +542,17 @@ public class SIVServiceImpl implements SIVService {
             postBombypj(userProfile, siv, detail);
             postCoq(userProfile.getCompanyCode(), userProfile.getPlantNo(), input.getProjectNo(), input.getDocmNo(), detail.getItemNo(),
                     detail.getBatchNo(), input.getSivNo(), detail.getIssuedQty(), detail.getIssuedPrice(), input.getSubType());
+        }
+    }
+
+    private void postBomproj(UserProfile userProfile, String sivNo, String projectNo) {
+        BomprojProjection pickedStatus = bomprojRepository.getPickedStatus(userProfile.getCompanyCode(), userProfile.getPlantNo(), projectNo);
+        if (pickedStatus != null) {
+            if (!pickedStatus.getPickedStatus().equals("P") || StringUtils.isBlank(pickedStatus.getPickedStatus())) {
+                bomprojRepository.updatePickedStatusSivNo(sivNo, projectNo);
+            } else {
+                bomprojRepository.updateSivNo(sivNo, projectNo);
+            }
         }
     }
 
@@ -720,19 +851,20 @@ public class SIVServiceImpl implements SIVService {
                 }
             }
         } else {
-            List<GrnDetailProjection> grnDetCur = grnDetRepository.getGrndetCur(userProfile.getCompanyCode(),
-                    userProfile.getPlantNo(), detail.getBatchNo(), detail.getItemNo());
-            for (GrnDetailProjection prj : grnDetCur) {
-                detail.setGrnNo(prj.getGrnNo());
-                detail.setUom(prj.getUom());
-                detail.setGrndetSeqNo(prj.getSeqNo());
-                if (prj.getIssuedQty().compareTo(BigDecimal.ZERO) == 0) {
-                    BigDecimal issuedQty = (prj.getIssuedQty() == null ? BigDecimal.ZERO : prj.getIssuedQty()).add(detail.getIssuedQty());
-                    grnDetRepository.updateSivNoIssuedQty(input.getSivNo(), issuedQty, prj.getGrnNo(), prj.getSeqNo());
+            if (!input.getSivType().equalsIgnoreCase("Combine")) {
+                List<GrnDetailProjection> grnDetCur = grnDetRepository.getGrndetCur(userProfile.getCompanyCode(),
+                        userProfile.getPlantNo(), detail.getBatchNo(), detail.getItemNo());
+                for (GrnDetailProjection prj : grnDetCur) {
+                    detail.setGrnNo(prj.getGrnNo());
+                    detail.setUom(prj.getUom());
+                    detail.setGrndetSeqNo(prj.getSeqNo());
+                    if (prj.getIssuedQty().compareTo(BigDecimal.ZERO) == 0) {
+                        BigDecimal issuedQty = (prj.getIssuedQty() == null ? BigDecimal.ZERO : prj.getIssuedQty()).add(detail.getIssuedQty());
+                        grnDetRepository.updateSivNoIssuedQty(input.getSivNo(), issuedQty, prj.getGrnNo(), prj.getSeqNo());
+                    }
                 }
+                reduceItemInv(userProfile, input, detail);
             }
-
-            reduceItemInv(userProfile, input, detail);
         }
 
         return detail;
@@ -906,141 +1038,237 @@ public class SIVServiceImpl implements SIVService {
     }
 
     private void checkRecNull(SIVDTO input) {
-        if (input.getSivNo() == null) {
-            throw new ServerException("SIV No Can Not be Blank!");
+        if (input.getSivType().equalsIgnoreCase("Combine")) {
+            if (StringUtils.isBlank(input.getProjNoA())) {
+                throw new ServerException("Project No A Can Not be Blank!");
+            }
+            if (StringUtils.isBlank(input.getProjNoB())) {
+                throw new ServerException("Project No B Can Not be Blank!");
+            }
+        } else {
+            if (StringUtils.isBlank(input.getSivNo())) {
+                throw new ServerException("SIV No Can Not be Blank!");
+            }
         }
     }
 
     private SIVDetailDTO checkRecValidDetail(UserProfile userProfile, SIVDTO input, SIVDetailDTO detail) {
+
         if (input.getSubType().equals("N")) {
-            if (StringUtils.isBlank(input.getProjectNo())) {
-                throw new ServerException("Project No. Cannot be blank!");
-            } else if (StringUtils.isBlank(detail.getItemNo())) {
-                throw new ServerException("Item No Can Not be Blank!");
+            if (input.getSivType().equalsIgnoreCase("Combine")) {
+                if (StringUtils.isNotBlank(input.getProjNoA())) {
+                    if (StringUtils.isBlank(detail.getItemNo())) {
+                        throw new ServerException("No SIV Detail, CANNOT create SIV !");
+                    }
+
+                    if (detail.getIssuedQty() == null) {
+                        qtyResetCombine(detail);
+                        throw new ServerException("Issued Qty Can Not be Blank !");
+                    }
+
+                    if (detail.getIssuedQty().compareTo(BigDecimal.ZERO) <= 0) {
+                        qtyResetCombine(detail);
+                        throw new ServerException("Issued Qty MUST be > 0 !");
+                    }
+
+                    if (detail.getBomPickQty() == null) {
+                        throw new ServerException(String.format("Item No %s not found !", detail.getItemNo()));
+                    } else if (detail.getBomPickQty().compareTo(BigDecimal.ZERO) == 0) {
+                        throw new ServerException(String.format("Item No %s has no pick qty !", detail.getItemNo()));
+                    } else if (detail.getBomPickQty().compareTo(detail.getIssuedQty()) > 0) {
+                        qtyResetCombine(detail);
+                        throw new ServerException("Partial issue is not allow in this program !");
+                    } else if (detail.getIssuedQty().compareTo(detail.getBatchQty()) > 0) {
+                        qtyResetCombine(detail);
+                        throw new ServerException(String.format("Item No : %s ,Issued > Batch Qty !", detail.getItemNo()));
+                    } else if (detail.getIssuedQty().compareTo(detail.getBomQtyA().add(detail.getBomQtyB())
+                            .add(detail.getBomQtyC()).add(detail.getBomQtyD()).add(detail.getBomQtyE())) < 0) {
+                        qtyResetCombine(detail);
+                        throw new ServerException(String.format("Item No : %s ,Issued < Total Project Issue Qty !", detail.getItemNo()));
+                    }
+
+                    List<ItemLocProjection> qohCur = itemLocRepository.qohCur(userProfile.getCompanyCode(),
+                            userProfile.getPlantNo(), detail.getItemNo(), detail.getLoc());
+                    for (ItemLocProjection rec : qohCur) {
+                        BigDecimal vQoh = (rec.getQoh() == null ? BigDecimal.ZERO : rec.getQoh());
+                        BigDecimal vEOH = rec.getEoh();
+                        BigDecimal issuedPrice = (rec.getStdMaterial() == null ? BigDecimal.ZERO : rec.getStdMaterial());
+                        if (vQoh.compareTo(detail.getIssuedQty()) < 0) {
+                            throw new ServerException(String.format("Item No : %s ,Issued > Qty-On-Hand !", detail.getItemNo()));
+                        }
+
+                        if (detail.getIssuedQty().compareTo(detail.getBomPickQty()) > 0 &&
+                                vEOH.compareTo(detail.getIssuedQty().subtract(detail.getBomPickQty())) < 0) {
+                            qtyResetCombine(detail);
+                            throw new ServerException(String.format("Issued Qty of %s CANNOT be > EOH, EOH now is : %s !", detail.getItemNo(), vEOH));
+                        } else {
+                            detail.setIssuedPrice(issuedPrice);
+                        }
+                    }
+
+                    Long newBatchNo = null;
+                    String newLoc = null;
+                    if (StringUtils.isBlank(detail.getBatchDesc())) {
+                        detail.setBatchDesc(detail.getBatchLoc());
+                        detail.setMessage("Batch No Can Not be Blank !");
+                    } else if (!StringUtils.equals(detail.getBatchLoc(), detail.getBatchDesc())) {
+                        newBatchNo = Long.valueOf(detail.getBatchNo().toString().substring(0, 8));
+                        newLoc = detail.getBatchLoc().substring(9, 11);
+                        ItemBatchProjection batchQty = itemBatcRepository.cBatchQoh(userProfile.getCompanyCode(),
+                                userProfile.getPlantNo(), detail.getItemNo(), newBatchNo, newLoc);
+                        if (batchQty.getQoh().compareTo(detail.getIssuedQty()) < 0) {
+                            detail.setBatchDesc(detail.getBatchLoc());
+                            throw new ServerException(String.format("Batch No / Loc : %s / %s Batch Qty < Item Issued !", newBatchNo, newLoc));
+                        }
+
+                        BigDecimal ttlIssQty = detail.getIssuedQty();
+
+                        if (batchQty.getQoh().compareTo(ttlIssQty) < 0) {
+                            detail.setBatchDesc(detail.getBatchLoc());
+                            throw new ServerException(String.format("Batch No / Loc : %s / %s Batch Qty < Total Issued !", newBatchNo, newLoc));
+                        } else {
+                            detail.setBatchLoc(detail.getBatchDesc());
+                            detail.setBatchNo(newBatchNo);
+                            detail.setLoc(newLoc);
+                            detail.setBatchQty(batchQty.getQoh());
+                        }
+                    }
+
+                    if (detail.getIssuedQty().compareTo(detail.getBomPickQty()) != 0) {
+                        detail.setExtraQty(detail.getIssuedQty().subtract(detail.getBomPickQty()));
+                        extraAloc(detail);
+                    }
+                }
             } else {
-                BombypjProjection bombypjCur = bombypjRepository.bombypjCur(userProfile.getCompanyCode(),
-                        userProfile.getPlantNo(), input.getProjectNo(), detail.getItemNo());
-                if (bombypjCur == null) {
-                    throw new ServerException("Item No : " + detail.getItemNo() + " not found in " + input.getProjectNo() + " !");
+                if (StringUtils.isBlank(input.getProjectNo())) {
+                    throw new ServerException("Project No. Cannot be blank!");
+                } else if (StringUtils.isBlank(detail.getItemNo())) {
+                    throw new ServerException("Item No Can Not be Blank!");
+                } else {
+                    BombypjProjection bombypjCur = bombypjRepository.bombypjCur(userProfile.getCompanyCode(),
+                            userProfile.getPlantNo(), input.getProjectNo(), detail.getItemNo());
+                    if (bombypjCur == null) {
+                        throw new ServerException("Item No : " + detail.getItemNo() + " not found in " + input.getProjectNo() + " !");
+                    }
+
+                    if (!bombypjCur.getSource().equals("B") || !bombypjCur.getSource().equals("C")) {
+                        throw new ServerException("Invalid Item Source, Item is not Buy or Consigned !");
+                    }
+
+                    if (detail.getItemType() == null) {
+                        detail.setItemType(0);
+                        detail.setPartNo(bombypjCur.getPartNo());
+                        detail.setLoc(bombypjCur.getLoc());
+                        detail.setUom(bombypjCur.getUom());
+                        detail.setRemarks(bombypjCur.getPartNo());
+                        detail.setIssuedQty(bombypjCur.getPickedQty());
+                        detail.setExtraQty(BigDecimal.ZERO);
+                        detail.setIssuedPrice(bombypjCur.getStdMaterial());
+                    }
                 }
 
-                if (!bombypjCur.getSource().equals("B") || !bombypjCur.getSource().equals("C")) {
-                    throw new ServerException("Invalid Item Source, Item is not Buy or Consigned !");
+                if (detail.getItemType() == 0) {
+                    ItemLocProjection itemsNo = itemLocRepository.itemLocCur(userProfile.getCompanyCode(),
+                            userProfile.getPlantNo(), detail.getItemNo(), detail.getLoc());
+                    if (itemsNo == null) {
+                        throw new NotFoundException("Item No : " + detail.getItemNo() + " is not found in this loc !");
+                    }
+                }
+
+                if (detail.getIssuedQty().compareTo(BigDecimal.ZERO) > 0) {
+                    if (detail.getBomPickQty() == null) {
+                        throw new NotFoundException("Item No : " + detail.getItemNo() + " not found !");
+                    } else if (detail.getBomPickQty().compareTo(BigDecimal.ZERO) == 0) {
+                        throw new ServerException("Item No : " + detail.getItemNo() + " has no pick qty !");
+                    }
+
+                    if (detail.getIssuedQty().compareTo(detail.getBatchQty()) > 0) {
+                        qtyReset(detail);
+                        throw new ServerException("Item No : " + detail.getItemNo() + " Issued > Batch Qty !");
+                    }
+
+                    ItemLocProjection qohCur = itemLocRepository.getQohCur(userProfile.getCompanyCode(), userProfile.getPlantNo(),
+                            detail.getItemNo(), detail.getLoc());
+                    if (qohCur.getQoh().compareTo(detail.getIssuedQty()) < 0) {
+                        qtyReset(detail);
+                        throw new ServerException("Item No : " + detail.getItemNo() + " Issued > Qty-On-Hand !");
+                    }
+
+                    if ((detail.getIssuedQty().subtract(detail.getBomPickQty())).compareTo(BigDecimal.ZERO) > 0
+                            && qohCur.getEoh().compareTo(detail.getIssuedQty()
+                            .subtract(detail.getBomPickQty())) < 0) {
+                        qtyReset(detail);
+                        throw new ServerException("Issued Qty of " + detail.getItemNo() + " Cannot be > EOH, EOH now is : " + qohCur.getEoh() + " !");
+                    }
+
+                    ItemLocProjection resv = itemLocRepository.getResv(userProfile.getCompanyCode(), userProfile.getPlantNo(), detail.getItemNo());
+                    if (resv.getProdnResv().subtract(resv.getPoResvQty()).compareTo(resv.getResvQty()) != 0) {
+                        throw new ServerException("" + detail.getItemNo() + " Item Resv does not match Bom total Resv ! " +
+                                "Prodn Resv : " + resv.getProdnResv() + ", Resv Qty : " + resv.getResvQty() + " Inform MIS");
+                    }
+                } else {
+                    qtyReset(detail);
+                    throw new ServerException("Issued Qty Must be > 0 !");
                 }
 
                 if (detail.getItemType() == null) {
-                    detail.setItemType(0);
-                    detail.setPartNo(bombypjCur.getPartNo());
-                    detail.setLoc(bombypjCur.getLoc());
-                    detail.setUom(bombypjCur.getUom());
-                    detail.setRemarks(bombypjCur.getPartNo());
-                    detail.setIssuedQty(bombypjCur.getPickedQty());
-                    detail.setExtraQty(BigDecimal.ZERO);
-                    detail.setIssuedPrice(bombypjCur.getStdMaterial());
-                }
-            }
-
-            if (detail.getItemType() == 0) {
-                ItemLocProjection itemsNo = itemLocRepository.itemLocCur(userProfile.getCompanyCode(),
-                        userProfile.getPlantNo(), detail.getItemNo(), detail.getLoc());
-                if (itemsNo == null) {
-                    throw new NotFoundException("Item No : " + detail.getItemNo() + " is not found in this loc !");
-                }
-            }
-
-            if (detail.getIssuedQty().compareTo(BigDecimal.ZERO) > 0) {
-                if (detail.getBomPickQty() == null) {
-                    throw new NotFoundException("Item No : " + detail.getItemNo() + " not found !");
-                } else if (detail.getBomPickQty().compareTo(BigDecimal.ZERO) == 0) {
-                    throw new ServerException("Item No : " + detail.getItemNo() + " has no pick qty !");
-                }
-
-                if (detail.getIssuedQty().compareTo(detail.getBatchQty()) > 0) {
-                    qtyReset(detail);
-                    throw new ServerException("Item No : " + detail.getItemNo() + " Issued > Batch Qty !");
-                }
-
-                ItemLocProjection qohCur = itemLocRepository.getQohCur(userProfile.getCompanyCode(), userProfile.getPlantNo(),
-                        detail.getItemNo(), detail.getLoc());
-                if (qohCur.getQoh().compareTo(BigDecimal.ZERO) < detail.getIssuedQty().compareTo(BigDecimal.ZERO)) {
-                    qtyReset(detail);
-                    throw new ServerException("Item No : " + detail.getItemNo() + " Issued > Qty-On-Hand !");
-                }
-
-                if ((detail.getIssuedQty().subtract(detail.getBomPickQty())).compareTo(BigDecimal.ZERO) > 0
-                        && qohCur.getEoh().compareTo(detail.getIssuedQty()
-                        .subtract(detail.getBomPickQty())) < 0) {
-                    qtyReset(detail);
-                    throw new ServerException("Issued Qty of " + detail.getItemNo() + " Cannot be > EOH, EOH now is : " + qohCur.getEoh() + " !");
-                }
-
-                ItemLocProjection resv = itemLocRepository.getResv(userProfile.getCompanyCode(), userProfile.getPlantNo(), detail.getItemNo());
-                if (resv.getProdnResv().subtract(resv.getPoResvQty()).compareTo(resv.getResvQty()) != 0) {
-                    throw new ServerException("" + detail.getItemNo() + " Item Resv does not match Bom total Resv ! " +
-                            "Prodn Resv : " + resv.getProdnResv() + ", Resv Qty : " + resv.getResvQty() + " Inform MIS");
-                }
-            } else {
-                qtyReset(detail);
-                throw new ServerException("Issued Qty Must be > 0 !");
-            }
-
-            if (detail.getItemType() == null) {
-                throw new ServerException("Please enter 0-Stock, 1-Non Stock !");
-            } else {
-                if (!Integer.toString(detail.getItemType()).contains("0") && !Integer.toString(detail.getItemType()).contains("1")) {
                     throw new ServerException("Please enter 0-Stock, 1-Non Stock !");
+                } else {
+                    if (!Integer.toString(detail.getItemType()).contains("0") && !Integer.toString(detail.getItemType()).contains("1")) {
+                        throw new ServerException("Please enter 0-Stock, 1-Non Stock !");
+                    }
                 }
-            }
 
-            if (detail.getIssuedQty().compareTo(BigDecimal.ZERO) > 0) {
-                if (detail.getItemType() == 0) {
-                    if (StringUtils.isNotBlank(detail.getProjectNo1())) {
-                        if (detail.getIssuedQty1().compareTo(BigDecimal.ZERO) <= 0) {
-                            throw new ServerException("Issued Qty Must be > 0");
+                if (detail.getIssuedQty().compareTo(BigDecimal.ZERO) > 0) {
+                    if (detail.getItemType() == 0) {
+                        if (StringUtils.isNotBlank(detail.getProjectNo1())) {
+                            if (detail.getIssuedQty1().compareTo(BigDecimal.ZERO) <= 0) {
+                                throw new ServerException("Issued Qty Must be > 0");
+                            }
                         }
-                    }
-                    if (StringUtils.isNotBlank(detail.getProjectNo2())) {
-                        if (detail.getIssuedQty2().compareTo(BigDecimal.ZERO) <= 0) {
-                            throw new ServerException("Issued Qty Must be > 0");
+                        if (StringUtils.isNotBlank(detail.getProjectNo2())) {
+                            if (detail.getIssuedQty2().compareTo(BigDecimal.ZERO) <= 0) {
+                                throw new ServerException("Issued Qty Must be > 0");
+                            }
                         }
-                    }
-                    if (StringUtils.isNotBlank(detail.getProjectNo3())) {
-                        if (detail.getIssuedQty3().compareTo(BigDecimal.ZERO) <= 0) {
-                            throw new ServerException("Issued Qty Must be > 0");
+                        if (StringUtils.isNotBlank(detail.getProjectNo3())) {
+                            if (detail.getIssuedQty3().compareTo(BigDecimal.ZERO) <= 0) {
+                                throw new ServerException("Issued Qty Must be > 0");
+                            }
                         }
-                    }
-                    if (StringUtils.isNotBlank(detail.getProjectNo4())) {
-                        if (detail.getIssuedQty4().compareTo(BigDecimal.ZERO) <= 0) {
-                            throw new ServerException("Issued Qty Must be > 0");
+                        if (StringUtils.isNotBlank(detail.getProjectNo4())) {
+                            if (detail.getIssuedQty4().compareTo(BigDecimal.ZERO) <= 0) {
+                                throw new ServerException("Issued Qty Must be > 0");
+                            }
                         }
-                    }
-                    if (StringUtils.isNotBlank(detail.getProjectNo5())) {
-                        if (detail.getIssuedQty5().compareTo(BigDecimal.ZERO) <= 0) {
-                            throw new ServerException("Issued Qty Must be > 0");
+                        if (StringUtils.isNotBlank(detail.getProjectNo5())) {
+                            if (detail.getIssuedQty5().compareTo(BigDecimal.ZERO) <= 0) {
+                                throw new ServerException("Issued Qty Must be > 0");
+                            }
                         }
-                    }
 
-                    BombypjProjection bombPickedQty;
-                    if (StringUtils.isNotBlank(input.getProjectNo())) {
-                        bombPickedQty = bombypjRepository.bombypjCurCaseWhen(userProfile.getCompanyCode(),
-                                userProfile.getPlantNo(), input.getProjectNo(), detail.getItemNo());
-                    } else {
-                        bombPickedQty = bombypjRepository.bombypjCurCaseWhen(userProfile.getCompanyCode(),
-                                userProfile.getPlantNo(), input.getDocmNo(), detail.getItemNo());
-                    }
-
-                    if (bombPickedQty == null) {
+                        BombypjProjection bombPickedQty;
                         if (StringUtils.isNotBlank(input.getProjectNo())) {
-                            throw new ServerException("Ref No " + input.getProjectNo() + " not found !");
+                            bombPickedQty = bombypjRepository.bombypjCurCaseWhen(userProfile.getCompanyCode(),
+                                    userProfile.getPlantNo(), input.getProjectNo(), detail.getItemNo());
                         } else {
-                            throw new ServerException("Ref No " + input.getDocmNo() + " not found !");
+                            bombPickedQty = bombypjRepository.bombypjCurCaseWhen(userProfile.getCompanyCode(),
+                                    userProfile.getPlantNo(), input.getDocmNo(), detail.getItemNo());
                         }
-                    } else if (bombPickedQty.getPickedQty().compareTo(BigDecimal.ZERO) == 0) {
-                        throw new ServerException("Item No" + detail.getItemNo() + " has no outstanding qty !");
-                    } else if (bombPickedQty.getPickedQty().compareTo(detail.getIssuedQty()) < 0) {
-                        detail.setExtraQty(detail.getIssuedQty().subtract(bombPickedQty.getPickedQty()));
-                    } else {
-                        detail.setExtraQty(BigDecimal.ZERO);
+
+                        if (bombPickedQty == null) {
+                            if (StringUtils.isNotBlank(input.getProjectNo())) {
+                                throw new ServerException("Ref No " + input.getProjectNo() + " not found !");
+                            } else {
+                                throw new ServerException("Ref No " + input.getDocmNo() + " not found !");
+                            }
+                        } else if (bombPickedQty.getPickedQty().compareTo(BigDecimal.ZERO) == 0) {
+                            throw new ServerException("Item No" + detail.getItemNo() + " has no outstanding qty !");
+                        } else if (bombPickedQty.getPickedQty().compareTo(detail.getIssuedQty()) < 0) {
+                            detail.setExtraQty(detail.getIssuedQty().subtract(bombPickedQty.getPickedQty()));
+                        } else {
+                            detail.setExtraQty(BigDecimal.ZERO);
+                        }
                     }
                 }
             }
@@ -1048,8 +1276,86 @@ public class SIVServiceImpl implements SIVService {
         return detail;
     }
 
+    private void extraAloc(SIVDetailDTO detail) {
+
+        if ((detail.getExtraQty() == null ? BigDecimal.ZERO : detail.getExtraQty()).compareTo(BigDecimal.ZERO) == 0) {
+            detail.setIssuedQtyA(detail.getBomQtyA() == null ? BigDecimal.ZERO : detail.getBomQtyA());
+            detail.setIssuedQtyB(detail.getBomQtyB() == null ? BigDecimal.ZERO : detail.getBomQtyB());
+            detail.setIssuedQtyC(detail.getBomQtyC() == null ? BigDecimal.ZERO : detail.getBomQtyC());
+            detail.setIssuedQtyD(detail.getBomQtyD() == null ? BigDecimal.ZERO : detail.getBomQtyD());
+            detail.setIssuedQtyE(detail.getBomQtyE() == null ? BigDecimal.ZERO : detail.getBomQtyE());
+        }
+
+        BigDecimal ttlExt = detail.getExtraQty() == null ? BigDecimal.ZERO : detail.getExtraQty();
+        BigDecimal ttlQty = detail.getBomQtyA().add(detail.getBomQtyB()).add(detail.getBomQtyC())
+                .add(detail.getBomQtyD()).add(detail.getBomQtyE());
+
+        BigDecimal extA = (ttlExt.multiply(detail.getBomQtyA().divide(ttlQty, 2, RoundingMode.FLOOR)));
+        BigDecimal extB = (ttlExt.multiply(detail.getBomQtyB().divide(ttlQty, 2, RoundingMode.FLOOR)));
+        BigDecimal extC = (ttlExt.multiply(detail.getBomQtyC().divide(ttlQty, 2, RoundingMode.FLOOR)));
+        BigDecimal extD = (ttlExt.multiply(detail.getBomQtyD().divide(ttlQty, 2, RoundingMode.FLOOR)));
+        BigDecimal extE = (ttlExt.multiply(detail.getBomQtyE().divide(ttlQty, 2, RoundingMode.FLOOR)));
+
+        ttlExt = ttlExt.subtract(extA).subtract(extB).subtract(extC).subtract(extD).subtract(extE);
+        BigDecimal topQty = BigDecimal.ZERO;
+
+        if (ttlExt.compareTo(BigDecimal.ZERO) < 0) {
+            throw new ServerException("Error in Extra distribution!");
+        } else {
+            BigDecimal bomQtyA = detail.getBomQtyA() == null ? BigDecimal.ZERO : detail.getBomQtyA();
+            BigDecimal bomQtyB = detail.getBomQtyB() == null ? BigDecimal.ZERO : detail.getBomQtyB();
+            BigDecimal bomQtyC = detail.getBomQtyC() == null ? BigDecimal.ZERO : detail.getBomQtyC();
+            BigDecimal bomQtyD = detail.getBomQtyD() == null ? BigDecimal.ZERO : detail.getBomQtyD();
+            BigDecimal bomQtyE = detail.getBomQtyE() == null ? BigDecimal.ZERO : detail.getBomQtyE();
+            BombypjProjection greatestQty = sivDetailRepository.findGreatestQty(bomQtyA, bomQtyB, bomQtyC, bomQtyD, bomQtyE);
+            topQty = greatestQty.getGreatestQty();
+            if (bomQtyA.compareTo(topQty) == 0) {
+                detail.setIssuedQtyA(bomQtyA.add(extA).add(ttlExt));
+            } else {
+                detail.setIssuedQtyA(bomQtyA.add(extA));
+            }
+            if (bomQtyB.compareTo(topQty) == 0) {
+                detail.setIssuedQtyB(bomQtyB.add(extB).add(ttlExt));
+            } else {
+                detail.setIssuedQtyB(bomQtyB.add(extB));
+            }
+            if (bomQtyC.compareTo(topQty) == 0) {
+                detail.setIssuedQtyC(bomQtyC.add(extC).add(ttlExt));
+            } else {
+                detail.setIssuedQtyC(bomQtyC.add(extC));
+            }
+            if (bomQtyD.compareTo(topQty) == 0) {
+                detail.setIssuedQtyD(bomQtyD.add(extD).add(ttlExt));
+            } else {
+                detail.setIssuedQtyD(bomQtyD.add(extD));
+            }
+            if (bomQtyE.compareTo(topQty) == 0) {
+                detail.setIssuedQtyE(bomQtyE.add(extE).add(ttlExt));
+            } else {
+                detail.setIssuedQtyE(bomQtyE.add(extE));
+            }
+        }
+    }
+
+    private SIVDetailDTO qtyResetCombine(SIVDetailDTO detail) {
+        detail.setIssuedQty(detail.getBomPickQty() == null ? BigDecimal.ZERO : detail.getBomPickQty());
+        detail.setExtraQty(BigDecimal.ZERO);
+        detail.setIssuedQtyA(detail.getBomQtyA() == null ? BigDecimal.ZERO : detail.getBomQtyA());
+        detail.setIssuedQtyB(detail.getBomQtyB() == null ? BigDecimal.ZERO : detail.getBomQtyB());
+        detail.setIssuedQtyC(detail.getBomQtyC() == null ? BigDecimal.ZERO : detail.getBomQtyC());
+        detail.setIssuedQtyD(detail.getBomQtyD() == null ? BigDecimal.ZERO : detail.getBomQtyD());
+        detail.setIssuedQtyE(detail.getBomQtyE() == null ? BigDecimal.ZERO : detail.getBomQtyE());
+        return detail;
+    }
+
     private void checkRecValid(SIVDTO input) {
         if (input.getSubType().equals("N")) {
+            if (input.getSivType().equalsIgnoreCase("Combine")) {
+                if (StringUtils.isBlank(input.getProjNoA()) && StringUtils.isBlank(input.getProjNoB())) {
+                    throw new ServerException("At least two Project No are needed !");
+                }
+            }
+        } else {
             if (StringUtils.isNotBlank(input.getDocmNo()) || StringUtils.isNotBlank(input.getProjectNo())) {
                 ItemProjection itemProjection;
                 if (StringUtils.isNotBlank(input.getProjectNo())) {
@@ -1078,53 +1384,73 @@ public class SIVServiceImpl implements SIVService {
     }
 
     private void checkIfSivNoExist(UserProfile userProfile, SIVDTO input) {
+
         Optional<SIV> sivOptional = sivRepository.findSIVByCompanyCodeAndPlantNoAndSivNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), input.getSivNo());
-        String type = "SIV";
-        String subType;
-        if (input.getSubType().equals("M")) {
-            subType = "M";
+        if (input.getSubType().equals("N") && StringUtils.isNotBlank(input.getSivNoA())) {
+            if (sivOptional.isPresent()) {
+                throw new DuplicateException("SIV No. exists ! List of SIV NOs are updated. Please add the record again to confirm the change.");
+            }
         } else {
-            subType = input.getProjectNo().substring(0, 1);
-        }
+            String type = "SIV";
+            String subType;
+            if (input.getSubType().equals("M")) {
+                subType = "M";
+            } else {
+                subType = input.getProjectNo().substring(0, 1);
+            }
 
-        DocmNoProjection docmNo = docmNoRepository.getLastGeneratedNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), type, subType);
-        if (docmNo.getGeneratedNo() == null) {
-            throw new NotFoundException("Not found in DOCM_NO table for type SIV !");
-        }
+            DocmNoProjection docmNo = docmNoRepository.getLastGeneratedNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), type, subType);
+            if (docmNo.getGeneratedNo() == null) {
+                throw new NotFoundException("Not found in DOCM_NO table for type SIV !");
+            }
 
-        if (sivOptional.isPresent()) {
-            throw new DuplicateException("SIV No. exists ! SIV NO change from " + sivOptional.get().getSivNo() +
-                    " to " + docmNo.getGeneratedNo() + " Please add the record again to confirm the change.");
+            if (sivOptional.isPresent()) {
+                throw new DuplicateException("SIV No. exists ! SIV NO change from " + sivOptional.get().getSivNo() +
+                        " to " + docmNo.getGeneratedNo() + " Please add the record again to confirm the change.");
+            }
         }
     }
 
-    private void sivPostSaving(UserProfile userProfile, SIV input) {
+    private void sivPostSaving(UserProfile userProfile, SIV input, SIVDTO sivDto) {
 
         if (input.getSubType().equals("N")) {
-            BomprojProjection pickedStatus = bomprojRepository.getPickedStatus(userProfile.getCompanyCode(), userProfile.getPlantNo(), input.getProjectNo());
-            if (pickedStatus != null) {
-                if (!pickedStatus.getPickedStatus().equals("P") || StringUtils.isBlank(pickedStatus.getPickedStatus())) {
-                    bomprojRepository.updatePickedStatusSivNo(input.getSivNo(), input.getProjectNo());
-                } else {
-                    bomprojRepository.updateSivNo(input.getSivNo(), input.getProjectNo());
+            if (!sivDto.getSivType().equalsIgnoreCase("Combine")) {
+                BomprojProjection pickedStatus = bomprojRepository.getPickedStatus(userProfile.getCompanyCode(), userProfile.getPlantNo(), input.getProjectNo());
+                if (pickedStatus != null) {
+                    if (!pickedStatus.getPickedStatus().equals("P") || StringUtils.isBlank(pickedStatus.getPickedStatus())) {
+                        bomprojRepository.updatePickedStatusSivNo(input.getSivNo(), input.getProjectNo());
+                    } else {
+                        bomprojRepository.updateSivNo(input.getSivNo(), input.getProjectNo());
+                    }
                 }
             }
         }
 
         String type = "SIV";
-        String subType;
+        String subType = null;
+        DocmNoProjection updateDocmNo = null;
         if (input.getSubType().equals("M")) {
-            subType = "M";
+            subType = input.getSubType();
+            updateDocmNo = docmNoRepository.getLastGeneratedNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), type, subType);
         } else {
-            subType = input.getProjectNo().substring(0, 1);
+            if (sivDto.getSivType().equalsIgnoreCase("Combine")) {
+                if (StringUtils.isNotBlank(sivDto.getSivNoA()) || StringUtils.isNotBlank(sivDto.getSivNoB())) {
+                    subType = sivDto.getProjNoA().substring(0, 1);
+                    updateDocmNo = docmNoRepository.getSivGeneratedNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), type, subType);
+                }
+            } else {
+                subType = input.getProjectNo().substring(0, 1);
+                updateDocmNo = docmNoRepository.getLastGeneratedNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), type, subType);
+            }
         }
-        DocmNoProjection docmNo = docmNoRepository.getLastGeneratedNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), type, subType);
-        docmNoRepository.updateLastGeneratedNo(docmNo.getDocmNo(), userProfile.getCompanyCode(), userProfile.getPlantNo(), subType, type);
+        docmNoRepository.updateLastGeneratedNo(updateDocmNo.getDocmNo(), userProfile.getCompanyCode(), userProfile.getPlantNo(), subType, type);
     }
 
     private void populateAfterSaving(SIVDTO input, SIV saved) {
-        input.setId(saved.getId());
-        input.setVersion(saved.getVersion());
+        if (!input.getSivType().equalsIgnoreCase("Combine")) {
+            input.setId(saved.getId());
+            input.setVersion(saved.getVersion());
+        }
     }
 
     @Override
@@ -1409,15 +1735,35 @@ public class SIVServiceImpl implements SIVService {
         }
         if (StringUtils.isNotBlank(projectNoB)) {
             cBombypj = bombypjRepository.projValidate(userProfile.getCompanyCode(), userProfile.getPlantNo(), projectNoB);
+            if (cBombypj == null) {
+                if (StringUtils.isNotBlank(projectNoB)) {
+                    throw new ServerException(String.format("%s is either an invaild project or no outstanding/enough picked qty!", projectNoB));
+                }
+            }
         }
         if (StringUtils.isNotBlank(projectNoC)) {
             cBombypj = bombypjRepository.projValidate(userProfile.getCompanyCode(), userProfile.getPlantNo(), projectNoC);
+            if (cBombypj == null) {
+                if (StringUtils.isNotBlank(projectNoC)) {
+                    throw new ServerException(String.format("%s is either an invaild project or no outstanding/enough picked qty!", projectNoC));
+                }
+            }
         }
         if (StringUtils.isNotBlank(projectNoD)) {
             cBombypj = bombypjRepository.projValidate(userProfile.getCompanyCode(), userProfile.getPlantNo(), projectNoD);
+            if (cBombypj == null) {
+                if (StringUtils.isNotBlank(projectNoD)) {
+                    throw new ServerException(String.format("%s is either an invaild project or no outstanding/enough picked qty!", projectNoD));
+                }
+            }
         }
         if (StringUtils.isNotBlank(projectNoE)) {
             cBombypj = bombypjRepository.projValidate(userProfile.getCompanyCode(), userProfile.getPlantNo(), projectNoE);
+            if (cBombypj == null) {
+                if (StringUtils.isNotBlank(projectNoE)) {
+                    throw new ServerException(String.format("%s is either an invaild project or no outstanding/enough picked qty!", projectNoE));
+                }
+            }
         }
 
         if (StringUtils.isNotBlank(projectNoA)) {
@@ -1427,36 +1773,67 @@ public class SIVServiceImpl implements SIVService {
             if (StringUtils.isNotBlank(projectNoC) && projectNoC != projectNoA && !projectNoA.substring(0, 1).equals(projectNoC.substring(0, 1))) {
                 throw new ServerException(String.format("%s is not same project type with %s", projectNoC, projectNoA));
             }
+            if (StringUtils.isNotBlank(projectNoC) && projectNoC != projectNoB && !projectNoB.substring(0, 1).equals(projectNoC.substring(0, 1))) {
+                throw new ServerException(String.format("%s is not same project type with %s", projectNoC, projectNoB));
+            }
             if (StringUtils.isNotBlank(projectNoD) && projectNoD != projectNoA && !projectNoA.substring(0, 1).equals(projectNoD.substring(0, 1))) {
                 throw new ServerException(String.format("%s is not same project type with %s", projectNoD, projectNoA));
+            }
+            if (StringUtils.isNotBlank(projectNoD) && projectNoD != projectNoC && !projectNoC.substring(0, 1).equals(projectNoD.substring(0, 1))) {
+                throw new ServerException(String.format("%s is not same project type with %s", projectNoD, projectNoC));
+            }
+            if (StringUtils.isNotBlank(projectNoD) && projectNoD != projectNoB && !projectNoB.substring(0, 1).equals(projectNoD.substring(0, 1))) {
+                throw new ServerException(String.format("%s is not same project type with %s", projectNoD, projectNoB));
             }
             if (StringUtils.isNotBlank(projectNoE) && projectNoE != projectNoA && !projectNoA.substring(0, 1).equals(projectNoE.substring(0, 1))) {
                 throw new ServerException(String.format("%s is not same project type with %s", projectNoE, projectNoA));
             }
+            if (StringUtils.isNotBlank(projectNoE) && projectNoE != projectNoD && !projectNoD.substring(0, 1).equals(projectNoE.substring(0, 1))) {
+                throw new ServerException(String.format("%s is not same project type with %s", projectNoE, projectNoD));
+            }
+            if (StringUtils.isNotBlank(projectNoE) && projectNoE != projectNoB && !projectNoB.substring(0, 1).equals(projectNoE.substring(0, 1))) {
+                throw new ServerException(String.format("%s is not same project type with %s", projectNoE, projectNoB));
+            }
+            if (StringUtils.isNotBlank(projectNoE) && projectNoE != projectNoC && !projectNoC.substring(0, 1).equals(projectNoE.substring(0, 1))) {
+                throw new ServerException(String.format("%s is not same project type with %s", projectNoE, projectNoC));
+            }
         }
 
-        if (cBombypj == null) {
+        if (StringUtils.isNotBlank(projectNoA)) {
+
             if (StringUtils.isNotBlank(projectNoB)) {
-                throw new ServerException(String.format("%s is either an invaild project or no outstanding/enough picked qty!", projectNoB));
+                if (StringUtils.equals(projectNoA, projectNoB)) {
+                    throw new ServerException(String.format("Duplicate project, %s , found!", projectNoB));
+                }
             }
             if (StringUtils.isNotBlank(projectNoC)) {
-                throw new ServerException(String.format("%s is either an invaild project or no outstanding/enough picked qty!", projectNoC));
+                if (StringUtils.equals(projectNoC, projectNoB)) {
+                    throw new ServerException(String.format("Duplicate project, %s , found!", projectNoC));
+                } else if (StringUtils.equals(projectNoC, projectNoA)) {
+                    throw new ServerException(String.format("Duplicate project, %s , found!", projectNoC));
+                }
             }
             if (StringUtils.isNotBlank(projectNoD)) {
-                throw new ServerException(String.format("%s is either an invaild project or no outstanding/enough picked qty!", projectNoD));
+                if (StringUtils.equals(projectNoD, projectNoC)) {
+                    throw new ServerException(String.format("Duplicate project, %s , found!", projectNoD));
+                } else if (StringUtils.equals(projectNoD, projectNoB)) {
+                    throw new ServerException(String.format("Duplicate project, %s , found!", projectNoD));
+                } else if (StringUtils.equals(projectNoD, projectNoA)) {
+                    throw new ServerException(String.format("Duplicate project, %s , found!", projectNoD));
+                }
             }
             if (StringUtils.isNotBlank(projectNoE)) {
-                throw new ServerException(String.format("%s is either an invaild project or no outstanding/enough picked qty!", projectNoE));
+                if (StringUtils.equals(projectNoE, projectNoD)) {
+                    throw new ServerException(String.format("Duplicate project, %s , found!", projectNoE));
+                } else if (StringUtils.equals(projectNoE, projectNoC)) {
+                    throw new ServerException(String.format("Duplicate project, %s , found!", projectNoE));
+                } else if (StringUtils.equals(projectNoE, projectNoB)) {
+                    throw new ServerException(String.format("Duplicate project, %s , found!", projectNoE));
+                } else if (StringUtils.equals(projectNoE, projectNoA)) {
+                    throw new ServerException(String.format("Duplicate project, %s , found!", projectNoE));
+                }
             }
-        }
 
-        if (StringUtils.isNotBlank(projectNoA)) {
-            if (projectNoA.equals(projectNoB) || projectNoA.equals(projectNoC) || projectNoA.equals(projectNoD) || projectNoA.equals(projectNoE)) {
-                throw new ServerException(String.format("Duplicate project, %s, found!", projectNoA));
-            }
-        }
-
-        if (StringUtils.isNotBlank(projectNoA)) {
             if (StringUtils.isNotBlank(projectNoB)) {
                 projectNoB = projectNoB;
             } else if (StringUtils.isNotBlank(projectNoC)) {
@@ -1574,6 +1951,7 @@ public class SIVServiceImpl implements SIVService {
             }
 
             listDet = populateSivDetCombine(userProfile, input);
+
         }
 
         return SIVDTO.builder().projNoA(projectNoA).projNoB(projectNoB)
@@ -1585,6 +1963,7 @@ public class SIVServiceImpl implements SIVService {
                 .sivNoD(sivNoD)
                 .sivNoE(sivNoE)
                 .sivDetails(listDet).build();
+
     }
 
     private Set<SIVDetailDTO> populateSivDetCombine(UserProfile userProfile, SIVDTO input) {
@@ -1595,37 +1974,36 @@ public class SIVServiceImpl implements SIVService {
 
         Integer seqNo = 1;
         for (BombypjProjection rec : populateDetComb) {
-            List<ItemBatchProjection> checkBatcQoh = itemBatcRepository.cBatch(userProfile.getCompanyCode(), userProfile.getPlantNo(),
+            ItemBatchProjection checkBatcQoh = itemBatcRepository.cBatch(userProfile.getCompanyCode(), userProfile.getPlantNo(),
                     rec.getAlternate(), rec.getTtlSivQty());
-            for (ItemBatchProjection recIBatc : checkBatcQoh) {
-                if (checkBatcQoh != null) {
-                    sivDetails.add(SIVDetailDTO.builder()
-                            .seqNo(seqNo++)
-                            .itemType(0)
-                            .itemNo(rec.getAlternate())
-                            .partNo(rec.getPartNo())
-                            .loc(rec.getLoc())
-                            .uom(rec.getUom())
-                            .batchNo(recIBatc.getBatchNo())
-                            .batchLoc(recIBatc.getBatchNo() + "/" + rec.getLoc())
-                            .batchQty(recIBatc.getQoh())
-                            .issuedQty(rec.getTtlSivQty())
-                            .extraQty(BigDecimal.ZERO)
-                            .issuedPrice(rec.getStdMaterial())
-                            .issuedQtyA(rec.getPaQty())
-                            .issuedQtyB(rec.getPbQty())
-                            .issuedQtyC(rec.getPcQty())
-                            .issuedQtyD(rec.getPdQty())
-                            .issuedQtyE(rec.getPeQty())
-                            .bomPickQty(rec.getTtlSivQty())
-                            .bomQtyA(rec.getPaQty())
-                            .bomQtyB(rec.getPbQty())
-                            .bomQtyC(rec.getPcQty())
-                            .bomQtyD(rec.getPdQty())
-                            .bomQtyE(rec.getPeQty())
-                            .remarks(rec.getPartNo()).build());
-                }
+            if (checkBatcQoh != null) {
+                sivDetails.add(SIVDetailDTO.builder()
+                        .seqNo(seqNo++)
+                        .itemType(0)
+                        .itemNo(rec.getAlternate())
+                        .partNo(rec.getPartNo())
+                        .loc(rec.getLoc())
+                        .uom(rec.getUom())
+                        /*.batchNo(recIBatc.getBatchNo())
+                        .batchLoc(recIBatc.getBatchNo() + "/" + rec.getLoc())
+                        .batchQty(recIBatc.getQoh())*/
+                        .issuedQty(rec.getTtlSivQty())
+                        .extraQty(BigDecimal.ZERO)
+                        .issuedPrice(rec.getStdMaterial())
+                        .issuedQtyA(rec.getPaQty())
+                        .issuedQtyB(rec.getPbQty())
+                        .issuedQtyC(rec.getPcQty())
+                        .issuedQtyD(rec.getPdQty())
+                        .issuedQtyE(rec.getPeQty())
+                        .bomPickQty(rec.getTtlSivQty())
+                        .bomQtyA(rec.getPaQty())
+                        .bomQtyB(rec.getPbQty())
+                        .bomQtyC(rec.getPcQty())
+                        .bomQtyD(rec.getPdQty())
+                        .bomQtyE(rec.getPeQty())
+                        .remarks(rec.getPartNo()).build());
             }
+
         }
 
         return sivDetails;
@@ -1998,6 +2376,7 @@ public class SIVServiceImpl implements SIVService {
                     iBatch.setItemNo(itemNo);
                     iBatch.setBatchDesc(ib.getBatchDesc());
                     iBatch.setBatchNoLoc(ib.getBatchNoLoc());
+                    iBatch.setBatchNo(ib.getBatchNo());
                     listPopulateBatch.add(iBatch);
                 }
             }
