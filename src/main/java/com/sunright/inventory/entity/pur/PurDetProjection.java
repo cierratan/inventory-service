@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.util.Date;
 
 public interface PurDetProjection {
-    int getSeqNo();
+    Integer getSeqNo();
     String getPartNo();
     String getItemNo();
     Integer getRecSeq();
@@ -21,8 +21,8 @@ public interface PurDetProjection {
     String getInvUom();
     BigDecimal getStdPackQty();
     String getPoNo();
-    long getCountItemNo();
-    long getCountPartNo();
+    Long getCountItemNo();
+    Long getCountPartNo();
     String getDescription();
     String getMslCode();
     BigDecimal getRlseQty();

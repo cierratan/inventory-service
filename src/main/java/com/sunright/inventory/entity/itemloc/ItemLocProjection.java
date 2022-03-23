@@ -11,8 +11,7 @@ public interface ItemLocProjection {
     BigDecimal getEoh();
     Long getRecCnt();
     String getLoc();
-    BigDecimal getBatchNo();
-    BigDecimal getCostVariance();
+    Long getBatchNo();
     BigDecimal getOrderQty();
     BigDecimal getPickedQty();
     BigDecimal getYtdReceipt();

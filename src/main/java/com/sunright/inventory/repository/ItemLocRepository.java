@@ -1,5 +1,6 @@
 package com.sunright.inventory.repository;
 
+import com.sunright.inventory.entity.bombypj.BombypjProjection;
 import com.sunright.inventory.entity.itemloc.ItemLoc;
 import com.sunright.inventory.entity.itemloc.ItemLocProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -43,7 +44,8 @@ public interface ItemLocRepository extends JpaRepository<ItemLoc, Long> {
 
     @Query("select distinct coalesce(l.qoh,0) as qoh, l.stdMaterial as stdMaterial, " +
             "(coalesce(l.qoh, 0) - (coalesce(l.prodnResv, 0) - " +
-            "coalesce((select sum(d.resvQty - coalesce(d.accumRecdQty,0)) from BOMBYPJ_DET d " +
+            "coalesce((select sum(d.resvQty - coalesce(d.accumRecdQty,0)) " +
+            "from BOMBYPJ_DET d " +
             "where d.id.projectNo = d.id.assemblyNo and d.resvQty <> coalesce(d.accumRecdQty,0) " +
             "and coalesce(d.status,'O') not in ('C') and d.tranType = 'PRJ'), 0)) - coalesce(l.rpcResv, 0) - coalesce(l.mrvResv, 0)) as eoh " +
             "from ITEMLOC l left join BOMBYPJ_DET b " +
@@ -109,16 +111,16 @@ public interface ItemLocRepository extends JpaRepository<ItemLoc, Long> {
             "i.lastTranDate = :lastTranDate WHERE i.companyCode = :companyCode " +
             "AND i.plantNo = :plantNo AND i.itemNo = :itemNo AND i.loc = :loc")
     void updateStdMatCostVarianceYtdRecLTranDate(BigDecimal newStdMat, BigDecimal costVariance, BigDecimal ytdReceipt,
-                                            Date lastTranDate, String companyCode,
-                                            Integer plantNo, String itemNo, String loc);
+                                                 Date lastTranDate, String companyCode,
+                                                 Integer plantNo, String itemNo, String loc);
 
     @Modifying
     @Query("UPDATE ITEMLOC i set i.stdMaterial = :newStdMat, i.ytdReceipt = :ytdReceipt, " +
             "i.lastTranDate = :lastTranDate WHERE i.companyCode = :companyCode " +
             "AND i.plantNo = :plantNo AND i.itemNo = :itemNo AND i.loc <> :loc")
     void updateStdMatYtdRecLTranDateWithNotEqualLoc(BigDecimal newStdMat, BigDecimal ytdReceipt,
-                                                 Date lastTranDate, String companyCode,
-                                                 Integer plantNo, String itemNo, String loc);
+                                                    Date lastTranDate, String companyCode,
+                                                    Integer plantNo, String itemNo, String loc);
 
     @Modifying
     @Query("UPDATE ITEMLOC i set i.qoh = :qoh WHERE i.companyCode = :companyCode " +
@@ -136,20 +138,21 @@ public interface ItemLocRepository extends JpaRepository<ItemLoc, Long> {
     void updatePickedQtyProdnResv(BigDecimal pickedQtyUpdate, BigDecimal prodnResvUpdate, String companyCode,
                                   Integer plantNo, String itemNo, String loc);
 
-    @Query("select ib.id as id, ib.qoh as qoh, ib.stdMaterial as stdMaterial, coalesce(ib.batchNo,0) as batchNo from ITEMLOC ib " +
-            "where ib.companyCode = :companyCode and ib.plantNo = :plantNo and ib.itemNo = :itemNo and ib.loc = :loc")
+    @Query("select ib.id as id, ib.qoh as qoh, ib.stdMaterial as stdMaterial, coalesce(ib.batchNo,0) as batchNo, ib.prodnResv as prodnResv " +
+            "from ITEMLOC ib where ib.companyCode = :companyCode and ib.plantNo = :plantNo and ib.itemNo = :itemNo and ib.loc = :loc")
     ItemLocProjection itemLocByItemNo(String companyCode, Integer plantNo, String itemNo, String loc);
 
     @Query("select coalesce(ib.ytdReceipt,0) as ytdReceipt, coalesce(ib.qoh,0) as qoh, " +
             "coalesce(ib.pickedQty,0) as pickedQty, coalesce(ib.prodnResv,0) as prodnResv, " +
-            "coalesce(ib.ytdIssue,0) as ytdIssue, coalesce(ib.ytdProd,0) as ytdProd from ITEMLOC ib " +
+            "coalesce(ib.ytdIssue,0) as ytdIssue, coalesce(ib.ytdProd,0) as ytdProd " +
+            "from ITEMLOC ib " +
             "where ib.companyCode = :companyCode and ib.plantNo = :plantNo and ib.itemNo = :itemNo and ib.loc = :loc")
     ItemLocProjection itemLocInfo(String companyCode, Integer plantNo, String itemNo, String loc);
 
     @Modifying
     @Query("UPDATE ITEMLOC i set i.prodnResv = :prodnResv, i.pickedQty = :pickedQty, i.qoh = :qoh, i.ytdProd = :ytdProd, " +
-            "i.ytdIssue = :ytdIssue, i.lastTranDate = :lastTranDate WHERE i.companyCode = :companyCode " +
-            "AND i.plantNo = :plantNo AND i.itemNo = :itemNo AND i.loc = :loc")
+            "i.ytdIssue = :ytdIssue, i.lastTranDate = :lastTranDate " +
+            "WHERE i.companyCode = :companyCode AND i.plantNo = :plantNo AND i.itemNo = :itemNo AND i.loc = :loc")
     void updateProdnResvPickedQtyQohYtdProdTydIssueLTranDate(BigDecimal prodnResv, BigDecimal pickedQty, BigDecimal qoh,
                                                              BigDecimal ytdProd, BigDecimal ytdIssue, Date lastTranDate, String companyCode,
                                                              Integer plantNo, String itemNo, String loc);
@@ -190,4 +193,17 @@ public interface ItemLocRepository extends JpaRepository<ItemLoc, Long> {
             "   ITEMLOC l on l.COMPANY_CODE = il.COMPANY_CODE and l.PLANT_NO = il.PLANT_NO and l.ITEM_NO = il.ITEM_NO and l.LOC = il.LOC " +
             "WHERE il.COMPANY_CODE = :companyCode and il.PLANT_NO = :plantNo and il.ITEM_NO = :itemNo and il.LOC = :loc", nativeQuery = true)
     ItemLocProjection findItemLocWithRecCnt(String companyCode, Integer plantNo, String itemNo, String loc);
+
+    @Modifying
+    @Query("UPDATE ITEMLOC i set i.prodnResv = 0 " +
+            "WHERE i.companyCode = :companyCode AND i.plantNo = :plantNo AND i.itemNo = :itemNo AND i.loc = :loc " +
+            "AND i.prodnResv < 0")
+    void updateProdnResv(String companyCode, Integer plantNo, String itemNo, String loc);
+
+    @Query("SELECT COALESCE(i.prodnResv,0) as prodnResv, SUM(COALESCE(bpj.resvQty,0)) as resvQty " +
+            "FROM ITEMLOC i LEFT JOIN BOMBYPJ bpj " +
+            "ON bpj.id.alternate = i.itemNo " +
+            "WHERE bpj.id.companyCode = :companyCode AND bpj.id.plantNo = :plantNo AND COALESCE(bpj.resvQty,0) <> 0 " +
+            "AND i.companyCode = :companyCode AND i.plantNo = :plantNo AND i.itemNo = :itemNo GROUP BY i.prodnResv")
+    ItemLocProjection prodnResv(String companyCode, Integer plantNo, String itemNo);
 }

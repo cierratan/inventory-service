@@ -154,4 +154,13 @@ public interface ItemRepository extends JpaRepository<Item, Long>, JpaSpecificat
 
     @Query("SELECT i.itemNo as itemNo FROM ITEM i")
     List<ItemProjection> getAllItemNo();
+
+    @Query("SELECT i.partNo as partNo FROM ITEM i WHERE i.companyCode = :companyCode AND i.plantNo = :plantNo AND i.itemNo = :itemNo")
+    ItemProjection foundPartNoByItemNo(String companyCode, Integer plantNo, String itemNo);
+
+    @Modifying
+    @Query("UPDATE ITEM i set i.prodnResv = 0 " +
+            "WHERE i.companyCode = :companyCode AND i.plantNo = :plantNo AND i.itemNo = :itemNo AND i.loc = :loc " +
+            "AND i.prodnResv < 0")
+    void updateProdnResv(String companyCode, Integer plantNo, String itemNo, String loc);
 }

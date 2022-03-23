@@ -1,6 +1,5 @@
 package com.sunright.inventory.entity.product;
 
-import com.sunright.inventory.entity.pur.PurId;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 

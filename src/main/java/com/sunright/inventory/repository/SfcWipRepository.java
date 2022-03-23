@@ -19,8 +19,7 @@ public interface SfcWipRepository extends JpaRepository<SfcWip, SfcWipId>, JpaSp
     SfcWipProjection wipCur(String projectNo, String partNo);
 
     @Query("SELECT s.id.projectNoSub as projectNoSub, s.id.pcbPartNo as pcbPartNo, s.pcbQty as pcbQty " +
-            "FROM SFC_WIP s " +
-            "WHERE s.id.projectNoSub = :projectNo and s.id.pcbPartNo = :partNo and s.status NOT IN ('C', 'V') ")
+            "FROM SFC_WIP s WHERE s.id.projectNoSub = :projectNo and s.id.pcbPartNo = :partNo and s.status NOT IN ('C', 'V')")
     SfcWipProjection wipCurWithStatusCheck(String projectNo, String partNo);
 
     @Modifying

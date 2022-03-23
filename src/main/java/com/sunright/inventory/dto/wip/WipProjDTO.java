@@ -19,5 +19,7 @@ public class WipProjDTO {
     private String projectNoSub;
     private String projectNo;
     private String orderNo;
+    private String type;
+    private String subType;
     private Set<WipProjDetail> wipProjDetails;
 }
