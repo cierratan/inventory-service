@@ -6,7 +6,6 @@ import com.sunright.inventory.dto.lov.DocmValueDTO;
 import com.sunright.inventory.dto.search.SearchRequest;
 import com.sunright.inventory.dto.search.SearchResult;
 import com.sunright.inventory.service.GrnService;
-import net.sf.jasperreports.engine.JRException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -14,10 +13,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.List;
 
@@ -39,8 +34,7 @@ public class GrnController {
     }
 
     @PostMapping("label")
-    public ResponseEntity<byte[]> label(@RequestBody GrnDTO input) throws SQLException,
-            JRException, FileNotFoundException {
+    public ResponseEntity<byte[]> label(@RequestBody GrnDTO input) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_PDF);
         headers.setContentDispositionFormData("filename", input.getGrnNo() + "_Label" + ".pdf");
@@ -48,8 +42,7 @@ public class GrnController {
     }
 
     @PostMapping("picked-list")
-    public ResponseEntity<byte[]> pickedList(@RequestBody GrnDTO input) throws SQLException,
-            JRException, FileNotFoundException {
+    public ResponseEntity<byte[]> pickedList(@RequestBody GrnDTO input) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_PDF);
         headers.setContentDispositionFormData("filename", input.getGrnNo() + "_PickList" + ".pdf");
@@ -57,8 +50,7 @@ public class GrnController {
     }
 
     @PostMapping("report")
-    public ResponseEntity<byte[]> report(@RequestBody GrnDTO input) throws SQLException,
-            JRException, IOException {
+    public ResponseEntity<byte[]> report(@RequestBody GrnDTO input) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_PDF);
         headers.setContentDispositionFormData("filename", input.getGrnNo() + "_Report" + ".pdf");
@@ -119,7 +111,7 @@ public class GrnController {
     }
 
     @PostMapping
-    public ResponseEntity<GrnDTO> create(@RequestBody GrnDTO grn) throws ParseException {
+    public ResponseEntity<GrnDTO> create(@RequestBody GrnDTO grn) {
         return new ResponseEntity<>(grnService.createGrn(grn), HttpStatus.CREATED);
     }
 
