@@ -49,6 +49,10 @@ import com.sunright.inventory.repository.lov.DefaultCodeDetailRepository;
 import com.sunright.inventory.service.GrnService;
 import com.sunright.inventory.util.QueryGenerator;
 import net.sf.jasperreports.engine.*;
+import net.sf.jasperreports.engine.export.JRPdfExporter;
+import net.sf.jasperreports.export.SimpleExporterInput;
+import net.sf.jasperreports.export.SimpleOutputStreamExporterOutput;
+import net.sf.jasperreports.export.SimplePdfExporterConfiguration;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.springframework.beans.BeanUtils;
@@ -60,11 +64,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.sql.DataSource;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -796,93 +800,109 @@ public class GrnServiceImpl implements GrnService {
     }
 
     @Override
-    public byte[] generatedReportGRN(GrnDTO input) throws SQLException, JRException {
+    public byte[] generatedReportGRN(GrnDTO input) {
 
-        UserProfile userProfile = UserProfileContext.getUserProfile();
-        // Fetching the .jrxml file from the resources folder.
-        InputStream resourceSubReport;
-        InputStream mainReport;
-        if (input.getSubType().equals("N")) {
-            resourceSubReport = this.getClass().getResourceAsStream("/reports/detail.jrxml");
-            mainReport = this.getClass().getResourceAsStream("/reports/header.jrxml");
-        } else {
-            resourceSubReport = this.getClass().getResourceAsStream("/reports/grn_manual_header.jrxml");
-            mainReport = this.getClass().getResourceAsStream("/reports/grn_manual_detail.jrxml");
-        }
-
-        // Compile the Jasper report from .jrxml to .jasper
-        JasperReport jasperSubReport = JasperCompileManager.compileReport(resourceSubReport);
-        JasperReport jasperMainReport = JasperCompileManager.compileReport(mainReport);
-        Map<String, Object> param = new HashMap<>();
-        // Adding the additional parameters to the pdf.
-        param.put("GRN_NO", input.getGrnNo());
-        param.put("SUB_TYPE", input.getSubType());
-        param.put("COMPANY_CODE", userProfile.getCompanyCode());
-        param.put("PLANT_NO", userProfile.getPlantNo());
-        param.put("SUB_REPORT", jasperSubReport);
-        // Fetching the inventoryuser from the data source.
-        Connection source = dataSource.getConnection();
-        // Filling the report with the data and additional parameters information.
-        JasperPrint jasperPrint = JasperFillManager.fillReport(jasperMainReport, param, source);
-        return JasperExportManager.exportReportToPdf(jasperPrint);
-    }
-
-    @Override
-    public byte[] generatedPickedListGRN(GrnDTO input) throws SQLException, JRException {
-
-        UserProfile userProfile = UserProfileContext.getUserProfile();
-        // get projectNo and orderNo
-        List<BombypjDetailProjection> projectOrderNo = bombypjDetailRepository.getProjectOrderNo(userProfile.getCompanyCode(),
-                userProfile.getPlantNo(), input.getGrnNo());
-        // Fetching the .jrxml file from the resources folder.
-        InputStream resourceSubReport = this.getClass().getResourceAsStream("/reports/header_pick_list.jrxml");
-        InputStream resourceMainReport = this.getClass().getResourceAsStream("/reports/pick_list.jrxml");
-        // Compile the Jasper report from .jrxml to .jasper
-        JasperReport jasperSubReport = JasperCompileManager.compileReport(resourceSubReport);
-        JasperReport jasperMainReport = JasperCompileManager.compileReport(resourceMainReport);
-        Map<String, Object> param = new HashMap<>();
-        byte[] jasperReport = null;
-        for (BombypjDetailProjection rec : projectOrderNo) {
-            param.put("USERNAME", userProfile.getUsername());
+        try {
+            UserProfile userProfile = UserProfileContext.getUserProfile();
+            // Fetching the .jrxml file from the resources folder.
+            InputStream resourceSubReport;
+            InputStream mainReport;
+            if (input.getSubType().equals("N")) {
+                resourceSubReport = this.getClass().getResourceAsStream("/reports/detail.jrxml");
+                mainReport = this.getClass().getResourceAsStream("/reports/header.jrxml");
+            } else {
+                resourceSubReport = this.getClass().getResourceAsStream("/reports/grn_manual_header.jrxml");
+                mainReport = this.getClass().getResourceAsStream("/reports/grn_manual_detail.jrxml");
+            }
+            // Compile the Jasper report from .jrxml to .jasper
+            JasperReport jasperSubReport = JasperCompileManager.compileReport(resourceSubReport);
+            JasperReport jasperMainReport = JasperCompileManager.compileReport(mainReport);
+            Map<String, Object> param = new HashMap<>();
+            // Adding the additional parameters to the pdf.
+            param.put("GRN_NO", input.getGrnNo());
+            param.put("SUB_TYPE", input.getSubType());
             param.put("COMPANY_CODE", userProfile.getCompanyCode());
             param.put("PLANT_NO", userProfile.getPlantNo());
-            if (projectOrderNo != null) {
-                param.put("PROJECT_NO", rec.getProjectNo());
-                param.put("ORDER_NO", rec.getOrderNo());
-            } else {
-                param.put("PROJECT_NO", "");
-                param.put("ORDER_NO", "");
-            }
             param.put("SUB_REPORT", jasperSubReport);
+            // Fetching the inventoryuser from the data source.
             Connection source = dataSource.getConnection();
+            // Filling the report with the data and additional parameters information.
             JasperPrint jasperPrint = JasperFillManager.fillReport(jasperMainReport, param, source);
-            JasperPrint jasperPrint1 = JasperFillManager.fillReport(jasperMainReport, param, source);
-            List<JRPrintPage> pages = jasperPrint1.getPages();
-            if (pages.size() > 1) {
-                for (int j = 0; j < pages.size(); j++) {
-                    JRPrintPage object = (JRPrintPage) pages.get(j);
-                    jasperPrint.addPage(object);
-                }
-            }
-            jasperReport = JasperExportManager.exportReportToPdf(jasperPrint);
+            return JasperExportManager.exportReportToPdf(jasperPrint);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new ServerException("Error Generated Report GRN");
         }
-        return jasperReport;
     }
 
     @Override
-    public byte[] generatedLabelGRN(GrnDTO input) throws SQLException, JRException {
+    public byte[] generatedPickedListGRN(GrnDTO input) {
 
-        UserProfile userProfile = UserProfileContext.getUserProfile();
-        InputStream resource = this.getClass().getResourceAsStream("/reports/label.jrxml");
-        // Compile the Jasper report from .jrxml to .jasper
-        JasperReport jasperReport = JasperCompileManager.compileReport(resource);
-        Map<String, Object> param = new HashMap<>();
-        param.put("GRN_NO", input.getGrnNo());
-        param.put("COMPANY_CODE", userProfile.getCompanyCode());
-        param.put("PLANT_NO", userProfile.getPlantNo());
-        Connection source = dataSource.getConnection();
-        JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, param, source);
-        return JasperExportManager.exportReportToPdf(jasperPrint);
+        try {
+            UserProfile userProfile = UserProfileContext.getUserProfile();
+            // get projectNo and orderNo
+            List<BombypjDetailProjection> projectOrderNo = bombypjDetailRepository.getProjectOrderNo(userProfile.getCompanyCode(),
+                    userProfile.getPlantNo(), input.getGrnNo());
+            // Fetching the .jrxml file from the resources folder.
+            InputStream resourceSubReport = this.getClass().getResourceAsStream("/reports/header_pick_list.jrxml");
+            InputStream resourceMainReport = this.getClass().getResourceAsStream("/reports/pick_list.jrxml");
+            // Compile the Jasper report from .jrxml to .jasper
+            JasperReport jasperSubReport = JasperCompileManager.compileReport(resourceSubReport);
+            JasperReport jasperMainReport = JasperCompileManager.compileReport(resourceMainReport);
+            Map<String, Object> param = new HashMap<>();
+            List<JasperPrint> jasperPrintList = new ArrayList<JasperPrint>();
+            for (BombypjDetailProjection rec : projectOrderNo) {
+                param.put("USERNAME", userProfile.getUsername());
+                param.put("COMPANY_CODE", userProfile.getCompanyCode());
+                param.put("PLANT_NO", userProfile.getPlantNo());
+                if (projectOrderNo != null) {
+                    param.put("PROJECT_NO", rec.getProjectNo());
+                    param.put("ORDER_NO", rec.getOrderNo());
+                } else {
+                    param.put("PROJECT_NO", "");
+                    param.put("ORDER_NO", "");
+                }
+                param.put("SUB_REPORT", jasperSubReport);
+                Connection source = dataSource.getConnection();
+                JasperPrint jasperPrint = JasperFillManager.fillReport(jasperMainReport, param, source);
+                jasperPrintList.add(jasperPrint);
+            }
+            ByteArrayOutputStream pdfOutputStream = new ByteArrayOutputStream();
+            // Generating report using List<JasperPrint>
+            JRPdfExporter exporter = new JRPdfExporter();
+            exporter.setExporterInput(SimpleExporterInput.getInstance(jasperPrintList));
+            exporter.setExporterOutput(new SimpleOutputStreamExporterOutput(pdfOutputStream));
+            SimplePdfExporterConfiguration configuration = new SimplePdfExporterConfiguration();
+            configuration.setCreatingBatchModeBookmarks(true);
+            exporter.setConfiguration(configuration);
+            exporter.exportReport();
+            byte[] jasperReport = pdfOutputStream.toByteArray();
+            return jasperReport;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new ServerException("Error Generated Picked List GRN");
+        }
+    }
+
+    @Override
+    public byte[] generatedLabelGRN(GrnDTO input) {
+
+        try {
+            UserProfile userProfile = UserProfileContext.getUserProfile();
+            InputStream resource = this.getClass().getResourceAsStream("/reports/label.jrxml");
+            // Compile the Jasper report from .jrxml to .jasper
+            JasperReport jasperReport = JasperCompileManager.compileReport(resource);
+            Map<String, Object> param = new HashMap<>();
+            param.put("GRN_NO", input.getGrnNo());
+            param.put("COMPANY_CODE", userProfile.getCompanyCode());
+            param.put("PLANT_NO", userProfile.getPlantNo());
+            Connection source = dataSource.getConnection();
+            JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, param, source);
+            return JasperExportManager.exportReportToPdf(jasperPrint);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new ServerException("Error Generated Label GRN");
+        }
     }
 
     @Override
@@ -1059,44 +1079,49 @@ public class GrnServiceImpl implements GrnService {
     }
 
     @Override
-    public GrnDTO createGrn(GrnDTO input) throws ParseException {
-        UserProfile userProfile = UserProfileContext.getUserProfile();
-        Grn grn = new Grn();
-        input.setRecdDate(new Timestamp(System.currentTimeMillis()));
-        BeanUtils.copyProperties(input, grn);
-        grn.setCompanyCode(userProfile.getCompanyCode());
-        grn.setPlantNo(userProfile.getPlantNo());
-        grn.setStatus(Status.ACTIVE);
-        grn.setCreatedBy(userProfile.getUsername());
-        grn.setCreatedAt(ZonedDateTime.now());
-        grn.setUpdatedBy(userProfile.getUsername());
-        grn.setUpdatedAt(ZonedDateTime.now());
-        preSavingGrn(input);
-        Grn saved = grnRepository.save(grn);
-        if (!CollectionUtils.isEmpty(input.getGrnDetails())) {
-            for (GrnDetDTO detail : input.getGrnDetails()) {
-                detail.setRecdDate(new Timestamp(System.currentTimeMillis()));
-                GrnDet grnDetail = new GrnDet();
-                checkBeforeSaving(input);
-                if (input.getSubType().equalsIgnoreCase("M")) {
-                    checkRecValidForGrnManual(userProfile, input, detail);
+    public GrnDTO createGrn(GrnDTO input) {
+        try {
+            UserProfile userProfile = UserProfileContext.getUserProfile();
+            Grn grn = new Grn();
+            input.setRecdDate(new Timestamp(System.currentTimeMillis()));
+            BeanUtils.copyProperties(input, grn);
+            grn.setCompanyCode(userProfile.getCompanyCode());
+            grn.setPlantNo(userProfile.getPlantNo());
+            grn.setStatus(Status.ACTIVE);
+            grn.setCreatedBy(userProfile.getUsername());
+            grn.setCreatedAt(ZonedDateTime.now());
+            grn.setUpdatedBy(userProfile.getUsername());
+            grn.setUpdatedAt(ZonedDateTime.now());
+            preSavingGrn(input);
+            Grn saved = grnRepository.save(grn);
+            if (!CollectionUtils.isEmpty(input.getGrnDetails())) {
+                for (GrnDetDTO detail : input.getGrnDetails()) {
+                    detail.setRecdDate(new Timestamp(System.currentTimeMillis()));
+                    GrnDet grnDetail = new GrnDet();
+                    checkBeforeSaving(input);
+                    if (input.getSubType().equalsIgnoreCase("M")) {
+                        checkRecValidForGrnManual(userProfile, input, detail);
+                    }
+                    BeanUtils.copyProperties(detail, grnDetail);
+                    grnDetail.setCompanyCode(userProfile.getCompanyCode());
+                    grnDetail.setPlantNo(userProfile.getPlantNo());
+                    grnDetail.setGrn(saved);
+                    grnDetRepository.save(grnDetail);
+                    grnDetailPostSaving(saved, grnDetail, input, detail);
                 }
-                BeanUtils.copyProperties(detail, grnDetail);
-                grnDetail.setCompanyCode(userProfile.getCompanyCode());
-                grnDetail.setPlantNo(userProfile.getPlantNo());
-                grnDetail.setGrn(saved);
-                grnDetRepository.save(grnDetail);
-                grnDetailPostSaving(saved, grnDetail, input, detail);
             }
-        }
 
-        grnPostSaving(userProfile, saved);
-        if (input.getSubType().equals("N")) {
-            closePO(userProfile, saved);
-        }
-        populateAfterSaving(input, saved);
+            grnPostSaving(userProfile, saved);
+            if (input.getSubType().equals("N")) {
+                closePO(userProfile, saved);
+            }
+            populateAfterSaving(input, saved);
 
-        return input;
+            return input;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new ServerException("Error Created GRN !");
+        }
     }
 
     private void checkRecValidForGrnManual(UserProfile userProfile, GrnDTO input, GrnDetDTO detail) {
