@@ -14,4 +14,8 @@ public interface ProductRepository extends JpaRepository<Product, ProductId>, Jp
     @Query("SELECT p.wipTracking as wipTracking FROM PRODUCT p WHERE p.id.companyCode = :companyCode " +
             "AND p.id.plantNo = :plantNo AND p.id.type = :type AND p.id.subType = :subType")
     ProductProjection wipTrackCur(String companyCode, Integer plantNo, String type, String subType);
+
+    @Query("SELECT p.wipTracking as wipTracking FROM PRODUCT p JOIN WIPPROJ w ON p.id.type = w.type AND p.id.subType = w.subType " +
+            "WHERE p.id.companyCode = :companyCode AND p.id.plantNo = :plantNo AND w.id.projectNoSub = :projectNoSub")
+    ProductProjection wipTrack(String companyCode, Integer plantNo, String projectNoSub);
 }

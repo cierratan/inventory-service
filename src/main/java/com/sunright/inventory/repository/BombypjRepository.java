@@ -28,8 +28,8 @@ public interface BombypjRepository extends JpaRepository<Bombypj, BombypjId>, Jp
             "b.id.assemblyNo as assemblyNo, b.id.component as component, b.id.alternate as alternate, b.id.projectNo as projectNo, " +
             "b.resvQty as resvQty, b.shortQty as shortQty, b.pickedQty as pickedQty, b.issuedQty as issuedQty " +
             "FROM BOMBYPJ b " +
-            "WHERE b.id.companyCode = :companyCode AND b.id.plantNo = :plantNo" +
-            "   AND b.id.projectNo = :projectNo AND b.id.alternate = :alternate ")
+            "WHERE b.id.companyCode = :companyCode AND b.id.plantNo = :plantNo " +
+            "AND b.id.projectNo = :projectNo AND b.id.alternate = :alternate ")
     BombypjProjection getBombypjInfo(String companyCode, Integer plantNo, String projectNo, String alternate);
 
     @Modifying
@@ -306,4 +306,15 @@ public interface BombypjRepository extends JpaRepository<Bombypj, BombypjId>, Jp
             "where (cntA + cntB + cntC + cntD + cntE) > 1", nativeQuery = true)
     List<BombypjProjection> sivCur(String companyCode, Integer plantNo, String projectNoA, String projectNoB, String projectNoC,
                                    String projectNoD, String projectNoE);
+
+    @Query("SELECT SUM(COALESCE(bpj.resvQty,0)) as resvQty FROM BOMBYPJ bpj WHERE bpj.id.companyCode = :companyCode " +
+            "AND bpj.id.plantNo = :plantNo AND COALESCE(bpj.resvQty,0) <> 0 AND bpj.id.alternate = :itemNo")
+    BombypjProjection bombypjResv(String companyCode, Integer plantNo, String itemNo);
+
+    @Modifying
+    @Query("UPDATE BOMBYPJ b set b.resvQty = :resvQty, b.issuedQty = :issuedQty, b.pickedQty = :pickedQty " +
+            "WHERE b.id.companyCode = :companyCode AND b.id.plantNo = :plantNo " +
+            "AND b.id.projectNo = :projectNo AND b.id.alternate = :itemNo")
+    void updateResvIssuedPickedQty(BigDecimal resvQty, BigDecimal issuedQty, BigDecimal pickedQty,
+                                   String companyCode, Integer plantNo, String projectNo, String itemNo);
 }

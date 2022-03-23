@@ -26,6 +26,7 @@ import com.sunright.inventory.entity.itemloc.ItemLocProjection;
 import com.sunright.inventory.entity.pr.PRDetailProjection;
 import com.sunright.inventory.entity.pr.PRProjection;
 import com.sunright.inventory.entity.product.ProductProjection;
+import com.sunright.inventory.entity.pur.PurDetProjection;
 import com.sunright.inventory.entity.sale.SaleDetailProjection;
 import com.sunright.inventory.entity.sale.SaleProjection;
 import com.sunright.inventory.entity.sfcwip.SfcWip;
@@ -43,7 +44,14 @@ import com.sunright.inventory.interceptor.UserProfileContext;
 import com.sunright.inventory.repository.*;
 import com.sunright.inventory.service.SIVService;
 import com.sunright.inventory.util.QueryGenerator;
-import net.sf.jasperreports.engine.*;
+import net.sf.jasperreports.engine.JasperCompileManager;
+import net.sf.jasperreports.engine.JasperFillManager;
+import net.sf.jasperreports.engine.JasperPrint;
+import net.sf.jasperreports.engine.JasperReport;
+import net.sf.jasperreports.engine.export.JRPdfExporter;
+import net.sf.jasperreports.export.SimpleExporterInput;
+import net.sf.jasperreports.export.SimpleOutputStreamExporterOutput;
+import net.sf.jasperreports.export.SimplePdfExporterConfiguration;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.springframework.beans.BeanUtils;
@@ -55,11 +63,11 @@ import org.springframework.util.CollectionUtils;
 
 import javax.sql.DataSource;
 import javax.transaction.Transactional;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -147,6 +155,9 @@ public class SIVServiceImpl implements SIVService {
     private PRRepository prRepository;
 
     @Autowired
+    private PurDetRepository purDetRepository;
+
+    @Autowired
     private QueryGenerator queryGenerator;
 
     @Override
@@ -155,7 +166,7 @@ public class SIVServiceImpl implements SIVService {
         UserProfile userProfile = UserProfileContext.getUserProfile();
 
         SIV siv = new SIV();
-        String entryTime = FastDateFormat.getInstance("kkmmss").format(System.currentTimeMillis());
+        String entryTime = FastDateFormat.getInstance("kkmmssss").format(System.currentTimeMillis());
         input.setEntryTime(entryTime);
         BeanUtils.copyProperties(input, siv);
         siv.setCompanyCode(userProfile.getCompanyCode());
@@ -231,42 +242,73 @@ public class SIVServiceImpl implements SIVService {
                     postSfc(userProfile, detail.getProjNoA(), detail.getItemNo(), detail.getIssuedQtyA());
                     postItemInv(userProfile, detail.getItemNo(), detail.getLoc(), detail.getIssuedQtyA(),
                             detail.getIssuedQtyA().subtract(detail.getBomQtyA()), detail.getBatchNo(),
-                            detail.getSivNoA(), detail.getProjNoA(), remarksCombine);
-                    postBombypj(userProfile, savedA, detail);
+                            detail.getSivNoA(), detail.getProjNoA(), remarksCombine, detail);
+                    postBombypjCombine(userProfile, detail.getProjNoA(), detail.getItemNo(), detail.getIssuedQtyA());
                     postCoqCombine(userProfile, detail.getProjNoA(), detail.getItemNo(), detail.getBatchNo(),
                             detail.getSivNoA(), detail.getIssuedQtyA(), detail.getIssuedPrice());
                     sivDetail.setSivNo(detail.getSivNoA());
                     sivDetail.setIssuedQty(detail.getIssuedQtyA());
                     sivDetail.setSiv(savedA);
-                    SIVDetail savedDetail = sivDetailRepository.save(sivDetail);
+                    SIVDetail savedDetailA = sivDetailRepository.save(sivDetail);
                 }
                 if (StringUtils.isNotBlank(input.getSivNoB())) {
                     postGrn(userProfile, detail.getSivNoB(), detail.getIssuedQtyB(), detail);
                     postSfc(userProfile, detail.getProjNoB(), detail.getItemNo(), detail.getIssuedQtyB());
                     postItemInv(userProfile, detail.getItemNo(), detail.getLoc(), detail.getIssuedQtyB(),
                             detail.getIssuedQtyB().subtract(detail.getBomQtyB()), detail.getBatchNo(),
-                            detail.getSivNoB(), detail.getProjNoB(), remarksCombine);
-                    postBombypj(userProfile, savedB, detail);
+                            detail.getSivNoB(), detail.getProjNoB(), remarksCombine, detail);
+                    postBombypjCombine(userProfile, detail.getProjNoB(), detail.getItemNo(), detail.getIssuedQtyB());
                     postCoqCombine(userProfile, detail.getProjNoB(), detail.getItemNo(), detail.getBatchNo(),
                             detail.getSivNoB(), detail.getIssuedQtyB(), detail.getIssuedPrice());
                     sivDetail.setSivNo(detail.getSivNoB());
                     sivDetail.setIssuedQty(detail.getIssuedQtyB());
                     sivDetail.setSiv(savedB);
-                    SIVDetail savedDetail = sivDetailRepository.save(sivDetail);
+                    SIVDetail savedDetailB = sivDetailRepository.save(sivDetail);
                 }
                 if (StringUtils.isNotBlank(input.getSivNoC())) {
+                    postGrn(userProfile, detail.getSivNoC(), detail.getIssuedQtyC(), detail);
+                    postSfc(userProfile, detail.getProjNoC(), detail.getItemNo(), detail.getIssuedQtyC());
+                    postItemInv(userProfile, detail.getItemNo(), detail.getLoc(), detail.getIssuedQtyC(),
+                            detail.getIssuedQtyC().subtract(detail.getBomQtyC()), detail.getBatchNo(),
+                            detail.getSivNoC(), detail.getProjNoC(), remarksCombine, detail);
+                    postBombypjCombine(userProfile, detail.getProjNoC(), detail.getItemNo(), detail.getIssuedQtyC());
+                    postCoqCombine(userProfile, detail.getProjNoC(), detail.getItemNo(), detail.getBatchNo(),
+                            detail.getSivNoC(), detail.getIssuedQtyC(), detail.getIssuedPrice());
+                    sivDetail.setSivNo(detail.getSivNoC());
+                    sivDetail.setIssuedQty(detail.getIssuedQtyC());
                     sivDetail.setSiv(savedC);
-                    SIVDetail savedDetail = sivDetailRepository.save(sivDetail);
+                    SIVDetail savedDetailC = sivDetailRepository.save(sivDetail);
                 }
                 if (StringUtils.isNotBlank(input.getSivNoD())) {
+                    postGrn(userProfile, detail.getSivNoD(), detail.getIssuedQtyD(), detail);
+                    postSfc(userProfile, detail.getProjNoD(), detail.getItemNo(), detail.getIssuedQtyD());
+                    postItemInv(userProfile, detail.getItemNo(), detail.getLoc(), detail.getIssuedQtyD(),
+                            detail.getIssuedQtyD().subtract(detail.getBomQtyD()), detail.getBatchNo(),
+                            detail.getSivNoD(), detail.getProjNoD(), remarksCombine, detail);
+                    postBombypjCombine(userProfile, detail.getProjNoD(), detail.getItemNo(), detail.getIssuedQtyD());
+                    postCoqCombine(userProfile, detail.getProjNoD(), detail.getItemNo(), detail.getBatchNo(),
+                            detail.getSivNoD(), detail.getIssuedQtyD(), detail.getIssuedPrice());
+                    sivDetail.setSivNo(detail.getSivNoD());
+                    sivDetail.setIssuedQty(detail.getIssuedQtyD());
                     sivDetail.setSiv(savedD);
-                    SIVDetail savedDetail = sivDetailRepository.save(sivDetail);
+                    SIVDetail savedDetailD = sivDetailRepository.save(sivDetail);
                 }
                 if (StringUtils.isNotBlank(input.getSivNoE())) {
+                    postGrn(userProfile, detail.getSivNoE(), detail.getIssuedQtyE(), detail);
+                    postSfc(userProfile, detail.getProjNoE(), detail.getItemNo(), detail.getIssuedQtyE());
+                    postItemInv(userProfile, detail.getItemNo(), detail.getLoc(), detail.getIssuedQtyE(),
+                            detail.getIssuedQtyE().subtract(detail.getBomQtyE()), detail.getBatchNo(),
+                            detail.getSivNoE(), detail.getProjNoE(), remarksCombine, detail);
+                    postBombypjCombine(userProfile, detail.getProjNoE(), detail.getItemNo(), detail.getIssuedQtyE());
+                    postCoqCombine(userProfile, detail.getProjNoE(), detail.getItemNo(), detail.getBatchNo(),
+                            detail.getSivNoE(), detail.getIssuedQtyE(), detail.getIssuedPrice());
+                    sivDetail.setSivNo(detail.getSivNoE());
+                    sivDetail.setIssuedQty(detail.getIssuedQtyE());
                     sivDetail.setSiv(savedE);
-                    SIVDetail savedDetail = sivDetailRepository.save(sivDetail);
+                    SIVDetail savedDetailE = sivDetailRepository.save(sivDetail);
                 }
-                if (StringUtils.isBlank(input.getSivNoA())) {
+                if (StringUtils.isBlank(input.getSivNoA()) && StringUtils.isBlank(input.getSivNoB()) && StringUtils.isBlank(input.getSivNoC())
+                        && StringUtils.isBlank(input.getSivNoD()) && StringUtils.isBlank(input.getSivNoE())) {
                     sivDetail.setSiv(saved);
                     SIVDetail savedDetail = sivDetailRepository.save(sivDetail);
                     sivDetailPostSaving(userProfile, saved, sivDetail, detail, input, savedDetail);
@@ -288,15 +330,350 @@ public class SIVServiceImpl implements SIVService {
         return input;
     }
 
-    private void postCoqCombine(UserProfile userProfile, String projNoA, String itemNo, Long batchNo,
-                                String sivNoA, BigDecimal issuedQtyA, BigDecimal issuedPrice) {
+    private void postBombypjCombine(UserProfile userProfile, String projNo, String itemNo, BigDecimal issuedQty) {
+
+        BigDecimal sivIssue = issuedQty;
+        BigDecimal shortQty = BigDecimal.ZERO;
+        BigDecimal pickIss = issuedQty;
+        BigDecimal shortIss = shortQty;
+
+        List<BombypjProjection> resBombypj = bombypjRepository.getBombypjInfoByStatus(userProfile.getCompanyCode(),
+                userProfile.getPlantNo(), projNo, itemNo, shortQty);
+
+        if (resBombypj.size() != 0) {
+            for (BombypjProjection bProj : resBombypj) {
+                while (true) {
+                    BigDecimal resvQty = bProj.getResvQty() == null ? BigDecimal.ZERO : bProj.getResvQty();
+                    BigDecimal issuedQtyBomb = bProj.getIssuedQty() == null ? BigDecimal.ZERO : bProj.getIssuedQty();
+                    BigDecimal pickedQty = bProj.getPickedQty() == null ? BigDecimal.ZERO : bProj.getPickedQty();
+                    if (sivIssue.compareTo(pickedQty) > 0) {
+                        resvQty = resvQty.subtract(pickedQty);
+                        issuedQty = issuedQty.add(pickedQty);
+                        sivIssue = sivIssue.subtract(pickedQty);
+                        pickedQty = BigDecimal.ZERO;
+                    } else {
+                        resvQty = resvQty.subtract(sivIssue);
+                        issuedQty = issuedQty.add(sivIssue);
+                        pickedQty = pickedQty.subtract(sivIssue);
+                        sivIssue = BigDecimal.ZERO;
+                    }
+
+                    if (resvQty.compareTo(BigDecimal.ZERO) < 0) {
+                        resvQty = BigDecimal.ZERO;
+                    }
+
+                    bombypjRepository.updateResvIssuedPickedQty(resvQty, issuedQty, pickedQty,
+                            userProfile.getCompanyCode(), userProfile.getPlantNo(), projNo, itemNo);
+
+                    if (sivIssue.compareTo(BigDecimal.ZERO) == 0) {
+                        break;
+                    }
+                }
+            }
+
+            if (sivIssue.compareTo(BigDecimal.ZERO) > 0 && resBombypj.size() != 0) {
+                /** extra will be assign to the last retrieved record **/
+                BombypjProjection bombypjInfo = bombypjRepository.getBombypjInfo(userProfile.getCompanyCode(),
+                        userProfile.getPlantNo(), projNo, itemNo);
+                BigDecimal issuedQtyBomb = bombypjInfo.getIssuedQty().add(sivIssue);
+                bombypjRepository.updateIssuedQty(issuedQtyBomb, userProfile.getCompanyCode(),
+                        userProfile.getPlantNo(), bombypjInfo.getOrderNo(), projNo, itemNo);
+            }
+
+            /** to catch over deduction in ITEMLOC.PRODN_RESV **/
+            ItemLocProjection prodnResv = itemLocRepository.prodnResv(userProfile.getCompanyCode(), userProfile.getPlantNo(), itemNo);
+            PurDetProjection poResv = purDetRepository.poResv(userProfile.getCompanyCode(), userProfile.getPlantNo(), itemNo);
+            BigDecimal resProdnResv = prodnResv.getProdnResv() == null ? BigDecimal.ZERO : prodnResv.getProdnResv();
+            BigDecimal resBombypjResv = prodnResv.getResvQty() == null ? BigDecimal.ZERO : prodnResv.getResvQty();
+            BigDecimal resPoResv = poResv.getResvQty() == null ? BigDecimal.ZERO : poResv.getResvQty();
+
+            if (resProdnResv.subtract(resPoResv).compareTo(resBombypjResv) != 0) {
+                throw new ServerException(String.format("%s Item Resv does not match Bom total Resv ! " +
+                        "prodnResv : %s, bombypjResv : %s, Inform MIS", itemNo, resProdnResv, resBombypjResv));
+            }
+        }
     }
 
-    private void postItemInv(UserProfile userProfile, String itemNo, String loc, BigDecimal issuedQtyA,
-                             BigDecimal issQtySubtractBomQty, Long batchNo, String sivNoA, String projNoA, String remarks) {
+    private void postCoqCombine(UserProfile userProfile, String projNo, String itemNo, Long batchNo,
+                                String sivNo, BigDecimal issuedQty, BigDecimal issuedPrice) {
+
+        String docmNo = null;
+        BigDecimal docmQty = null;
+        Integer subSeq = null;
+        Integer recSeq = null;
+        String WKType = "WO";
+        COQProjection coqRec = coqRepository.coqRecN(userProfile.getCompanyCode(), userProfile.getPlantNo(), itemNo, projNo, WKType);
+
+        if (StringUtils.isNotBlank(coqRec.getDocmNo())) {
+            docmNo = coqRec.getDocmNo();
+            recSeq = coqRec.getRecSeq();
+            docmQty = coqRec.getDocmQty();
+            subSeq = coqRec.getSeqNo();
+            String poNoCoqDetSub = null;
+            BigDecimal unitPriceCoqDetSub = null;
+
+            Integer maxDetRecSeq = null;
+            Integer maxDetSeqNo = null;
+            String partNo = null;
+            String itemDesc = null;
+
+            ItemBatcLogProjection iBatcLog = itemBatcLogRepository.getPoNoRecdPrice(userProfile.getCompanyCode(), userProfile.getPlantNo(),
+                    sivNo, batchNo, itemNo);
+
+            if (iBatcLog != null) {
+                poNoCoqDetSub = iBatcLog.getPoNo();
+                unitPriceCoqDetSub = iBatcLog.getRecdPrice();
+            }
+
+            if (coqRec == null) {
+                COQProjection coqDet = coqDetailRepository.coqDet(userProfile.getCompanyCode(), userProfile.getPlantNo(), projNo);
+                maxDetRecSeq = coqDet.getRecSeq();
+                maxDetSeqNo = coqDet.getSeqNo();
+                ItemProjection itemInfo = itemRepository.itemInfo(userProfile.getCompanyCode(), userProfile.getPlantNo(), itemNo);
+                partNo = itemInfo.getPartNo();
+                itemDesc = itemInfo.getDescription();
+                String coqDiv = null;
+                String coqDept = null;
+                String reasonCode = null;
+                String reasonDesc = null;
+                SaleProjection saleProj = saleRepository.saleCoqReasonsDet(userProfile.getCompanyCode(), userProfile.getPlantNo(), projNo);
+                coqDiv = saleProj.getCoqDivCode();
+                coqDept = saleProj.getCoqDeptCode();
+                reasonCode = saleProj.getReasonCode();
+                reasonDesc = saleProj.getReasonDesc();
+                recSeq = (maxDetRecSeq == null ? 0 : maxDetRecSeq) + 1;
+
+                /** INSERT COQ_DET**/
+                COQDetail coqDetail = new COQDetail();
+                COQDetailId idCoqDet = new COQDetailId();
+                idCoqDet.setCompanyCode(userProfile.getCompanyCode());
+                idCoqDet.setPlantNo(userProfile.getPlantNo());
+                idCoqDet.setDocmNo(docmNo);
+                idCoqDet.setRecSeq(recSeq);
+                coqDetail.setSeqNo((maxDetRecSeq == null ? 0 : maxDetRecSeq) + 1);
+                coqDetail.setItemType(0);
+                coqDetail.setPartNo(partNo);
+                coqDetail.setItemNo(itemNo);
+                coqDetail.setAssemblyNo("");
+                coqDetail.setDescription(itemDesc);
+                coqDetail.setDocmQty(issuedQty);
+                coqDetail.setReasonCode(reasonCode);
+                coqDetail.setReasonDesc(reasonDesc);
+                coqDetail.setDivCode(coqDiv);
+                coqDetail.setDeptCode(coqDept);
+                coqDetail.setId(idCoqDet);
+                coqDetailRepository.save(coqDetail);
+            } else {
+                BigDecimal docmQtyUpdate = docmQty.add(issuedQty);
+                coqDetailRepository.updateDocmQty(docmQtyUpdate, userProfile.getCompanyCode(), userProfile.getPlantNo(), subSeq, docmNo);
+            }
+
+            COQDetailSub coqDetailSub = new COQDetailSub();
+            COQDetailSubId idDetSub = new COQDetailSubId();
+            idDetSub.setCompanyCode(userProfile.getCompanyCode());
+            idDetSub.setPlantNo(userProfile.getPlantNo());
+            idDetSub.setDocmNo(docmNo);
+            idDetSub.setDetRecSeq(recSeq);
+            idDetSub.setSeqNo((subSeq == null ? 0 : subSeq) + 1);
+            coqDetailSub.setSivNo(sivNo);
+            coqDetailSub.setQty(issuedQty);
+            coqDetailSub.setPoNo(poNoCoqDetSub);
+            coqDetailSub.setUnitPrice(unitPriceCoqDetSub == null ? issuedPrice : unitPriceCoqDetSub);
+            Date entryDate = new Date(System.currentTimeMillis());
+            coqDetailSub.setEntryDate(entryDate);
+            coqDetailSub.setId(idDetSub);
+            coqDetailSubRepository.save(coqDetailSub);
+        }
     }
 
-    private void postSfc(UserProfile userProfile, String projNoA, String itemNo, BigDecimal issuedQtyA) {
+    private void postItemInv(UserProfile userProfile, String itemNo, String loc, BigDecimal issuedQty,
+                             BigDecimal issQtySubtractBomQty, Long batchNo, String sivNo, String projNo,
+                             String remarks, SIVDetailDTO detail) {
+
+        /** When the SIV record is created.
+         Mainly to update 3 essential tables, REDUCE INVENTORY of ITEMLOC, ITEM, ITEMBATC
+         insert into INAUDIT and ITEMBATC_LOG **/
+        BigDecimal itemBatchBal = null;
+        List<ItemBatchProjection> itemBatcPrj = itemBatcRepository.getItemBatchByBatchNo(userProfile.getCompanyCode(),
+                userProfile.getPlantNo(), itemNo, batchNo, loc);
+        CompanyProjection coStkLoc = companyRepository.getStockLoc(userProfile.getCompanyCode(), userProfile.getPlantNo());
+        String poNoInAudit = null, grnNoInAudit = null;
+
+        /** will delete the itembatc transaction if the qoh for that item in that batch = 0. **/
+        for (ItemBatchProjection rec : itemBatcPrj) {
+            if (rec.getQoh().compareTo(issuedQty) < 0) {
+                throw new ServerException(String.format("Item No : %s Issued Qty > Batch Qty!", itemNo));
+            } else {
+                itemBatchBal = rec.getQoh().subtract(issuedQty);
+                if (itemBatchBal.compareTo(BigDecimal.ZERO) == 0) {
+                    itemBatcRepository.deleteItemBatcBal(itemNo, batchNo);
+                } else {
+                    itemBatcRepository.updateItemBatcBal(itemBatchBal, batchNo);
+                }
+
+                /** INSERT ITEMBATC_LOG **/
+                ItemBatcLog itemBatcLog = new ItemBatcLog();
+                ItemBatcLogId id = new ItemBatcLogId();
+                id.setCompanyCode(userProfile.getCompanyCode());
+                id.setPlantNo(userProfile.getPlantNo());
+                id.setItemNo(itemNo);
+                id.setBatchNo(batchNo);
+                id.setSivNo(sivNo);
+                id.setLoc(loc);
+                itemBatcLog.setSivQty(issuedQty);
+                itemBatcLog.setDateCode(rec.getDateCode());
+                itemBatcLog.setPoNo(rec.getPoNo());
+                itemBatcLog.setPoRecSeq(rec.getPoRecSeq());
+                itemBatcLog.setGrnNo(rec.getGrnNo());
+                itemBatcLog.setGrnSeq(rec.getGrnSeq());
+                itemBatcLog.setGrnQty(rec.getOriQoh());
+                itemBatcLog.setId(id);
+                itemBatcLog.setStatus(Status.ACTIVE);
+                itemBatcLog.setCreatedBy(userProfile.getUsername());
+                itemBatcLog.setCreatedAt(ZonedDateTime.now());
+                itemBatcLog.setUpdatedBy(userProfile.getUsername());
+                itemBatcLog.setUpdatedAt(ZonedDateTime.now());
+                itemBatcLogRepository.save(itemBatcLog);
+            }
+            poNoInAudit = rec.getPoNo();
+            grnNoInAudit = rec.getGrnNo();
+        }
+
+        if (itemBatchBal == null) {
+            throw new NotFoundException(String.format("Batch No : %s for item %s not found!", batchNo, itemNo));
+        }
+
+        /** Check the stock level of itemloc, if QOH > OUT Qty,
+         update itemloc, insert records into inaudit under
+         tran_code = 'IS' : for MSR
+         tran_code = 'IM' : for SIV N/M **/
+
+        /** ITEMLOC **/
+        ItemLocProjection itemLoc = itemLocRepository.itemLocByItemNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), itemNo, loc);
+
+        BigDecimal itemLocBal = itemLoc.getQoh().subtract(issuedQty);
+        BigDecimal prodnResv = (itemLoc.getProdnResv() == null ? BigDecimal.ZERO : itemLoc.getProdnResv())
+                .subtract(issuedQty.subtract(issQtySubtractBomQty));
+        BigDecimal pickedQty = (itemLoc.getPickedQty() == null ? BigDecimal.ZERO : itemLoc.getPickedQty())
+                .subtract(issuedQty.subtract(issQtySubtractBomQty));
+        BigDecimal qoh = (itemLoc.getQoh() == null ? BigDecimal.ZERO : itemLoc.getQoh())
+                .subtract(issuedQty);
+        BigDecimal ytdProd = (itemLoc.getYtdProd() == null ? BigDecimal.ZERO : itemLoc.getYtdProd())
+                .add(issuedQty);
+        BigDecimal ytdIssue = (itemLoc.getYtdIssue() == null ? BigDecimal.ZERO : itemLoc.getYtdIssue())
+                .add(issuedQty);
+        Date lastTranDate = new Date(ZonedDateTime.now().toLocalDate().toEpochDay());
+        Long locBatchNo = itemLoc.getBatchNo();
+
+        if (itemLocBal == null) {
+            throw new NotFoundException(String.format("Item No : %s not found in ITEMLOC!", itemNo));
+        } else if (itemLocBal.compareTo(BigDecimal.ZERO) < 0) {
+            throw new ServerException(String.format("Item No : %s Issued Qty > Qty-On-Hand!", itemNo));
+        } else {
+            /** to catch over deduction in ITEMLOC.PRODN_RESV **/
+            BombypjProjection bombypjResv = bombypjRepository.bombypjResv(userProfile.getCompanyCode(), userProfile.getPlantNo(), itemNo);
+            PurDetProjection poResv = purDetRepository.poResv(userProfile.getCompanyCode(), userProfile.getPlantNo(), itemNo);
+            BigDecimal resBombypjResv = bombypjResv.getResvQty() == null ? BigDecimal.ZERO : bombypjResv.getResvQty();
+            BigDecimal resPoResv = poResv.getResvQty() == null ? BigDecimal.ZERO : poResv.getResvQty();
+
+            if (poResv.getResvQty().subtract(issuedQty.subtract(issQtySubtractBomQty))
+                    .compareTo(itemLoc.getProdnResv().subtract(issuedQty.subtract(issQtySubtractBomQty))) != 0) {
+                throw new ServerException(String.format("%s Item Resv does not match Bom total Resv ! bombypjResv : %s, " +
+                                "prodnResv : %s, outQty : %s, exOutQty : %s, Inform MIS", itemNo, resBombypjResv,
+                        itemLoc.getProdnResv(), issuedQty, issQtySubtractBomQty));
+            }
+
+            itemLocRepository.updateProdnResvPickedQtyQohYtdProdTydIssueLTranDate(prodnResv, pickedQty, qoh, ytdProd, ytdIssue,
+                    lastTranDate, userProfile.getCompanyCode(), userProfile.getPlantNo(), itemNo, loc);
+
+            itemLocRepository.updateProdnResv(userProfile.getCompanyCode(), userProfile.getPlantNo(), itemNo, loc);
+        }
+
+        /** ITEM **/
+        /** No checking for the QOH as the first pass in ITEMLOC
+         will determine whether the QOH is enough
+         Thus, just update the required fields to take effect of the MSR Qty **/
+
+        ItemProjection itemInfo = itemRepository.getQohByItemNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), itemNo, loc);
+
+        BigDecimal prodnResvItem = (itemInfo.getProdnResv() == null ? BigDecimal.ZERO : itemInfo.getProdnResv())
+                .subtract(issuedQty.subtract(issQtySubtractBomQty));
+        BigDecimal pickedQtyItem = (itemInfo.getPickedQty() == null ? BigDecimal.ZERO : itemInfo.getPickedQty())
+                .subtract(issuedQty.subtract(issQtySubtractBomQty));
+        BigDecimal qohItem = (itemInfo.getQoh() == null ? BigDecimal.ZERO : itemInfo.getQoh())
+                .subtract(issuedQty);
+        BigDecimal ytdProdItem = (itemInfo.getYtdProd() == null ? BigDecimal.ZERO : itemInfo.getYtdProd())
+                .add(issuedQty);
+        BigDecimal ytdIssueItem = (itemInfo.getYtdIssue() == null ? BigDecimal.ZERO : itemInfo.getYtdIssue())
+                .add(issuedQty);
+
+        itemRepository.updateProdnResvPickedQtyQohYtdProdTydIssueLTranDate(prodnResvItem, pickedQtyItem, qohItem, ytdProdItem, ytdIssueItem,
+                lastTranDate, userProfile.getCompanyCode(), userProfile.getPlantNo(), itemNo, loc);
+
+        itemRepository.updateProdnResv(userProfile.getCompanyCode(), userProfile.getPlantNo(), itemNo, loc);
+
+        /** Update Batch No in ITEM and ITEMLOC with lastest Batch No **/
+        ItemBatchProjection resMaxBatchNo = itemBatcRepository.getMaxBatchNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), itemNo);
+        if (resMaxBatchNo.getMaxBatchNo().compareTo(locBatchNo) > 0) {
+            itemRepository.updateBatchNo(new BigDecimal(resMaxBatchNo.getMaxBatchNo()), userProfile.getCompanyCode(), userProfile.getPlantNo(), itemNo);
+            itemLocRepository.updateBatchNo(new BigDecimal(resMaxBatchNo.getMaxBatchNo()), userProfile.getCompanyCode(), userProfile.getPlantNo(), itemNo, loc);
+        }
+
+        /** INSERT INAUDIT **/
+        InAudit inAudit = new InAudit();
+        inAudit.setCompanyCode(userProfile.getCompanyCode());
+        inAudit.setPlantNo(userProfile.getPlantNo());
+        inAudit.setItemNo(itemNo);
+        inAudit.setLoc(loc);
+        inAudit.setTranDate(lastTranDate);
+        String tranTime = FastDateFormat.getInstance("kkmmsssss").format(System.currentTimeMillis());
+        inAudit.setTranTime(tranTime);
+        inAudit.setTranType("IM");
+        inAudit.setDocmNo(sivNo);
+        inAudit.setOutQty(issuedQty);
+        inAudit.setOrderQty(issuedQty);
+        inAudit.setBalQty(itemLocBal);
+        inAudit.setProjectNo(projNo);
+        inAudit.setCurrencyCode("SGD");
+        inAudit.setCurrencyRate(BigDecimal.ONE);
+        inAudit.setActualCost(itemLoc.getStdMaterial());
+        inAudit.setGrnNo(grnNoInAudit);
+        inAudit.setPoNo(poNoInAudit);
+        inAudit.setDoNo(null);
+        inAudit.setRemarks(remarks);
+        inAudit.setStatus(Status.ACTIVE);
+        inAudit.setCreatedBy(userProfile.getUsername());
+        inAudit.setCreatedAt(ZonedDateTime.now());
+        inAudit.setUpdatedBy(userProfile.getUsername());
+        inAudit.setUpdatedAt(ZonedDateTime.now());
+        inAudit.setItemlocId(itemLoc.getId());
+        inAuditRepository.save(inAudit);
+    }
+
+    private void postSfc(UserProfile userProfile, String projNo, String itemNo, BigDecimal issuedQty) {
+        String subStrItemNo = itemNo.substring(0, 2);
+        if (StringUtils.equals(subStrItemNo, "01")) {
+            ProductProjection wipTrack = productRepository.wipTrack(userProfile.getCompanyCode(), userProfile.getPlantNo(), projNo);
+            String resWipTrack = wipTrack.getWipTracking() == null ? "N" : wipTrack.getWipTracking();
+            if (StringUtils.equals(resWipTrack, "Y")) {
+                ItemProjection foundPartNo = itemRepository.foundPartNoByItemNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), itemNo);
+                SfcWipProjection getWip = sfcWipRepository.wipCur(projNo, foundPartNo.getPartNo());
+                if (getWip == null) {
+                    SfcWip sfcWip = new SfcWip();
+                    SfcWipId id = new SfcWipId();
+                    id.setProjectNoSub(projNo);
+                    id.setPcbPartNo(foundPartNo.getPartNo());
+                    sfcWip.setPcbQty(issuedQty);
+                    sfcWip.setFlowId(null);
+                    sfcWip.setStatus("O");
+                    sfcWip.setId(id);
+                    sfcWipRepository.save(sfcWip);
+                } else {
+                    BigDecimal pcbQty = (getWip.getPcbQty() == null ? BigDecimal.ZERO : getWip.getPcbQty()).add(issuedQty);
+                    sfcWipRepository.updatePcbQty(pcbQty, projNo, foundPartNo.getPartNo());
+                }
+            }
+        }
     }
 
     private SIVDetailDTO postGrn(UserProfile userProfile, String sivNo, BigDecimal issuedQty, SIVDetailDTO detail) {
@@ -336,26 +713,26 @@ public class SIVServiceImpl implements SIVService {
         ProductProjection wipTrackCur = productRepository.wipTrackCur(userProfile.getCompanyCode(), userProfile.getPlantNo(), type, subType);
         ItemProjection itemCat = itemRepository.itemCatCodePartNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), detail.getItemNo());
         SfcWipProjection wipCur = sfcWipRepository.wipCur(input.getProjectNo(), itemCat.getPartNo());
-        if (wipTrackCur != null) {
-            if (wipTrackCur.getWipTracking().equals("Y")) {
-                if (itemCat.getCategoryCode().equals("01")) {
-                    if (wipCur == null) {
-                        SfcWip sfcWip = new SfcWip();
-                        SfcWipId id = new SfcWipId();
-                        id.setProjectNoSub(input.getProjectNo());
-                        id.setPcbPartNo(itemCat.getPartNo());
-                        sfcWip.setPcbQty(sivDetail.getIssuedQty());
-                        sfcWip.setFlowId(null);
-                        sfcWip.setStatus("O");
-                        sfcWip.setId(id);
-                        sfcWipRepository.save(sfcWip);
-                    } else {
-                        BigDecimal pcbQty = wipCur.getPcbQty().add(sivDetail.getIssuedQty());
-                        sfcWipRepository.updatePcbQty(pcbQty, input.getProjectNo(), itemCat.getPartNo());
-                    }
+        String resWipTrack = wipTrackCur.getWipTracking() == null ? "N" : wipTrackCur.getWipTracking();
+        if (StringUtils.equals(resWipTrack, "Y")) {
+            if (StringUtils.equals(itemCat.getCategoryCode(), "01")) {
+                if (wipCur == null) {
+                    SfcWip sfcWip = new SfcWip();
+                    SfcWipId id = new SfcWipId();
+                    id.setProjectNoSub(input.getProjectNo());
+                    id.setPcbPartNo(itemCat.getPartNo());
+                    sfcWip.setPcbQty(sivDetail.getIssuedQty());
+                    sfcWip.setFlowId(null);
+                    sfcWip.setStatus("O");
+                    sfcWip.setId(id);
+                    sfcWipRepository.save(sfcWip);
+                } else {
+                    BigDecimal pcbQty = wipCur.getPcbQty().add(sivDetail.getIssuedQty());
+                    sfcWipRepository.updatePcbQty(pcbQty, input.getProjectNo(), itemCat.getPartNo());
                 }
             }
         }
+
     }
 
     private SIVDetailDTO procBatchConsolidate(SIVDetail sivDetail, SIVDetailDTO detail) {
@@ -637,6 +1014,7 @@ public class SIVServiceImpl implements SIVService {
 
     private void postCoq(String companyCode, Integer plantNo, String projectNo, String docmNo, String itemNo,
                          Long batchNo, String sivNo, BigDecimal issuedQty, BigDecimal issuedPrice, String subType) {
+
         String WKType = "WO";
         String PRType = "PR";
         COQProjection coqRecN = null;
@@ -912,9 +1290,10 @@ public class SIVServiceImpl implements SIVService {
                 detail.getItemNo(), detail.getLoc());
         CompanyProjection coStkLoc = companyRepository.getStockLoc(userProfile.getCompanyCode(), userProfile.getPlantNo());
         ItemProjection itemInfo = itemRepository.itemInfo(userProfile.getCompanyCode(), userProfile.getPlantNo(), detail.getItemNo());
+        String poNoInAudit = null, grnNoInAudit = null;
         for (ItemBatchProjection rec : itemBatcPrj) {
             if (rec.getQoh().compareTo(detail.getIssuedQty()) < 0) {
-                throw new ServerException("Item No : " + detail.getItemNo() + " Issued Qty > Batch Qty!");
+                throw new ServerException(String.format("Item No : %s Issued Qty > Batch Qty!", detail.getItemNo()));
             } else {
                 itemBatchBal = rec.getQoh().subtract(detail.getIssuedQty());
                 if (itemBatchBal.compareTo(BigDecimal.ZERO) == 0) {
@@ -946,8 +1325,8 @@ public class SIVServiceImpl implements SIVService {
                 itemBatcLog.setUpdatedAt(ZonedDateTime.now());
                 itemBatcLogRepository.save(itemBatcLog);
             }
-            detail.setPoNo(rec.getPoNo());
-            detail.setGrnNo(rec.getGrnNo());
+            poNoInAudit = rec.getPoNo();
+            grnNoInAudit = rec.getGrnNo();
         }
         if (itemBatchBal == null) {
             throw new NotFoundException("Batch No : " + detail.getBatchNo() + " not found!");
@@ -1007,7 +1386,7 @@ public class SIVServiceImpl implements SIVService {
         inAudit.setItemNo(detail.getItemNo());
         inAudit.setLoc(detail.getLoc());
         inAudit.setTranDate(lastTranDate);
-        String tranTime = FastDateFormat.getInstance("kkmmss").format(System.currentTimeMillis());
+        String tranTime = FastDateFormat.getInstance("kkmmssss").format(System.currentTimeMillis());
         inAudit.setTranTime(tranTime);
         inAudit.setTranType("IM");
         inAudit.setDocmNo(detail.getDocmNo());
@@ -1018,8 +1397,8 @@ public class SIVServiceImpl implements SIVService {
         inAudit.setCurrencyCode(input.getCurrencyCode());
         inAudit.setCurrencyRate(input.getCurrencyRate());
         inAudit.setActualCost(itemLoc.getStdMaterial());
-        inAudit.setGrnNo(detail.getGrnNo());
-        inAudit.setPoNo(detail.getPoNo());
+        inAudit.setGrnNo(grnNoInAudit);
+        inAudit.setPoNo(poNoInAudit);
         inAudit.setDoNo(null);
         if (detail.getSubType().equals("M")) {
             inAudit.setRemarks("Issued Thru SIV-M, Prg : INM00005");
@@ -1606,48 +1985,186 @@ public class SIVServiceImpl implements SIVService {
     }
 
     @Override
-    public byte[] generatedLabelSIV(SIVDTO input) throws JRException, SQLException {
+    public byte[] generatedLabelSIV(SIVDTO input) {
 
-        Integer seqNo = 0;
-        for (SIVDetailDTO dto : input.getSivDetails()) {
-            seqNo = dto.getSeqNo();
+        try {
+            Integer seqNo = 0;
+            for (SIVDetailDTO dto : input.getSivDetails()) {
+                seqNo = dto.getSeqNo();
+            }
+            UserProfile userProfile = UserProfileContext.getUserProfile();
+            InputStream resource = this.getClass().getResourceAsStream("/reports/siv_label.jrxml");
+            // Compile the Jasper report from .jrxml to .jasper
+            JasperReport jasperReport = JasperCompileManager.compileReport(resource);
+            Map<String, Object> param = new HashMap<>();
+            List<JasperPrint> jasperPrintList = new ArrayList<JasperPrint>();
+            // Fetching the inventoryuser from the data source.
+            Connection source = dataSource.getConnection();
+            // Adding the additional parameters to the pdf.
+            if (StringUtils.isNotBlank(input.getSivNoA())) {
+                param.put("SIV_NO", input.getSivNoA());
+                param.put("COMPANY_CODE", userProfile.getCompanyCode());
+                param.put("PLANT_NO", userProfile.getPlantNo());
+                param.put("SEQ_NO", seqNo);
+                // Filling the report with the data and additional parameters information.
+                JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, param, source);
+                jasperPrintList.add(jasperPrint);
+            }
+            if (StringUtils.isNotBlank(input.getSivNoB())) {
+                param.put("SIV_NO", input.getSivNoB());
+                param.put("COMPANY_CODE", userProfile.getCompanyCode());
+                param.put("PLANT_NO", userProfile.getPlantNo());
+                param.put("SEQ_NO", seqNo);
+                // Filling the report with the data and additional parameters information.
+                JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, param, source);
+                jasperPrintList.add(jasperPrint);
+            }
+            if (StringUtils.isNotBlank(input.getSivNoC())) {
+                param.put("SIV_NO", input.getSivNoC());
+                param.put("COMPANY_CODE", userProfile.getCompanyCode());
+                param.put("PLANT_NO", userProfile.getPlantNo());
+                param.put("SEQ_NO", seqNo);
+                // Filling the report with the data and additional parameters information.
+                JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, param, source);
+                jasperPrintList.add(jasperPrint);
+            }
+            if (StringUtils.isNotBlank(input.getSivNoD())) {
+                param.put("SIV_NO", input.getSivNoD());
+                param.put("COMPANY_CODE", userProfile.getCompanyCode());
+                param.put("PLANT_NO", userProfile.getPlantNo());
+                param.put("SEQ_NO", seqNo);
+                // Filling the report with the data and additional parameters information.
+                JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, param, source);
+                jasperPrintList.add(jasperPrint);
+            }
+            if (StringUtils.isNotBlank(input.getSivNoE())) {
+                param.put("SIV_NO", input.getSivNoE());
+                param.put("COMPANY_CODE", userProfile.getCompanyCode());
+                param.put("PLANT_NO", userProfile.getPlantNo());
+                param.put("SEQ_NO", seqNo);
+                // Filling the report with the data and additional parameters information.
+                JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, param, source);
+                jasperPrintList.add(jasperPrint);
+            }
+            if (StringUtils.isBlank(input.getSivNoA()) && StringUtils.isBlank(input.getSivNoB()) && StringUtils.isBlank(input.getSivNoC())
+                    && StringUtils.isBlank(input.getSivNoD()) && StringUtils.isBlank(input.getSivNoE())) {
+                param.put("SIV_NO", input.getSivNoA());
+                param.put("COMPANY_CODE", userProfile.getCompanyCode());
+                param.put("PLANT_NO", userProfile.getPlantNo());
+                param.put("SEQ_NO", seqNo);
+                // Filling the report with the data and additional parameters information.
+                JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, param, source);
+                jasperPrintList.add(jasperPrint);
+            }
+            ByteArrayOutputStream pdfOutputStream = new ByteArrayOutputStream();
+            // Generating report using List<JasperPrint>
+            JRPdfExporter exporter = new JRPdfExporter();
+            exporter.setExporterInput(SimpleExporterInput.getInstance(jasperPrintList));
+            exporter.setExporterOutput(new SimpleOutputStreamExporterOutput(pdfOutputStream));
+            SimplePdfExporterConfiguration configuration = new SimplePdfExporterConfiguration();
+            configuration.setCreatingBatchModeBookmarks(true);
+            exporter.setConfiguration(configuration);
+            exporter.exportReport();
+            byte[] jasperReports = pdfOutputStream.toByteArray();
+            return jasperReports;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new ServerException("Error Generated Label SIV");
         }
-        UserProfile userProfile = UserProfileContext.getUserProfile();
-        InputStream resource = this.getClass().getResourceAsStream("/reports/siv_label.jrxml");
-        // Compile the Jasper report from .jrxml to .jasper
-        JasperReport jasperReport = JasperCompileManager.compileReport(resource);
-        Map<String, Object> param = new HashMap<>();
-        param.put("SIV_NO", input.getSivNo());
-        param.put("COMPANY_CODE", userProfile.getCompanyCode());
-        param.put("PLANT_NO", userProfile.getPlantNo());
-        param.put("SEQ_NO", seqNo);
-        Connection source = dataSource.getConnection();
-        JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, param, source);
-        return JasperExportManager.exportReportToPdf(jasperPrint);
     }
 
     @Override
-    public byte[] generatedReportSIV(SIVDTO input) throws JRException, SQLException {
+    public byte[] generatedReportSIV(SIVDTO input) {
 
-        UserProfile userProfile = UserProfileContext.getUserProfile();
-        // Fetching the .jrxml file from the resources folder.
-        InputStream resourceSubReport = this.getClass().getResourceAsStream("/reports/siv_report_header_INR00009.jrxml");
-        InputStream mainReport = this.getClass().getResourceAsStream("/reports/siv_report_detail_INR00009.jrxml");
-        // Compile the Jasper report from .jrxml to .jasper
-        JasperReport jasperSubReport = JasperCompileManager.compileReport(resourceSubReport);
-        JasperReport jasperMainReport = JasperCompileManager.compileReport(mainReport);
-        Map<String, Object> param = new HashMap<>();
-        // Adding the additional parameters to the pdf.
-        param.put("SIV_NO_START", input.getSivNo());
-        param.put("SIV_NO_END", input.getSivNo());
-        param.put("COMPANY_CODE", userProfile.getCompanyCode());
-        param.put("PLANT_NO", userProfile.getPlantNo());
-        param.put("SUB_REPORT", jasperSubReport);
-        // Fetching the inventoryuser from the data source.
-        Connection source = dataSource.getConnection();
-        // Filling the report with the data and additional parameters information.
-        JasperPrint jasperPrint = JasperFillManager.fillReport(jasperMainReport, param, source);
-        return JasperExportManager.exportReportToPdf(jasperPrint);
+        try {
+            UserProfile userProfile = UserProfileContext.getUserProfile();
+            // Fetching the .jrxml file from the resources folder.
+            InputStream resourceSubReport = this.getClass().getResourceAsStream("/reports/siv_report_header_INR00009.jrxml");
+            InputStream mainReport = this.getClass().getResourceAsStream("/reports/siv_report_detail_INR00009.jrxml");
+            // Compile the Jasper report from .jrxml to .jasper
+            JasperReport jasperSubReport = JasperCompileManager.compileReport(resourceSubReport);
+            JasperReport jasperMainReport = JasperCompileManager.compileReport(mainReport);
+            Map<String, Object> param = new HashMap<>();
+            List<JasperPrint> jasperPrintList = new ArrayList<JasperPrint>();
+            // Fetching the inventoryuser from the data source.
+            Connection source = dataSource.getConnection();
+            // Adding the additional parameters to the pdf.
+            if (StringUtils.isNotBlank(input.getSivNoA())) {
+                param.put("SIV_NO_START", input.getSivNoA());
+                param.put("SIV_NO_END", input.getSivNoA());
+                param.put("COMPANY_CODE", userProfile.getCompanyCode());
+                param.put("PLANT_NO", userProfile.getPlantNo());
+                param.put("SUB_REPORT", jasperSubReport);
+                // Filling the report with the data and additional parameters information.
+                JasperPrint jasperPrint = JasperFillManager.fillReport(jasperMainReport, param, source);
+                jasperPrintList.add(jasperPrint);
+            }
+            if (StringUtils.isNotBlank(input.getSivNoB())) {
+                param.put("SIV_NO_START", input.getSivNoB());
+                param.put("SIV_NO_END", input.getSivNoB());
+                param.put("COMPANY_CODE", userProfile.getCompanyCode());
+                param.put("PLANT_NO", userProfile.getPlantNo());
+                param.put("SUB_REPORT", jasperSubReport);
+                // Filling the report with the data and additional parameters information.
+                JasperPrint jasperPrint = JasperFillManager.fillReport(jasperMainReport, param, source);
+                jasperPrintList.add(jasperPrint);
+            }
+            if (StringUtils.isNotBlank(input.getSivNoC())) {
+                param.put("SIV_NO_START", input.getSivNoC());
+                param.put("SIV_NO_END", input.getSivNoC());
+                param.put("COMPANY_CODE", userProfile.getCompanyCode());
+                param.put("PLANT_NO", userProfile.getPlantNo());
+                param.put("SUB_REPORT", jasperSubReport);
+                // Filling the report with the data and additional parameters information.
+                JasperPrint jasperPrint = JasperFillManager.fillReport(jasperMainReport, param, source);
+                jasperPrintList.add(jasperPrint);
+            }
+            if (StringUtils.isNotBlank(input.getSivNoD())) {
+                param.put("SIV_NO_START", input.getSivNoD());
+                param.put("SIV_NO_END", input.getSivNoD());
+                param.put("COMPANY_CODE", userProfile.getCompanyCode());
+                param.put("PLANT_NO", userProfile.getPlantNo());
+                param.put("SUB_REPORT", jasperSubReport);
+                // Filling the report with the data and additional parameters information.
+                JasperPrint jasperPrint = JasperFillManager.fillReport(jasperMainReport, param, source);
+                jasperPrintList.add(jasperPrint);
+            }
+            if (StringUtils.isNotBlank(input.getSivNoE())) {
+                param.put("SIV_NO_START", input.getSivNoE());
+                param.put("SIV_NO_END", input.getSivNoE());
+                param.put("COMPANY_CODE", userProfile.getCompanyCode());
+                param.put("PLANT_NO", userProfile.getPlantNo());
+                param.put("SUB_REPORT", jasperSubReport);
+                // Filling the report with the data and additional parameters information.
+                JasperPrint jasperPrint = JasperFillManager.fillReport(jasperMainReport, param, source);
+                jasperPrintList.add(jasperPrint);
+            }
+            if (StringUtils.isBlank(input.getSivNoA()) && StringUtils.isBlank(input.getSivNoB()) && StringUtils.isBlank(input.getSivNoC())
+                    && StringUtils.isBlank(input.getSivNoD()) && StringUtils.isBlank(input.getSivNoE())) {
+                param.put("SIV_NO_START", input.getSivNo());
+                param.put("SIV_NO_END", input.getSivNo());
+                param.put("COMPANY_CODE", userProfile.getCompanyCode());
+                param.put("PLANT_NO", userProfile.getPlantNo());
+                param.put("SUB_REPORT", jasperSubReport);
+                // Filling the report with the data and additional parameters information.
+                JasperPrint jasperPrint = JasperFillManager.fillReport(jasperMainReport, param, source);
+                jasperPrintList.add(jasperPrint);
+            }
+            ByteArrayOutputStream pdfOutputStream = new ByteArrayOutputStream();
+            // Generating report using List<JasperPrint>
+            JRPdfExporter exporter = new JRPdfExporter();
+            exporter.setExporterInput(SimpleExporterInput.getInstance(jasperPrintList));
+            exporter.setExporterOutput(new SimpleOutputStreamExporterOutput(pdfOutputStream));
+            SimplePdfExporterConfiguration configuration = new SimplePdfExporterConfiguration();
+            configuration.setCreatingBatchModeBookmarks(true);
+            exporter.setConfiguration(configuration);
+            exporter.exportReport();
+            byte[] jasperReport = pdfOutputStream.toByteArray();
+            return jasperReport;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new ServerException("Error Generated Report SIV");
+        }
     }
 
     @Override
@@ -1700,19 +2217,6 @@ public class SIVServiceImpl implements SIVService {
         List<SIVDTO> list = new ArrayList<>();
         SIVDTO dto = projValidate(userProfile, input);
         list.add(dto);
-        return list;
-    }
-
-    @Override
-    public List<SIVDTO> getProjectNoSivCombine() {
-        List<BombypjProjection> prjNoProjection = bombypjRepository.getPrjNoByStatus(
-                UserProfileContext.getUserProfile().getCompanyCode(),
-                UserProfileContext.getUserProfile().getPlantNo());
-        List<SIVDTO> list = new ArrayList<>();
-        for (BombypjProjection bProj : prjNoProjection) {
-            list.add(SIVDTO.builder().projectNo(bProj.getProjectNo()).build());
-        }
-
         return list;
     }
 
@@ -2316,7 +2820,7 @@ public class SIVServiceImpl implements SIVService {
     @Override
     public SIVDTO getDefaultValueSIV(String subType) {
         UserProfile userProfile = UserProfileContext.getUserProfile();
-        String entryTime = FastDateFormat.getInstance("kkmmss").format(System.currentTimeMillis());
+        String entryTime = FastDateFormat.getInstance("kkmmssss").format(System.currentTimeMillis());
         // subType (N : for Entry, M : for Manual)
         return SIVDTO.builder().currencyCode("USD").currencyRate(BigDecimal.ONE)
                 .entryUser(userProfile.getUsername()).subType(subType).statuz("O")
@@ -2338,9 +2842,9 @@ public class SIVServiceImpl implements SIVService {
             for (SIVDetailDTO dto : populateDetails) {
                 if (StringUtils.isNotBlank(dto.getItemNo())) {
                     List<ItemBatchProjection> itemBatchFLoc = itemBatcRepository.getItemBatchFLocByItemNo(userProfile.getCompanyCode(),
-                            userProfile.getPlantNo(), itemNo);
+                            userProfile.getPlantNo(), dto.getItemNo());
                     List<ItemBatchProjection> itemBatch = itemBatcRepository.getItemBatchByItemNo(userProfile.getCompanyCode(),
-                            userProfile.getPlantNo(), itemNo);
+                            userProfile.getPlantNo(), dto.getItemNo());
 
                     if (dto.getBomShortQtyF().compareTo(BigDecimal.ZERO) > 0) {
                         for (ItemBatchProjection ib : itemBatchFLoc) {
