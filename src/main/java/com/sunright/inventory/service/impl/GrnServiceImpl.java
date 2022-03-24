@@ -1118,9 +1118,8 @@ public class GrnServiceImpl implements GrnService {
             populateAfterSaving(input, saved);
 
             return input;
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new ServerException("Error Created GRN !");
+        } catch (ServerException | ParseException e) {
+            throw new ServerException(e.getMessage());
         }
     }
 
