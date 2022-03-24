@@ -2051,6 +2051,13 @@ public class GrnServiceImpl implements GrnService {
                 if (detail.getSubType().equals("N")) {
                     PurDetProjection detailInfo = purDetRepository.getDataFromItemAndPartNo(detail.getCompanyCode(), detail.getPlantNo(), detail.getPoNo(),
                             detail.getItemNo(), detail.getPartNo(), detail.getPoRecSeq());
+                    Optional<List<ItemBatc>> foundDateCode = itemBatcRepository.findItemBatcByGrnNo(detail.getGrnNo());
+                    Integer dateCode = null;
+                    if(foundDateCode.isPresent()){
+                        for (ItemBatc itemBatc : foundDateCode.get()){
+                            dateCode = itemBatc.getDateCode();
+                        }
+                    }
                     if (detailInfo != null) {
                         grnDetail = GrnDetDTO.builder()
                                 .grnNo(detail.getGrnNo())
@@ -2058,6 +2065,7 @@ public class GrnServiceImpl implements GrnService {
                                 .orderQty(detailInfo.getOrderQty())
                                 .description(detailInfo.getDescription())
                                 .dueDate(detailInfo.getDueDate())
+                                .dateCode(dateCode)
                                 .build();
                     }
                 } else {

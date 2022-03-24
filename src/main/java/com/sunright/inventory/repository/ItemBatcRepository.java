@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ItemBatcRepository extends JpaRepository<ItemBatc, ItemBatcId> {
@@ -85,4 +86,6 @@ public interface ItemBatcRepository extends JpaRepository<ItemBatc, ItemBatcId> 
     @Query("select ib.qoh as qoh from ITEMBATC ib where ib.id.companyCode = :companyCode " +
             "and ib.id.plantNo = :plantNo and ib.id.itemNo = :itemNo and ib.id.batchNo = :batchNo and ib.id.loc = :loc")
     ItemBatchProjection cBatchQoh(String companyCode, Integer plantNo, String itemNo, Long batchNo, String loc);
+
+    Optional<List<ItemBatc>> findItemBatcByGrnNo(String grnNo);
 }
