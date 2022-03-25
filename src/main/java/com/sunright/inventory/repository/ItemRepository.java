@@ -73,7 +73,7 @@ public interface ItemRepository extends JpaRepository<Item, Long>, JpaSpecificat
     ItemProjection getItemNoByProjectNo(String projectNo);
 
     @Query("SELECT coalesce(i.qoh,0) as qoh, coalesce(i.orderQty,0) as orderQty, coalesce(i.costVariance,0) as costVariance, " +
-            "coalesce(i.stdMaterial,0) as stdMaterial, i.batchNo as batchNo FROM ITEM i " +
+            "coalesce(i.stdMaterial,0) as stdMaterial, i.batchNo as batchNo, coalesce(i.ytdReceipt,0) as ytdReceipt FROM ITEM i " +
             "WHERE i.companyCode = :companyCode AND i.plantNo = :plantNo AND i.itemNo = :itemNo")
     ItemProjection getDataItemCur(String companyCode, Integer plantNo, String itemNo);
 

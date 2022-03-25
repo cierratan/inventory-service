@@ -68,7 +68,7 @@ public interface ItemLocRepository extends JpaRepository<ItemLoc, Long> {
             "i.ytdReceipt = :ytdReceipt, i.batchNo = :newBatchNo, i.lastTranDate = :lastTranDate, " +
             "i.lastPurPrice = :convCost WHERE i.companyCode = :companyCode " +
             "AND i.plantNo = :plantNo AND i.itemNo = :itemNo AND i.loc = :loc")
-    void updateQohVarianceStdMatYtdRecBatchNoLTranDateLPurPrice(BigDecimal qoh, BigDecimal newCostVar, BigDecimal newStdMat,
+    void updateOrderVarianceStdMatYtdRecBatchNoLTranDateLPurPrice(BigDecimal qoh, BigDecimal newCostVar, BigDecimal newStdMat,
                                                                 BigDecimal ytdReceipt, BigDecimal newBatchNo,
                                                                 Date lastTranDate, BigDecimal convCost, String companyCode,
                                                                 Integer plantNo, String itemNo, String loc);
@@ -144,7 +144,7 @@ public interface ItemLocRepository extends JpaRepository<ItemLoc, Long> {
 
     @Query("select coalesce(ib.ytdReceipt,0) as ytdReceipt, coalesce(ib.qoh,0) as qoh, " +
             "coalesce(ib.pickedQty,0) as pickedQty, coalesce(ib.prodnResv,0) as prodnResv, " +
-            "coalesce(ib.ytdIssue,0) as ytdIssue, coalesce(ib.ytdProd,0) as ytdProd " +
+            "coalesce(ib.ytdIssue,0) as ytdIssue, coalesce(ib.ytdProd,0) as ytdProd, coalesce(ib.orderQty,0) as orderQty " +
             "from ITEMLOC ib " +
             "where ib.companyCode = :companyCode and ib.plantNo = :plantNo and ib.itemNo = :itemNo and ib.loc = :loc")
     ItemLocProjection itemLocInfo(String companyCode, Integer plantNo, String itemNo, String loc);
