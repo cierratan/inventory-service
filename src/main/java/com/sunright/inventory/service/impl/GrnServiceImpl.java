@@ -1321,12 +1321,11 @@ public class GrnServiceImpl implements GrnService {
                 finalGrnVar = (grnValue.subtract(stockValue)).setScale(4, BigDecimal.ROUND_HALF_EVEN);
             } else {
                 if (StringUtils.equals(input.getSubType(), "M")) {
-                    UOMProjection uomFactor = uomRepository.getUomFactor(detail.getUom(), itemUom.getUom());
-                    if (uomFactor == null) {
-                        convUom = BigDecimal.ONE;
-                    } else {
-                        convUom = uomFactor.getUomFactor();
+                    if(StringUtils.isNotBlank(grnDTO.getMsrNo())){
+                        checkIfMsrNoValid(grnDTO.getMsrNo());
                     }
+                    UOMProjection uomFactor = uomRepository.getUomFactor(detail.getUom(), itemUom.getUom());
+                    convUom = uomFactor == null ? BigDecimal.ONE : uomFactor.getUomFactor();
                     grnValue = ((grnDetail.getRecdQty().multiply(convUom)).multiply(detail.getRecdPrice().multiply(currRate)
                             .divide(convUom, 2, RoundingMode.HALF_UP))).setScale(4, BigDecimal.ROUND_HALF_EVEN);
                     stockValue = ((grnDetail.getRecdPrice().multiply(currRate).divide(convUom, 2, RoundingMode.HALF_UP))
@@ -1337,17 +1336,23 @@ public class GrnServiceImpl implements GrnService {
                 }
             }
 
+            BigDecimal itemQoh = itemCur.getQoh() == null ? BigDecimal.ZERO : itemCur.getQoh();
+            BigDecimal itemOrderQty = itemCur.getOrderQty() == null ? BigDecimal.ZERO : itemCur.getOrderQty();
+            BigDecimal itemCostVar = itemCur.getCostVariance() == null ? BigDecimal.ZERO : itemCur.getCostVariance();
+            BigDecimal itemStdMat = itemCur.getStdMaterial() == null ? BigDecimal.ZERO : itemCur.getStdMaterial();
+            BigDecimal itemBatchNo = itemCur.getBatchNo();
+
             NLCTLProjection batchYear = nlctlRepository.getBatchYear(userProfile.getCompanyCode(), userProfile.getPlantNo());
             BigDecimal newBatchNo = null;
-            if (itemCur.getBatchNo() == null) {
+            if (itemBatchNo == null) {
                 newBatchNo = (batchYear.getBatchNo().multiply(BigDecimal.valueOf(10000))).add(BigDecimal.valueOf(1));
             } else {
-                String batchYr = itemCur.getBatchNo().toString().substring(0, 4);
-                String batchNo = itemCur.getBatchNo().toString().substring(7);
+                String batchYr = itemBatchNo.toString().substring(0, 4);
+                String batchNo = itemBatchNo.toString().substring(7);
                 BigDecimal btchYr = BigDecimal.valueOf(Double.parseDouble(batchYr));
                 BigDecimal btchNo = BigDecimal.valueOf(Double.parseDouble(batchNo));
 
-                if (BigDecimal.valueOf(Double.parseDouble(batchYr)).intValue() < batchYear.getBatchNo().intValue()) {
+                if (btchYr.compareTo(batchYear.getBatchNo()) < 0) {
                     btchYr = batchYear.getBatchNo();
                     btchNo = BigDecimal.ZERO;
                 }
@@ -1359,17 +1364,14 @@ public class GrnServiceImpl implements GrnService {
                 }
             }
 
-            BigDecimal itemValue = itemCur.getStdMaterial() == null ? BigDecimal.ZERO : itemCur.getStdMaterial();
-            BigDecimal newStdMat = itemCur.getStdMaterial() == null ? BigDecimal.ZERO : itemCur.getStdMaterial();
-            BigDecimal newQoh = itemCur.getQoh() == null ? BigDecimal.ZERO : itemCur.getQoh();
-            BigDecimal newCostVar = itemCur.getCostVariance() == null ? BigDecimal.ZERO : itemCur.getCostVariance();
-            BigDecimal ytdReceipt = itemCur.getYtdReceipt() == null ? BigDecimal.ZERO : itemCur.getYtdReceipt();
-            BigDecimal qoh = itemCur.getQoh() == null ? BigDecimal.ZERO : itemCur.getQoh();
-            BigDecimal itemQoh = itemCur.getQoh() == null ? BigDecimal.ZERO : itemCur.getQoh();
-            BigDecimal itemStdMat = itemCur.getStdMaterial() == null ? BigDecimal.ZERO : itemCur.getStdMaterial();
-            BigDecimal itemCostVar = itemCur.getCostVariance() == null ? BigDecimal.ZERO : itemCur.getCostVariance();
+            BigDecimal itemValue = BigDecimal.ZERO;
+            BigDecimal newStdMat = BigDecimal.ZERO;
+            BigDecimal newQoh = BigDecimal.ZERO;
+            BigDecimal newCostVar = BigDecimal.ZERO;
+            BigDecimal ytdReceipt = BigDecimal.ZERO;
+            BigDecimal qoh = BigDecimal.ZERO;
             Date lastTranDate = new Date(System.currentTimeMillis());
-            BigDecimal itemOrderQty = itemCur.getOrderQty() == null ? BigDecimal.ZERO : itemCur.getOrderQty();
+
             BigDecimal qohItemLoc = itemLocInfo.getQoh() == null ? BigDecimal.ZERO : itemLocInfo.getQoh();
             BigDecimal orderQtyItemLoc = itemLocInfo.getOrderQty() == null ? BigDecimal.ZERO : itemLocInfo.getOrderQty();
             BigDecimal ytdReceiptItemLoc = itemLocInfo.getYtdReceipt() == null ? BigDecimal.ZERO : itemLocInfo.getYtdReceipt();
@@ -1388,12 +1390,20 @@ public class GrnServiceImpl implements GrnService {
                     newCostVar = ((itemValue.subtract(newQoh.multiply(newStdMat))).add(finalGrnVar)).setScale(4, BigDecimal.ROUND_HALF_EVEN);
                     costVar = ((itemValue.subtract(newQoh.multiply(newStdMat))).subtract(itemCostVar)).setScale(4, BigDecimal.ROUND_HALF_EVEN);
                     ytdReceipt = (ytdReceipt.add(convQty)).setScale(4, BigDecimal.ROUND_HALF_EVEN);
+                    qohItemLoc = qohItemLoc.add(convQty);
+
+                    orderQtyItemLoc = orderQtyItemLoc.add(convQty);
+                    ytdReceiptItemLoc = ytdReceiptItemLoc.add(convQty);
+                } else {
+                    ytdReceiptItemLoc = ytdReceiptItemLoc.add(newQoh);
                 }
 
                 if (StringUtils.equals(input.getSubType(), "M")) {
-                    /*inpCalStdMaterial(itemQoh, itemStdMat, itemCostVar, currRate, grnDetail.getRecdQty(),
-                            grnDetail.getRecdPrice(), convUom, newStdMat, newCostVar, newQoh);*/
+                    inpCalStdMaterial(itemQoh, itemStdMat, itemCostVar, currRate, grnDetail.getRecdQty(),
+                            grnDetail.getRecdPrice(), convUom, newStdMat, newCostVar, newQoh);
                     costVar = (newCostVar.subtract(finalGrnVar).subtract(itemCostVar)).setScale(4, BigDecimal.ROUND_HALF_EVEN);
+                    newQoh = itemQoh.add(newQoh);
+                    ytdReceipt = ytdReceipt.add(newQoh);
                     itemRepository.updateQohStdMatCostVarYtdRecLTranDateBatchNo(newQoh, newStdMat, newCostVar, ytdReceipt, lastTranDate, newBatchNo,
                             userProfile.getCompanyCode(), userProfile.getPlantNo(), grnDetail.getItemNo());
                 } else {
@@ -1554,8 +1564,6 @@ public class GrnServiceImpl implements GrnService {
                             ytdReceiptItemLoc, newBatchNo, lastTranDate, userProfile.getCompanyCode(),
                             userProfile.getPlantNo(), grnDetail.getItemNo(), stkLoc.getStockLoc());
                 } else {
-                    orderQtyItemLoc = orderQtyItemLoc.add(convQty);
-                    ytdReceiptItemLoc = ytdReceiptItemLoc.add(convQty);
                     itemLocRepository.updateOrderVarianceStdMatYtdRecBatchNoLTranDateLPurPrice(orderQtyItemLoc, newCostVar, newStdMat,
                             ytdReceiptItemLoc, newBatchNo, lastTranDate, convCost, userProfile.getCompanyCode(),
                             userProfile.getPlantNo(), grnDetail.getItemNo(), stkLoc.getStockLoc());
@@ -1570,7 +1578,6 @@ public class GrnServiceImpl implements GrnService {
                             ytdReceiptItemLoc, newBatchNo, lastTranDate, userProfile.getCompanyCode(),
                             userProfile.getPlantNo(), grnDetail.getItemNo(), stkLoc.getStockLoc());
                 } else {
-                    ytdReceiptItemLoc = ytdReceiptItemLoc.add(convQty);
                     itemLocRepository.updateStdMatYtdRecBatchNoLTranDateLPurPrice(newStdMat,
                             ytdReceiptItemLoc, newBatchNo, lastTranDate, convCost, userProfile.getCompanyCode(),
                             userProfile.getPlantNo(), grnDetail.getItemNo(), stkLoc.getStockLoc());
@@ -1615,7 +1622,6 @@ public class GrnServiceImpl implements GrnService {
                     itemLoc.setId(saved.getId());
                     itemLoc.setVersion(saved.getVersion());
                 } else {
-                    qohItemLoc = qohItemLoc.add(convQty);
                     itemLocRepository.updateQoh(qohItemLoc, userProfile.getCompanyCode(), userProfile.getPlantNo(), grnDetail.getItemNo());
                 }
             }
@@ -1655,7 +1661,7 @@ public class GrnServiceImpl implements GrnService {
 
             BigDecimal balQoh = BigDecimal.ZERO;
             if (StringUtils.equals(input.getSubType(), "M")) {
-                balQoh = (itemQoh.add(qoh)).setScale(4, BigDecimal.ROUND_HALF_EVEN);
+                balQoh = (itemQoh.add(newQoh)).setScale(4, BigDecimal.ROUND_HALF_EVEN);
             }
 
             /** INSERT INAUDIT  **/
@@ -1835,6 +1841,33 @@ public class GrnServiceImpl implements GrnService {
                     grnDetail.getPoPrice(), userProfile.getCompanyCode(), userProfile.getPlantNo(),
                     input.getPoNo(), grnDetail.getPoRecSeq());
         }
+    }
+
+    private void inpCalStdMaterial(BigDecimal oldQoh, BigDecimal oldStdMat, BigDecimal oldCostVar,
+                                   BigDecimal currRate, BigDecimal tranQty, BigDecimal tranPrice,
+                                   BigDecimal uomFactor, BigDecimal newStdMat, BigDecimal newCostVar, BigDecimal convQoh) {
+
+        oldQoh = (oldQoh == null ? BigDecimal.ZERO : oldQoh);
+        oldStdMat = (oldStdMat == null ? BigDecimal.ZERO : oldStdMat);
+        oldCostVar = (oldCostVar == null ? BigDecimal.ZERO : oldCostVar);
+        newStdMat = oldStdMat;
+        newCostVar = BigDecimal.ZERO;
+        BigDecimal convQty = tranQty.multiply(uomFactor);
+        BigDecimal convPrice = (tranPrice.multiply(currRate).divide(uomFactor, 2, RoundingMode.HALF_UP)).setScale(4, BigDecimal.ROUND_HALF_EVEN);
+        BigDecimal docValue = convQty.multiply(convPrice);
+        BigDecimal newQOH = oldQoh.add(convQty);
+        BigDecimal itemValue = oldQoh.multiply(oldStdMat).add(oldCostVar);
+        itemValue = itemValue.add(docValue);
+        // Exclude variance if QOH is 0
+        BigDecimal stdMaterial = null;
+        if (oldQoh.compareTo(BigDecimal.ZERO) <= 0) {
+            stdMaterial = (itemValue.subtract(oldCostVar)).divide(newQOH, 2, RoundingMode.HALF_UP).setScale(4, BigDecimal.ROUND_HALF_EVEN);
+            newCostVar = (itemValue.subtract(newQOH.multiply(stdMaterial)));
+        } else {
+            stdMaterial = itemValue.divide(newQOH, 2, RoundingMode.HALF_UP).setScale(4, BigDecimal.ROUND_HALF_EVEN);
+            newCostVar = (stdMaterial.multiply(newQOH)).subtract(newStdMat.multiply(newQOH)).setScale(4, BigDecimal.ROUND_HALF_EVEN);
+        }
+        convQoh = convQty;
     }
 
     private void procUpdateMSR(UserProfile userProfile, GrnDTO input, GrnDetDTO detail, BigDecimal newQoh) {
