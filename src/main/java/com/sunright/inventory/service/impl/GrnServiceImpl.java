@@ -214,9 +214,9 @@ public class GrnServiceImpl implements GrnService {
             throw new ServerException("Invalid PO No!");
         } else {
             if (!StringUtils.equals(statusPoNo2.getPoNo(), null) && !StringUtils.equals(statusPoNo2.getPoNo(), null)) {
-                if (StringUtils.equals(statusPoNo.getPoNo(), "C")) {
+                if (StringUtils.equals(statusPoNo.getOpenClose(), "C")) {
                     throw new ServerException("PO already Closed, Purchase Receipt not allowed.");
-                } else if (!StringUtils.equals(statusPoNo.getPoNo(), "A")) {
+                } else if (!StringUtils.equals(statusPoNo.getOpenClose(), "A")) {
                     throw new ServerException("PO is yet to be Approved, Purchase Receipt not allowed.");
                 }
             }
