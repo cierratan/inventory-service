@@ -18,7 +18,7 @@ public class IdentifierGeneratorUtil {
         NLCTLProjection batchYear = nlctlRepository.getBatchYear(UserProfileContext.getUserProfile().getCompanyCode(),
                 UserProfileContext.getUserProfile().getPlantNo());
 
-        Long newBatchNo = null;
+        Long newBatchNo;
 
         if (objBatchNo == null) {
             newBatchNo = (batchYear.getBatchNo().multiply(BigDecimal.valueOf(10000))).add(BigDecimal.valueOf(1)).longValue();
@@ -26,7 +26,7 @@ public class IdentifierGeneratorUtil {
             String batchYr = String.valueOf(objBatchNo).substring(0, 4);
             String batchNo = String.valueOf(objBatchNo).substring(7);
             BigDecimal btchYr = BigDecimal.valueOf(Double.parseDouble(batchYr));
-            BigDecimal btchNo = BigDecimal.valueOf(Double.parseDouble(batchNo));
+            BigDecimal btchNo = BigDecimal.valueOf(Double.parseDouble(batchNo)).add(BigDecimal.valueOf(1));
 
             if (BigDecimal.valueOf(Double.parseDouble(batchYr)).intValue() < batchYear.getBatchNo().intValue()) {
                 btchYr = batchYear.getBatchNo();
