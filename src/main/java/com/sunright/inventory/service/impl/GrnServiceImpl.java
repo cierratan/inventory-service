@@ -204,19 +204,19 @@ public class GrnServiceImpl implements GrnService {
 
         PurProjection statusPoNo = purRepository.checkStatusPoNoPur(userProfile.getCompanyCode(), userProfile.getPlantNo(), poNo);
         DraftPurProjection statusPoNo2 = draftPurRepository.checkStatusPoNoDraftPur(userProfile.getCompanyCode(), userProfile.getPlantNo(), poNo);
-        if (statusPoNo2.getOpenClose().equalsIgnoreCase("C")) {
+        if (StringUtils.equals(statusPoNo2.getOpenClose(), "C")) {
             throw new ServerException("PO already Closed, Purchase Receipt not allowed.");
-        } else if (!statusPoNo2.getOpenClose().equalsIgnoreCase("A")) {
+        } else if (!StringUtils.equals(statusPoNo2.getOpenClose(), "A")) {
             throw new ServerException("PO is yet to be Approved, Purchase Receipt not allowed.");
-        } else if (statusPoNo2.getOpenClose().equalsIgnoreCase("V")) {
+        } else if (StringUtils.equals(statusPoNo2.getOpenClose(), "V")) {
             throw new ServerException("PO already Voided, Purchase Receipt not allowed.");
         } else if (StringUtils.isBlank(statusPoNo2.getPoNo())) {
             throw new ServerException("Invalid PO No!");
         } else {
-            if (statusPoNo2.getPoNo() != null && statusPoNo2.getOpenClose() != null) {
-                if (statusPoNo.getOpenClose().equalsIgnoreCase("C")) {
+            if (!StringUtils.equals(statusPoNo2.getPoNo(), null) && !StringUtils.equals(statusPoNo2.getPoNo(), null)) {
+                if (StringUtils.equals(statusPoNo.getPoNo(), "C")) {
                     throw new ServerException("PO already Closed, Purchase Receipt not allowed.");
-                } else if (!statusPoNo.getOpenClose().equalsIgnoreCase("A")) {
+                } else if (!StringUtils.equals(statusPoNo.getPoNo(), "A")) {
                     throw new ServerException("PO is yet to be Approved, Purchase Receipt not allowed.");
                 }
             }
@@ -290,21 +290,17 @@ public class GrnServiceImpl implements GrnService {
         if (StringUtils.isBlank(docmNo.getGeneratedNo())) {
             throw new NotFoundException("Not found in DOCM_NO table for type GRN-M !");
         } else {
-            dto.setGrnNo(docmNo.getGeneratedNo());
-            dto.setSubType("M");
-            dto.setStatuz("Y");
             try {
+                dto.setGrnNo(docmNo.getGeneratedNo());
+                dto.setSubType("M");
+                dto.setStatuz("Y");
                 dto.setRecdDate(sdf.parse(date));
-            } catch (ParseException e) {
-                e.printStackTrace();
-            }
-            dto.setCurrencyRate(new BigDecimal(1));
-            dto.setCurrencyCode("USD");
-            dto.setEntryUser(userProfile.getUsername());
-            try {
+                dto.setCurrencyRate(new BigDecimal(1));
+                dto.setCurrencyCode("USD");
+                dto.setEntryUser(userProfile.getUsername());
                 dto.setEntryDate(sdf.parse(date));
             } catch (ParseException e) {
-                e.printStackTrace();
+                throw new ServerException(e.getMessage());
             }
         }
         return dto;
@@ -1113,7 +1109,7 @@ public class GrnServiceImpl implements GrnService {
                     grnDetail.setPlantNo(userProfile.getPlantNo());
                     grnDetail.setGrn(saved);
                     grnDetRepository.save(grnDetail);
-                    grnDetailPostSaving(saved, grnDetail, input, detail);
+                    grnDetailPostSaving(input, detail);
                 }
             }
 
@@ -1264,7 +1260,7 @@ public class GrnServiceImpl implements GrnService {
                     if (itemSrc == null) {
                         throw new ServerException("Unknown source for Stock Item");
                     } else if (itemSrc.getSource().equals("C")) {
-                        throw new ServerException("Invalid Recd Price for Consigned Item");
+                        checkValidRecdPriceForConsignedItem();
                     }
                 }
             }
@@ -1278,13 +1274,13 @@ public class GrnServiceImpl implements GrnService {
         }
     }
 
-    private void grnDetailPostSaving(Grn input, GrnDet grnDetail, GrnDTO grnDTO, GrnDetDTO detail) {
+    private void grnDetailPostSaving(GrnDTO input, GrnDetDTO grnDetail) {
 
         UserProfile userProfile = UserProfileContext.getUserProfile();
         ItemProjection itemCur = itemRepository.getDataItemCur(userProfile.getCompanyCode(), userProfile.getPlantNo(), grnDetail.getItemNo());
         CompanyProjection stkLoc = companyRepository.getStockLoc(userProfile.getCompanyCode(), userProfile.getPlantNo());
         ItemLocProjection itemLc = itemLocRepository.getItemLocByItemNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), grnDetail.getLoc(), grnDetail.getItemNo());
-        ItemProjection itemUom = itemRepository.getItemUomByItemNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), detail.getItemNo());
+        ItemProjection itemUom = itemRepository.getItemUomByItemNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), grnDetail.getItemNo());
         ItemLocProjection itemLocInfo = itemLocRepository.itemLocInfo(userProfile.getCompanyCode(),
                 userProfile.getPlantNo(), grnDetail.getItemNo(), grnDetail.getLoc());
 
@@ -1321,12 +1317,12 @@ public class GrnServiceImpl implements GrnService {
                 finalGrnVar = (grnValue.subtract(stockValue)).setScale(4, BigDecimal.ROUND_HALF_EVEN);
             } else {
                 if (StringUtils.equals(input.getSubType(), "M")) {
-                    if(StringUtils.isNotBlank(grnDTO.getMsrNo())){
-                        checkIfMsrNoValid(grnDTO.getMsrNo());
+                    if (StringUtils.isNotBlank(input.getMsrNo())) {
+                        checkIfMsrNoValid(input.getMsrNo());
                     }
-                    UOMProjection uomFactor = uomRepository.getUomFactor(detail.getUom(), itemUom.getUom());
+                    UOMProjection uomFactor = uomRepository.getUomFactor(grnDetail.getUom(), itemUom.getUom());
                     convUom = uomFactor == null ? BigDecimal.ONE : uomFactor.getUomFactor();
-                    grnValue = ((grnDetail.getRecdQty().multiply(convUom)).multiply(detail.getRecdPrice().multiply(currRate)
+                    grnValue = ((grnDetail.getRecdQty().multiply(convUom)).multiply(grnDetail.getRecdPrice().multiply(currRate)
                             .divide(convUom, 2, RoundingMode.HALF_UP))).setScale(4, BigDecimal.ROUND_HALF_EVEN);
                     stockValue = ((grnDetail.getRecdPrice().multiply(currRate).divide(convUom, 2, RoundingMode.HALF_UP))
                             .multiply(grnDetail.getRecdQty().multiply(convUom))).setScale(4, BigDecimal.ROUND_HALF_EVEN);
@@ -1343,21 +1339,21 @@ public class GrnServiceImpl implements GrnService {
             BigDecimal itemBatchNo = itemCur.getBatchNo();
 
             NLCTLProjection batchYear = nlctlRepository.getBatchYear(userProfile.getCompanyCode(), userProfile.getPlantNo());
-            BigDecimal newBatchNo = null;
+            Long newBatchNo = null;
             if (itemBatchNo == null) {
-                newBatchNo = (batchYear.getBatchNo().multiply(BigDecimal.valueOf(10000))).add(BigDecimal.valueOf(1));
+                newBatchNo = (batchYear.getBatchNo().multiply(BigDecimal.valueOf(10000))).add(BigDecimal.valueOf(1)).longValue();
             } else {
                 String batchYr = itemBatchNo.toString().substring(0, 4);
                 String batchNo = itemBatchNo.toString().substring(7);
                 BigDecimal btchYr = BigDecimal.valueOf(Double.parseDouble(batchYr));
-                BigDecimal btchNo = BigDecimal.valueOf(Double.parseDouble(batchNo));
+                BigDecimal btchNo = BigDecimal.valueOf(Double.parseDouble(batchNo)).add(BigDecimal.valueOf(1));
 
                 if (btchYr.compareTo(batchYear.getBatchNo()) < 0) {
                     btchYr = batchYear.getBatchNo();
                     btchNo = BigDecimal.ZERO;
                 }
 
-                newBatchNo = (btchYr.multiply(BigDecimal.valueOf(10000))).add(btchNo);
+                newBatchNo = (btchYr.multiply(BigDecimal.valueOf(10000))).add(btchNo).longValue();
 
                 if (newBatchNo == null) {
                     throw new NotFoundException("New Batch No not found!");
@@ -1404,10 +1400,10 @@ public class GrnServiceImpl implements GrnService {
                     costVar = (newCostVar.subtract(finalGrnVar).subtract(itemCostVar)).setScale(4, BigDecimal.ROUND_HALF_EVEN);
                     newQoh = itemQoh.add(newQoh);
                     ytdReceipt = ytdReceipt.add(newQoh);
-                    itemRepository.updateQohStdMatCostVarYtdRecLTranDateBatchNo(newQoh, newStdMat, newCostVar, ytdReceipt, lastTranDate, newBatchNo,
+                    itemRepository.updateQohStdMatCostVarYtdRecLTranDateBatchNo(newQoh, newStdMat, newCostVar, ytdReceipt, lastTranDate, BigDecimal.valueOf(newBatchNo),
                             userProfile.getCompanyCode(), userProfile.getPlantNo(), grnDetail.getItemNo());
                 } else {
-                    itemRepository.updateDataItems(newQoh, itemOrderQty, newStdMat, newCostVar, ytdReceipt, lastTranDate, convCost, newBatchNo,
+                    itemRepository.updateDataItems(newQoh, itemOrderQty, newStdMat, newCostVar, ytdReceipt, lastTranDate, convCost, BigDecimal.valueOf(newBatchNo),
                             userProfile.getCompanyCode(), userProfile.getPlantNo(), grnDetail.getItemNo());
                 }
             }
@@ -1422,14 +1418,14 @@ public class GrnServiceImpl implements GrnService {
                 Item item = new Item();
                 item.setCompanyCode(userProfile.getCompanyCode());
                 item.setPlantNo(userProfile.getPlantNo());
-                item.setLoc(detail.getLoc());
+                item.setLoc(grnDetail.getLoc());
                 if (grnDetail.getItemNo() != null) {
-                    item.setItemNo(detail.getItemNo());
+                    item.setItemNo(grnDetail.getItemNo());
                 } else {
-                    item.setItemNo(detail.getPartNo());
+                    item.setItemNo(grnDetail.getPartNo());
                 }
-                item.setPartNo(detail.getPartNo());
-                item.setRemarks(detail.getRemarks());
+                item.setPartNo(grnDetail.getPartNo());
+                item.setRemarks(grnDetail.getRemarks());
                 if (grnDetail.getItemNo() != null) {
                     item.setCategoryCode(grnDetail.getItemNo().substring(0, 3));
                 } else {
@@ -1448,7 +1444,7 @@ public class GrnServiceImpl implements GrnService {
                 item.setProdnResv(BigDecimal.ZERO);
                 item.setStrRohsStatus("1");
                 item.setCostVariance(newCostVar);
-                item.setBatchNo(newBatchNo);
+                item.setBatchNo(BigDecimal.valueOf(newBatchNo));
                 item.setLastTranDate(lastTranDate);
                 item.setStatus(Status.ACTIVE);
                 item.setCreatedBy(userProfile.getUsername());
@@ -1483,7 +1479,7 @@ public class GrnServiceImpl implements GrnService {
                         itemLoc.setYtdReceipt(convQty);
                         itemLoc.setStdMaterial(newStdMat);
                         itemLoc.setCostVariance(newCostVar);
-                        itemLoc.setBatchNo(newBatchNo);
+                        itemLoc.setBatchNo(BigDecimal.valueOf(newBatchNo));
                         itemLoc.setLastTranDate(lastTranDate);
                     }
                     itemLoc.setStatus(Status.ACTIVE);
@@ -1509,7 +1505,7 @@ public class GrnServiceImpl implements GrnService {
                         itemLoc.setYtdReceipt(grnQty);
                         itemLoc.setStdMaterial(grnPrice);
                         itemLoc.setCostVariance(newCostVar);
-                        itemLoc.setBatchNo(newBatchNo);
+                        itemLoc.setBatchNo(BigDecimal.valueOf(newBatchNo));
                         itemLoc.setLastTranDate(lastTranDate);
                     } else {
                         itemLoc.setQoh(BigDecimal.ZERO);
@@ -1517,7 +1513,7 @@ public class GrnServiceImpl implements GrnService {
                         itemLoc.setYtdReceipt(savedItem.getYtdReceipt());
                         itemLoc.setStdMaterial(savedItem.getStdMaterial());
                         itemLoc.setCostVariance(BigDecimal.ZERO);
-                        itemLoc.setBatchNo(newBatchNo);
+                        itemLoc.setBatchNo(BigDecimal.valueOf(newBatchNo));
                         itemLoc.setLastTranDate(lastTranDate);
                     }
                     itemLoc.setStatus(Status.ACTIVE);
@@ -1548,7 +1544,7 @@ public class GrnServiceImpl implements GrnService {
                         itemLoc.setYtdReceipt(grnQty);
                         itemLoc.setStdMaterial(grnPrice);
                         itemLoc.setCostVariance(BigDecimal.ZERO);
-                        itemLoc.setBatchNo(newBatchNo);
+                        itemLoc.setBatchNo(BigDecimal.valueOf(newBatchNo));
                         itemLoc.setLastTranDate(lastTranDate);
                     }
                     itemLoc.setStatus(Status.ACTIVE);
@@ -1561,11 +1557,11 @@ public class GrnServiceImpl implements GrnService {
             } else if (itemLc.getRecCnt() > 0) {
                 if (StringUtils.equals(input.getSubType(), "M")) {
                     itemLocRepository.updateStdMatYtdRecBatchNoLTranDate(newCostVar, newStdMat,
-                            ytdReceiptItemLoc, newBatchNo, lastTranDate, userProfile.getCompanyCode(),
+                            ytdReceiptItemLoc, BigDecimal.valueOf(newBatchNo), lastTranDate, userProfile.getCompanyCode(),
                             userProfile.getPlantNo(), grnDetail.getItemNo(), stkLoc.getStockLoc());
                 } else {
                     itemLocRepository.updateOrderVarianceStdMatYtdRecBatchNoLTranDateLPurPrice(orderQtyItemLoc, newCostVar, newStdMat,
-                            ytdReceiptItemLoc, newBatchNo, lastTranDate, convCost, userProfile.getCompanyCode(),
+                            ytdReceiptItemLoc, BigDecimal.valueOf(newBatchNo), lastTranDate, convCost, userProfile.getCompanyCode(),
                             userProfile.getPlantNo(), grnDetail.getItemNo(), stkLoc.getStockLoc());
                 }
 
@@ -1575,11 +1571,11 @@ public class GrnServiceImpl implements GrnService {
 
                 if (StringUtils.equals(input.getSubType(), "M")) {
                     itemLocRepository.updateStdMatYtdRecBatchNoLTranDate(newStdMat,
-                            ytdReceiptItemLoc, newBatchNo, lastTranDate, userProfile.getCompanyCode(),
+                            ytdReceiptItemLoc, BigDecimal.valueOf(newBatchNo), lastTranDate, userProfile.getCompanyCode(),
                             userProfile.getPlantNo(), grnDetail.getItemNo(), stkLoc.getStockLoc());
                 } else {
                     itemLocRepository.updateStdMatYtdRecBatchNoLTranDateLPurPrice(newStdMat,
-                            ytdReceiptItemLoc, newBatchNo, lastTranDate, convCost, userProfile.getCompanyCode(),
+                            ytdReceiptItemLoc, BigDecimal.valueOf(newBatchNo), lastTranDate, convCost, userProfile.getCompanyCode(),
                             userProfile.getPlantNo(), grnDetail.getItemNo(), stkLoc.getStockLoc());
                 }
 
@@ -1601,7 +1597,7 @@ public class GrnServiceImpl implements GrnService {
                         itemLoc.setYtdReceipt(grnQty);
                         itemLoc.setStdMaterial(newStdMat);
                         itemLoc.setCostVariance(BigDecimal.ZERO);
-                        itemLoc.setBatchNo(newBatchNo);
+                        itemLoc.setBatchNo(BigDecimal.valueOf(newBatchNo));
                         itemLoc.setLastTranDate(lastTranDate);
                     } else {
                         itemLoc.setQoh(convQty);
@@ -1609,7 +1605,7 @@ public class GrnServiceImpl implements GrnService {
                         itemLoc.setYtdReceipt(convQty);
                         itemLoc.setStdMaterial(newStdMat);
                         itemLoc.setCostVariance(BigDecimal.ZERO);
-                        itemLoc.setBatchNo(newBatchNo);
+                        itemLoc.setBatchNo(BigDecimal.valueOf(newBatchNo));
                         itemLoc.setLastTranDate(lastTranDate);
                     }
                     itemLoc.setStatus(Status.ACTIVE);
@@ -1647,13 +1643,13 @@ public class GrnServiceImpl implements GrnService {
             itemBatc.setPoRecSeq(grnDetail.getPoRecSeq());
             itemBatc.setGrnNo(input.getGrnNo());
             itemBatc.setGrnSeq(grnDetail.getSeqNo());
-            itemBatc.setDateCode(detail.getDateCode());
+            itemBatc.setDateCode(grnDetail.getDateCode());
             itemBatc.setId(itemBatcId);
             itemBatcRepository.save(itemBatc);
 
             /** UPDATE ITEMLOC  **/
             List<ItemLoc> itemLocs = itemLocRepository.findByCompanyCodeAndPlantNoAndItemNoAndLoc(
-                    userProfile.getCompanyCode(), userProfile.getPlantNo(), detail.getItemNo(), detail.getLoc());
+                    userProfile.getCompanyCode(), userProfile.getPlantNo(), grnDetail.getItemNo(), grnDetail.getLoc());
 
             if (!CollectionUtils.isEmpty(itemLocs) && itemLocs.size() == 1) {
                 itemLoc = itemLocRepository.getById(itemLocs.get(0).getId());
@@ -1718,29 +1714,29 @@ public class GrnServiceImpl implements GrnService {
             inAudit.setVersion(saved.getVersion());
 
             /** MSRDET UPDATE  **/
-            if (StringUtils.isNotBlank(grnDTO.getMsrNo())) {
-                procUpdateMSR(userProfile, grnDTO, detail, newQoh);
+            if (StringUtils.isNotBlank(input.getMsrNo())) {
+                procUpdateMSR(userProfile, input, grnDetail, newQoh);
             }
 
             String projectNoMrv = null;
             BigDecimal itemPickQty = BigDecimal.ZERO;
             BigDecimal itemProdnResv = BigDecimal.ZERO;
             if (StringUtils.equals(input.getSubType(), "M")) {
-                if (StringUtils.isNotBlank(detail.getProjectNo())) {
-                    if (StringUtils.isNotBlank(grnDTO.getMsrNo())) {
+                if (StringUtils.isNotBlank(grnDetail.getProjectNo())) {
+                    if (StringUtils.isNotBlank(input.getMsrNo())) {
                         MRVDetailProjection mrvDetCur = mrvDetailRepository.mrvDetCur(userProfile.getCompanyCode(),
-                                userProfile.getPlantNo(), grnDTO.getMsrNo(), detail.getItemNo(), detail.getSeqNo());
+                                userProfile.getPlantNo(), input.getMsrNo(), grnDetail.getItemNo(), grnDetail.getSeqNo());
                         if (StringUtils.isBlank(mrvDetCur.getProjectNo())) {
-                            projectNoMrv = detail.getProjectNo();
+                            projectNoMrv = grnDetail.getProjectNo();
                         }
                     } else {
-                        projectNoMrv = detail.getProjectNo();
+                        projectNoMrv = grnDetail.getProjectNo();
                     }
 
-                    BigDecimal vRecdQty = (detail.getRecdQty() == null ? BigDecimal.ZERO : detail.getRecdQty()).multiply(convUom);
+                    BigDecimal vRecdQty = (grnDetail.getRecdQty() == null ? BigDecimal.ZERO : grnDetail.getRecdQty()).multiply(convUom);
                     /***************************** BOMBYPJ UPDATE *****************************/
                     List<BombypjProjection> bombypjCurs = bombypjRepository.bombypjCurList(userProfile.getCompanyCode(),
-                            userProfile.getPlantNo(), projectNoMrv, detail.getItemNo());
+                            userProfile.getPlantNo(), projectNoMrv, grnDetail.getItemNo());
                     for (BombypjProjection bombypjCur : bombypjCurs) {
                         String tranType = bombypjCur.getTranType();
                         String orderNo = bombypjCur.getOrderNo();
@@ -1749,7 +1745,7 @@ public class GrnServiceImpl implements GrnService {
                         BigDecimal vIssuedQty = bombypjCur.getIssuedQty();
                         BigDecimal vPickedQTy = bombypjCur.getPickedQty();
                         String itemSource = itemUom.getSource();
-                        if (StringUtils.isNotBlank(grnDTO.getMsrNo())) {
+                        if (StringUtils.isNotBlank(input.getMsrNo())) {
                             /** Returning of MSR **/
                             if (vRecdQty.compareTo(vShortQty) > 0) {
                                 vPickedQTy = vPickedQTy.add(vShortQty);
@@ -1764,7 +1760,7 @@ public class GrnServiceImpl implements GrnService {
                             }
                         } else {
                             /** Consigned Item handling **/
-                            if (stkLoc.getStockLoc().equals(detail.getLoc())) {
+                            if (stkLoc.getStockLoc().equals(grnDetail.getLoc())) {
                                 if (tranType.equals("PRJ") && itemSource.equals("C")) {
                                     if (vResvQty.compareTo(vRecdQty) < 0) {
                                         itemProdnResv = vRecdQty.subtract(vResvQty);
@@ -1796,7 +1792,7 @@ public class GrnServiceImpl implements GrnService {
                                 }
                             }
                         }
-                        bombypjRepository.updatePickedShortResvQtyDelvDate(vPickedQTy, vShortQty, vResvQty, detail.getRecdDate(),
+                        bombypjRepository.updatePickedShortResvQtyDelvDate(vPickedQTy, vShortQty, vResvQty, grnDetail.getRecdDate(),
                                 userProfile.getCompanyCode(), userProfile.getPlantNo(), orderNo,
                                 bombypjCur.getAlternate(), bombypjCur.getProjectNo());
                     }
@@ -1825,14 +1821,14 @@ public class GrnServiceImpl implements GrnService {
 
             /**PURDET UPDATE*/
             PurDetProjection purDetInfo = purDetRepository.purDetInfo(userProfile.getCompanyCode(), userProfile.getPlantNo(), input.getPoNo(), grnDetail.getSeqNo());
-            BigDecimal rlseQty = (purDetInfo.getRlseQty() == null ? BigDecimal.ZERO : purDetInfo.getRlseQty()).add(detail.getRecdQty());
-            BigDecimal recdQty = (purDetInfo.getRecdQty() == null ? BigDecimal.ZERO : purDetInfo.getRecdQty()).add(detail.getRecdQty());
+            BigDecimal rlseQty = (purDetInfo.getRlseQty() == null ? BigDecimal.ZERO : purDetInfo.getRlseQty()).add(grnDetail.getRecdQty());
+            BigDecimal recdQty = (purDetInfo.getRecdQty() == null ? BigDecimal.ZERO : purDetInfo.getRecdQty()).add(grnDetail.getRecdQty());
 
             DraftPurDetProjection dPurDetInfo = draftPurDetRepository.draftPurDetInfo(userProfile.getCompanyCode(),
                     userProfile.getPlantNo(), input.getPoNo(), grnDetail.getSeqNo());
 
-            BigDecimal rlseQtyDP = (dPurDetInfo.getRlseQty() == null ? BigDecimal.ZERO : dPurDetInfo.getRlseQty()).add(detail.getRecdQty());
-            BigDecimal recdQtyDP = (dPurDetInfo.getRecdQty() == null ? BigDecimal.ZERO : dPurDetInfo.getRecdQty()).add(detail.getRecdQty());
+            BigDecimal rlseQtyDP = (dPurDetInfo.getRlseQty() == null ? BigDecimal.ZERO : dPurDetInfo.getRlseQty()).add(grnDetail.getRecdQty());
+            BigDecimal recdQtyDP = (dPurDetInfo.getRecdQty() == null ? BigDecimal.ZERO : dPurDetInfo.getRecdQty()).add(grnDetail.getRecdQty());
 
             draftPurDetRepository.updateRlseRecdDateRlseRecdQtyRecdPrice(rlseDate, recdDate, rlseQtyDP, recdQtyDP,
                     grnDetail.getPoPrice(), userProfile.getCompanyCode(), userProfile.getPlantNo(),
@@ -1887,8 +1883,9 @@ public class GrnServiceImpl implements GrnService {
         }
     }
 
-    private void procBomUpdate(UserProfile userProfile, Grn input, GrnDet grnDetail, String stockLoc, BigDecimal
+    private void procBomUpdate(UserProfile userProfile, GrnDTO input, GrnDetDTO grnDetail, String stockLoc, BigDecimal
             convQty) {
+
         List<BombypjDetailProjection> bombypjDetCurs = bombypjDetailRepository.getBombypjDetCur(userProfile.getCompanyCode(),
                 userProfile.getPlantNo(), input.getPoNo(), grnDetail.getItemNo(), grnDetail.getPoRecSeq());
         ItemLocProjection itemLocInfo = itemLocRepository.itemLocInfo(userProfile.getCompanyCode(),
@@ -2042,6 +2039,7 @@ public class GrnServiceImpl implements GrnService {
     }
 
     private void closePO(UserProfile userProfile, Grn input) throws ParseException {
+
         PurDetProjection purDetProjection = purDetRepository.getSumOrderQtyByPoNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), input.getPoNo());
         if (purDetProjection.getOrderQty() != null && purDetProjection.getOrderQty().compareTo(BigDecimal.ZERO) == 0) {
             Calendar calendar = Calendar.getInstance();
