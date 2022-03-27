@@ -848,7 +848,7 @@ public class GrnServiceImpl implements GrnService {
             Map<String, Object> param = new HashMap<>();
             List<JasperPrint> jasperPrintList = new ArrayList<JasperPrint>();
             Connection source = dataSource.getConnection();
-            if (projectOrderNo.size() > 1) {
+            if (projectOrderNo.size() != 0) {
                 for (BombypjDetailProjection rec : projectOrderNo) {
                     param.put("USERNAME", userProfile.getUsername());
                     param.put("COMPANY_CODE", userProfile.getCompanyCode());
