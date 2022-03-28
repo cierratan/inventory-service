@@ -1333,12 +1333,12 @@ public class GrnServiceImpl implements GrnService {
                     UOMProjection uomFactor = uomRepository.getUomFactor(grnDetail.getUom(), itemUom.getUom());
                     convUom = uomFactor == null ? BigDecimal.ONE : uomFactor.getUomFactor();
                     grnValue = ((grnDetail.getRecdQty().multiply(convUom)).multiply(grnDetail.getRecdPrice().multiply(currRate)
-                            .divide(convUom))).setScale(4, BigDecimal.ROUND_HALF_UP);
-                    stockValue = ((grnDetail.getRecdPrice().multiply(currRate).divide(convUom))
+                            .divide(convUom, 4, RoundingMode.HALF_UP))).setScale(4, BigDecimal.ROUND_HALF_UP);
+                    stockValue = ((grnDetail.getRecdPrice().multiply(currRate).divide(convUom, 4, RoundingMode.HALF_UP))
                             .multiply(grnDetail.getRecdQty().multiply(convUom))).setScale(4, BigDecimal.ROUND_HALF_UP);
                     finalGrnVar = (grnValue.subtract(stockValue)).setScale(4, BigDecimal.ROUND_HALF_UP);
                     grnQty = (grnDetail.getRecdQty().multiply(convUom)).setScale(4, BigDecimal.ROUND_HALF_UP);
-                    grnPrice = ((grnDetail.getRecdPrice().multiply(currRate)).divide(convUom)).setScale(4, BigDecimal.ROUND_HALF_UP);
+                    grnPrice = ((grnDetail.getRecdPrice().multiply(currRate)).divide(convUom, 4, RoundingMode.HALF_UP)).setScale(4, BigDecimal.ROUND_HALF_UP);
                 }
             }
 
@@ -1391,9 +1391,9 @@ public class GrnServiceImpl implements GrnService {
                 if (StringUtils.equals(input.getSubType(), "N")) {
                     itemValue = (itemQoh.multiply(itemStdMat)).add(itemCostVar).add(convQty.multiply(convCost));
                     if (itemQoh.compareTo(BigDecimal.ZERO) <= 0) {
-                        newStdMat = (itemValue.subtract(itemCostVar)).divide(convQty.add(itemQoh));
+                        newStdMat = (itemValue.subtract(itemCostVar)).divide(convQty.add(itemQoh), 4, RoundingMode.HALF_UP);
                     } else {
-                        newStdMat = (convQty.add(itemQoh)).divide(itemValue);
+                        newStdMat = (convQty.add(itemQoh)).divide(itemValue, 4, RoundingMode.HALF_UP);
                     }
 
                     newQoh = itemQoh.add(convQty);
@@ -1883,7 +1883,7 @@ public class GrnServiceImpl implements GrnService {
         itemValue = itemValue.add(docValue);
         // Exclude variance if QOH is 0
         if (oldQoh.compareTo(BigDecimal.ZERO) <= 0) {
-            newStdMat = (itemValue.subtract(oldCostVar)).divide(newQOH);
+            newStdMat = (itemValue.subtract(oldCostVar)).divide(newQOH, 4, RoundingMode.HALF_UP);
             newStdMat = newStdMat.setScale(4, BigDecimal.ROUND_HALF_UP);
             newCostVar = (itemValue.subtract(newQOH.multiply(newStdMat)));
         } else {
