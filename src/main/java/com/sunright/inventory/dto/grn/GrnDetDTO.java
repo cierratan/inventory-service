@@ -52,4 +52,8 @@ public class GrnDetDTO extends InvBaseDTO {
     private BigDecimal retnPrice;
     private Integer dateCode;
     private String mrvNo;
+
+    private BigDecimal newStdMaterial;
+    private BigDecimal newCostVar;
+    private BigDecimal convQoh;
 }
