@@ -67,6 +67,7 @@ import javax.sql.DataSource;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -1125,6 +1126,7 @@ public class GrnServiceImpl implements GrnService {
     }
 
     private void checkRecValidForGrnManual(UserProfile userProfile, GrnDTO input, GrnDetDTO detail) {
+
         List<ItemProjection> itemCur = itemRepository.getItemAndPartNoByPartNo(userProfile.getCompanyCode(), userProfile.getPlantNo(),
                 detail.getPartNo(), detail.getItemNo());
         BombypjProjection projCur = bombypjRepository.getPrjNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), detail.getProjectNo());
@@ -1135,27 +1137,12 @@ public class GrnServiceImpl implements GrnService {
         Optional<MSR> msrCur = msrRepository.findMSRByMsrNo(input.getMsrNo());
         ItemProjection itemSrc = itemRepository.getSource(userProfile.getCompanyCode(), userProfile.getPlantNo(), detail.getItemNo());
 
-        if (StringUtils.isNotBlank(input.getMsrNo())) {
-            if (!msrCur.isPresent()) {
-                throw new ServerException("Invalid MSR No");
-            }
-
-            if (StringUtils.isNotBlank(input.getMsrNo())) {
-                MSRDetailProjection vRecdQty = msrDetailRepository.getRecdQtyByMsrNo(userProfile.getCompanyCode(),
-                        userProfile.getPlantNo(), input.getMsrNo(), detail.getItemNo(), detail.getSeqNo());
-                if (vRecdQty.getRecdQty().compareTo(BigDecimal.ZERO) <= 0) {
-                    throw new ServerException("There is no outstanding for this MSR#");
-                }
-
-                if (vRecdQty == null) {
-                    throw new ServerException("Invalid MSR No / Item No");
-                }
-            }
-        }
-
         if (StringUtils.isNotBlank(input.getGrnNo()) && StringUtils.isBlank(detail.getItemNo())) {
             if (detail.getItemType() == null) {
-                throw new ServerException("No Item No found. GRN record NOT created !");
+                detail.setItemType(2);
+                if (detail.getItemType() != 1) {
+                    throw new ServerException("No Item No found. GRN record NOT created !");
+                }
             }
         }
 
@@ -1163,13 +1150,17 @@ public class GrnServiceImpl implements GrnService {
             checkItemType();
         }
 
-        if (StringUtils.isBlank(detail.getLoc())) {
-            throw new ServerException("LOC Can Not be Blank !");
+        if (StringUtils.isBlank(detail.getItemNo())) {
+            checkItemNo();
         }
 
         if (detail.getItemType() != null) {
             if (!Integer.toString(detail.getItemType()).contains("0") && !Integer.toString(detail.getItemType()).contains("1")) {
                 checkItemTypeNotNull();
+            }
+
+            if (StringUtils.isBlank(detail.getLoc())) {
+                throw new ServerException("LOC Can Not be Blank !");
             }
 
             ItemDTO dto = ItemDTO.builder().build();
@@ -1263,6 +1254,24 @@ public class GrnServiceImpl implements GrnService {
                             checkValidRecdPriceForConsignedItem();
                         }
                     }
+                }
+            }
+        }
+
+        if (StringUtils.isNotBlank(input.getMsrNo())) {
+            if (!msrCur.isPresent()) {
+                throw new ServerException("Invalid MSR No");
+            }
+
+            if (StringUtils.isNotBlank(input.getMsrNo())) {
+                MSRDetailProjection vRecdQty = msrDetailRepository.getRecdQtyByMsrNo(userProfile.getCompanyCode(),
+                        userProfile.getPlantNo(), input.getMsrNo(), detail.getItemNo(), detail.getSeqNo());
+                if (vRecdQty.getRecdQty().compareTo(BigDecimal.ZERO) <= 0) {
+                    throw new ServerException("There is no outstanding for this MSR#");
+                }
+
+                if (vRecdQty == null) {
+                    throw new ServerException("Invalid MSR No / Item No");
                 }
             }
         }
@@ -1646,7 +1655,11 @@ public class GrnServiceImpl implements GrnService {
                 itemBatc.setOriQoh(convQty);
             }
             itemBatc.setStdMaterial(newStdMat);
-            itemBatc.setPoNo(input.getPoNo());
+            if (StringUtils.equals(input.getSubType(), "N")) {
+                itemBatc.setPoNo(input.getPoNo());
+            } else {
+                itemBatc.setPoNo(grnDetail.getPoNo());
+            }
             itemBatc.setPoRecSeq(grnDetail.getPoRecSeq());
             itemBatc.setGrnNo(input.getGrnNo());
             itemBatc.setGrnSeq(grnDetail.getSeqNo());
@@ -1874,7 +1887,7 @@ public class GrnServiceImpl implements GrnService {
             newStdMat = newStdMat.setScale(4, BigDecimal.ROUND_HALF_UP);
             newCostVar = (itemValue.subtract(newQOH.multiply(newStdMat)));
         } else {
-            newStdMat = itemValue.divide(newQOH).setScale(4, BigDecimal.ROUND_HALF_UP);
+            newStdMat = itemValue.divide(newQOH, 4, RoundingMode.HALF_UP);
             newStdMat = newStdMat.setScale(4, BigDecimal.ROUND_HALF_UP);
             newCostVar = (newStdMat.multiply(newQOH)).subtract((newStdMat.multiply(newQOH)).setScale(4, BigDecimal.ROUND_HALF_UP));
         }
