@@ -1259,8 +1259,10 @@ public class GrnServiceImpl implements GrnService {
                 } else if (StringUtils.isNotBlank(detail.getItemNo())) {
                     if (itemSrc == null) {
                         throw new ServerException("Unknown source for Stock Item");
-                    } else if (itemSrc.getSource().equals("C")) {
-                        checkValidRecdPriceForConsignedItem();
+                    } else if (StringUtils.equals(itemSrc.getSource(), "C")) {
+                        if (detail.getRecdPrice().compareTo(BigDecimal.ZERO) > 0) {
+                            checkValidRecdPriceForConsignedItem();
+                        }
                     }
                 }
             }
