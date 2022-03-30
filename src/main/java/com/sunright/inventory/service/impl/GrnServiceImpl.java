@@ -296,7 +296,7 @@ public class GrnServiceImpl implements GrnService {
                 dto.setStatuz("Y");
                 dto.setRecdDate(sdf.parse(date));
                 dto.setCurrencyRate(new BigDecimal(1));
-                dto.setCurrencyCode("USD");
+                dto.setCurrencyCode("SGD");
                 dto.setEntryUser(userProfile.getUsername());
                 dto.setEntryDate(sdf.parse(date));
             } catch (ParseException e) {
@@ -1369,7 +1369,7 @@ public class GrnServiceImpl implements GrnService {
             BigDecimal newStdMat = null;
             BigDecimal newCostVar = null;
             BigDecimal newQoh = null;
-            Date lastTranDate = new Date(System.currentTimeMillis());
+            Date lastTranDate = new Timestamp(System.currentTimeMillis());
 
             if (itemCur != null) {
                 if (StringUtils.equals(input.getSubType(), "N")) {
