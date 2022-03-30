@@ -29,7 +29,7 @@ public interface DraftPurDetRepository extends JpaRepository<DraftPurDet, DraftP
                                                 String poNo, Integer poRecSeq);
 
     @Query("select coalesce(d.resvQty,0) as resvQty, coalesce(d.rlseQty,0) as rlseQty, coalesce(d.recdQty,0) as recdQty " +
-            "from DRAFT_PURDET d where d.id.companyCode = :companyCode and d.id.plantNo = :plantNo and d.id.poNo = :poNo " +
-            "and d.id.recSeq = :recSeq")
-    DraftPurDetProjection draftPurDetInfo(String companyCode, Integer plantNo, String poNo, Integer recSeq);
+            "from DRAFT_PURDET d where d.id.companyCode = :companyCode and d.id.plantNo = :plantNo and d.itemNo = :itemNo " +
+            "and d.projectNo = :projectNo")
+    DraftPurDetProjection draftPurDetInfo(String companyCode, Integer plantNo, String itemNo, String projectNo);
 }

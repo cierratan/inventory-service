@@ -81,10 +81,10 @@ public interface ItemRepository extends JpaRepository<Item, Long>, JpaSpecificat
     ItemProjection getItemUomByItemNo(String companyCode, Integer plantNo, String itemNo);
 
     @Modifying
-    @Query("UPDATE ITEM i set i.qoh = :qoh, i.orderQty = :itemOrderQty, i.stdMaterial = :newStdMat, i.costVariance = :newCostVar, " +
+    @Query("UPDATE ITEM i set i.qoh = :newQoh, i.orderQty = :itemOrderQty, i.stdMaterial = :newStdMat, i.costVariance = :newCostVar, " +
             "i.ytdReceipt = :ytdReceipt, i.lastTranDate = :lastTranDate, i.lastPurPrice = :convCost, i.batchNo = :newBatchNo " +
             "WHERE i.companyCode = :companyCode AND i.plantNo = :plantNo AND i.itemNo = :itemNo")
-    void updateDataItems(BigDecimal qoh, BigDecimal itemOrderQty, BigDecimal newStdMat, BigDecimal newCostVar,
+    void updateQohOrderQtyStdMatCVarYtdRLTranDtLPurPrBtcNo(BigDecimal newQoh, BigDecimal itemOrderQty, BigDecimal newStdMat, BigDecimal newCostVar,
                          BigDecimal ytdReceipt, Date lastTranDate, BigDecimal convCost, BigDecimal newBatchNo,
                          String companyCode, Integer plantNo, String itemNo);
 
