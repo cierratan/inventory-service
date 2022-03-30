@@ -2157,24 +2157,27 @@ public class GrnServiceImpl implements GrnService {
                 if (StringUtils.equals(grn.getSubType(), "N")) {
                     PurDetProjection detailInfo = purDetRepository.getDataFromItemAndPartNo(detail.getCompanyCode(), detail.getPlantNo(), detail.getPoNo(),
                             detail.getItemNo(), detail.getPartNo(), detail.getPoRecSeq());
-                    grnDetail = GrnDetDTO.builder()
-                            .grnNo(detail.getGrnNo())
-                            .subType(detail.getSubType())
-                            .orderQty(detailInfo.getOrderQty())
-                            .description(detailInfo.getDescription())
-                            .dueDate(detailInfo.getDueDate())
-                            .dateCode(dateCode)
-                            .build();
-
+                    if (detailInfo != null) {
+                        grnDetail = GrnDetDTO.builder()
+                                .grnNo(detail.getGrnNo())
+                                .subType(detail.getSubType())
+                                .orderQty(detailInfo.getOrderQty())
+                                .description(detailInfo.getDescription())
+                                .dueDate(detailInfo.getDueDate())
+                                .dateCode(dateCode)
+                                .build();
+                    }
                 } else {
                     ItemProjection getItemInfo = itemRepository.itemInfo(grn.getCompanyCode(), grn.getPlantNo(), detail.getItemNo());
-                    grnDetail = GrnDetDTO.builder()
-                            .grnNo(detail.getGrnNo())
-                            .subType(detail.getSubType())
-                            .itemType(detail.getItemType())
-                            .description(getItemInfo.getDescription())
-                            .dateCode(dateCode)
-                            .build();
+                    if(getItemInfo != null){
+                        grnDetail = GrnDetDTO.builder()
+                                .grnNo(detail.getGrnNo())
+                                .subType(detail.getSubType())
+                                .itemType(detail.getItemType())
+                                .description(getItemInfo.getDescription())
+                                .dateCode(dateCode)
+                                .build();
+                    }
                 }
 
                 BeanUtils.copyProperties(detail, grnDetail);
