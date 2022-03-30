@@ -72,7 +72,7 @@ public interface ItemRepository extends JpaRepository<Item, Long>, JpaSpecificat
     @Query("SELECT i.itemNo as itemNo FROM ITEM i WHERE i.itemNo = :projectNo")
     ItemProjection getItemNoByProjectNo(String projectNo);
 
-    @Query("SELECT coalesce(i.qoh,0) as qoh, coalesce(i.orderQty,0) as orderQty, coalesce(i.costVariance,0) as costVariance, " +
+    @Query("SELECT i.id as itemId, coalesce(i.qoh,0) as qoh, coalesce(i.orderQty,0) as orderQty, coalesce(i.costVariance,0) as costVariance, " +
             "coalesce(i.stdMaterial,0) as stdMaterial, i.batchNo as batchNo, coalesce(i.ytdReceipt,0) as ytdReceipt FROM ITEM i " +
             "WHERE i.companyCode = :companyCode AND i.plantNo = :plantNo AND i.itemNo = :itemNo")
     ItemProjection getDataItemCur(String companyCode, Integer plantNo, String itemNo);
@@ -85,8 +85,8 @@ public interface ItemRepository extends JpaRepository<Item, Long>, JpaSpecificat
             "i.ytdReceipt = :ytdReceipt, i.lastTranDate = :lastTranDate, i.lastPurPrice = :convCost, i.batchNo = :newBatchNo " +
             "WHERE i.companyCode = :companyCode AND i.plantNo = :plantNo AND i.itemNo = :itemNo")
     void updateQohOrderQtyStdMatCVarYtdRLTranDtLPurPrBtcNo(BigDecimal newQoh, BigDecimal itemOrderQty, BigDecimal newStdMat, BigDecimal newCostVar,
-                         BigDecimal ytdReceipt, Date lastTranDate, BigDecimal convCost, BigDecimal newBatchNo,
-                         String companyCode, Integer plantNo, String itemNo);
+                                                           BigDecimal ytdReceipt, Date lastTranDate, BigDecimal convCost, BigDecimal newBatchNo,
+                                                           String companyCode, Integer plantNo, String itemNo);
 
     @Modifying
     @Query("UPDATE ITEM i set i.mrvResv = :mrvResv " +

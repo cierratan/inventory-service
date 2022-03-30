@@ -23,10 +23,10 @@ public interface DraftPurDetRepository extends JpaRepository<DraftPurDet, DraftP
     @Modifying
     @Query("UPDATE DRAFT_PURDET d set d.rlseDate = :rlseDate, d.recdDate = :recdDate, d.rlseQty = :rlseQty, " +
             "d.recdQty = :recdQty, d.recdPrice = :poPrice WHERE d.id.companyCode = :companyCode " +
-            "AND d.id.plantNo = :plantNo AND d.id.poNo = :poNo AND d.id.recSeq = :poRecSeq")
+            "AND d.id.plantNo = :plantNo AND d.itemNo = :itemNo AND d.projectNo = :projectNo")
     void updateRlseRecdDateRlseRecdQtyRecdPrice(Date rlseDate, Date recdDate, BigDecimal rlseQty, BigDecimal recdQty,
                                                 BigDecimal poPrice, String companyCode, Integer plantNo,
-                                                String poNo, Integer poRecSeq);
+                                                String itemNo, String projectNo);
 
     @Query("select coalesce(d.resvQty,0) as resvQty, coalesce(d.rlseQty,0) as rlseQty, coalesce(d.recdQty,0) as recdQty " +
             "from DRAFT_PURDET d where d.id.companyCode = :companyCode and d.id.plantNo = :plantNo and d.itemNo = :itemNo " +

@@ -1067,7 +1067,7 @@ public class GrnServiceImpl implements GrnService {
                     .uom(detailInfo.getUom())
                     .projectNo(detailInfo.getProjectNo())
                     .orderQty(detailInfo.getOrderQty())
-                    .unitPrice(detailInfo.getUnitPrice())
+                    .unitPrice(detailInfo.getUnitPrice().setScale(4, RoundingMode.HALF_UP))
                     .dueDate(detailInfo.getDueDate())
                     .resvQty(detailInfo.getResvQty())
                     .invUom(detailInfo.getInvUom())
@@ -1597,7 +1597,7 @@ public class GrnServiceImpl implements GrnService {
                             userProfile.getPlantNo(), grnDetail.getItemNo(), stkLoc.getStockLoc());
                 }
 
-                if (StringUtils.isBlank(itemCur.getLoc())) {
+                if (StringUtils.isBlank(itemLocWithRecCnt.getLoc())) {
                     itemLoc.setCompanyCode(userProfile.getCompanyCode());
                     itemLoc.setPlantNo(userProfile.getPlantNo());
                     if (grnDetail.getItemNo() != null) {
@@ -1631,7 +1631,7 @@ public class GrnServiceImpl implements GrnService {
                     itemLoc.setCreatedAt(ZonedDateTime.now());
                     itemLoc.setUpdatedBy(userProfile.getUsername());
                     itemLoc.setUpdatedAt(ZonedDateTime.now());
-                    itemLoc.setItemId(savedItem.getId());
+                    itemLoc.setItemId(itemCur.getItemId());
                     ItemLoc saved = itemLocRepository.save(itemLoc);
                     itemLoc.setId(saved.getId());
                     itemLoc.setVersion(saved.getVersion());
@@ -1869,10 +1869,10 @@ public class GrnServiceImpl implements GrnService {
 
             draftPurDetRepository.updateRlseRecdDateRlseRecdQtyRecdPrice(rlseDate, recdDate, rlseQtyDP, recdQtyDP,
                     grnDetail.getPoPrice(), userProfile.getCompanyCode(), userProfile.getPlantNo(),
-                    input.getPoNo(), grnDetail.getSeqNo());
+                    grnDetail.getItemNo(), grnDetail.getProjectNo());
             purDetRepository.updateRlseRecdDateRlseRecdQtyRecdPrice(rlseDate, recdDate, rlseQty, recdQty,
                     grnDetail.getPoPrice(), userProfile.getCompanyCode(), userProfile.getPlantNo(),
-                    input.getPoNo(), grnDetail.getPoRecSeq());
+                    grnDetail.getItemNo(), grnDetail.getProjectNo());
         }
     }
 
@@ -2087,8 +2087,8 @@ public class GrnServiceImpl implements GrnService {
         itemRepository.updatePickedQtyProdnResv(pickedQtyItem, prodnResvItem, userProfile.getCompanyCode(),
                 userProfile.getPlantNo(), grnDetail.getItemNo());
 
-        BigDecimal pickedQtyLoc = BigDecimal.ZERO;
-        BigDecimal prodnResvLoc = BigDecimal.ZERO;
+        BigDecimal pickedQtyLoc = null;
+        BigDecimal prodnResvLoc = null;
         if (itemLocInfo != null) {
             pickedQtyLoc = (itemLocInfo.getPickedQty() == null ? BigDecimal.ZERO : itemLocInfo.getPickedQty()).add(itemPickQty);
             prodnResvLoc = (itemLocInfo.getProdnResv() == null ? BigDecimal.ZERO : itemLocInfo.getProdnResv()).subtract(itemProdnResv);
@@ -2157,24 +2157,27 @@ public class GrnServiceImpl implements GrnService {
                 if (StringUtils.equals(grn.getSubType(), "N")) {
                     PurDetProjection detailInfo = purDetRepository.getDataFromItemAndPartNo(detail.getCompanyCode(), detail.getPlantNo(), detail.getPoNo(),
                             detail.getItemNo(), detail.getPartNo(), detail.getPoRecSeq());
-                    grnDetail = GrnDetDTO.builder()
-                            .grnNo(detail.getGrnNo())
-                            .subType(detail.getSubType())
-                            .orderQty(detailInfo.getOrderQty())
-                            .description(detailInfo.getDescription())
-                            .dueDate(detailInfo.getDueDate())
-                            .dateCode(dateCode)
-                            .build();
-
+                    if (detailInfo != null) {
+                        grnDetail = GrnDetDTO.builder()
+                                .grnNo(detail.getGrnNo())
+                                .subType(detail.getSubType())
+                                .orderQty(detailInfo.getOrderQty())
+                                .description(detailInfo.getDescription())
+                                .dueDate(detailInfo.getDueDate())
+                                .dateCode(dateCode)
+                                .build();
+                    }
                 } else {
                     ItemProjection getItemInfo = itemRepository.itemInfo(grn.getCompanyCode(), grn.getPlantNo(), detail.getItemNo());
-                    grnDetail = GrnDetDTO.builder()
-                            .grnNo(detail.getGrnNo())
-                            .subType(detail.getSubType())
-                            .itemType(detail.getItemType())
-                            .description(getItemInfo.getDescription())
-                            .dateCode(dateCode)
-                            .build();
+                    if (getItemInfo != null) {
+                        grnDetail = GrnDetDTO.builder()
+                                .grnNo(detail.getGrnNo())
+                                .subType(detail.getSubType())
+                                .itemType(detail.getItemType())
+                                .description(getItemInfo.getDescription())
+                                .dateCode(dateCode)
+                                .build();
+                    }
                 }
 
                 BeanUtils.copyProperties(detail, grnDetail);

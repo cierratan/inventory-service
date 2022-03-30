@@ -64,9 +64,9 @@ public interface PurDetRepository extends JpaRepository<PurDet, PurDetId>, JpaSp
     @Modifying
     @Query("UPDATE PURDET d set d.rlseDate = :rlseDate, d.recdDate = :recdDate, d.rlseQty = :rlseQty, " +
             "d.recdQty = :recdQty, d.recdPrice = :poPrice WHERE d.id.companyCode = :companyCode " +
-            "AND d.id.plantNo = :plantNo AND d.id.poNo = :poNo AND d.id.recSeq = :poRecSeq")
+            "AND d.id.plantNo = :plantNo AND d.itemNo = :itemNo AND d.projectNo = :projectNo")
     void updateRlseRecdDateRlseRecdQtyRecdPrice(Date rlseDate, Date recdDate, BigDecimal rlseQty, BigDecimal recdQty, BigDecimal poPrice,
-                                                String companyCode, Integer plantNo, String poNo, Integer poRecSeq);
+                                                String companyCode, Integer plantNo, String itemNo, String projectNo);
 
     @Query("select coalesce(p.resvQty,0) as resvQty, coalesce(p.rlseQty,0) as rlseQty, coalesce(p.recdQty,0) as recdQty " +
             "from PURDET p where p.id.companyCode = :companyCode and p.id.plantNo = :plantNo " +
