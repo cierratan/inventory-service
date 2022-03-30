@@ -70,8 +70,8 @@ public interface PurDetRepository extends JpaRepository<PurDet, PurDetId>, JpaSp
 
     @Query("select coalesce(p.resvQty,0) as resvQty, coalesce(p.rlseQty,0) as rlseQty, coalesce(p.recdQty,0) as recdQty " +
             "from PURDET p where p.id.companyCode = :companyCode and p.id.plantNo = :plantNo " +
-            "and p.id.poNo = :poNo and p.id.recSeq = :recSeq")
-    PurDetProjection purDetInfo(String companyCode, Integer plantNo, String poNo, Integer recSeq);
+            "and p.itemNo = :itemNo and p.projectNo = :projectNo")
+    PurDetProjection purDetInfo(String companyCode, Integer plantNo, String itemNo, String projectNo);
 
     @Query("SELECT SUM(COALESCE(pd.resvQty,0)) as resvQty FROM PURDET pd join PUR p on p.id.poNo = pd.id.poNo " +
             "WHERE p.id.companyCode = :companyCode AND p.id.plantNo = :plantNo AND COALESCE(p.openClose,'O') NOT IN ('V') " +

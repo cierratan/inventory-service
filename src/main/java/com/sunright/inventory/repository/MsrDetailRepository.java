@@ -62,4 +62,6 @@ public interface MsrDetailRepository extends JpaRepository<MSRDetail, Long> {
     @Query("UPDATE MSRDET md set md.recdQty = :recdQty, md.recdPrice = :recdPrice " +
             "WHERE md.companyCode = :companyCode AND md.plantNo = :plantNo AND md.msrNo = :msrNo")
     void updateRecdQty(BigDecimal recdQty, BigDecimal recdPrice, String companyCode, Integer plantNo, String msrNo);
+
+    Optional<List<MSRDetail>> getMSRDetailByGrnNo(String grnNo);
 }
