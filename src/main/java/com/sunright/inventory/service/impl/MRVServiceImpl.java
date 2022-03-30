@@ -265,8 +265,8 @@ public class MRVServiceImpl implements MRVService {
 
     private void increaseItemInv(MRVDetail mrvDetail) {
         ItemProjection itemInfo = itemRepository.itemInfo(mrvDetail.getCompanyCode(), mrvDetail.getPlantNo(), mrvDetail.getItemNo());
-        ItemLocProjection itemLocInfo = itemLocRepository.itemLocInfo(mrvDetail.getCompanyCode(), mrvDetail.getPlantNo(), itemInfo.getItemNo(), itemInfo.getLoc());
-        ItemLocProjection itemLocWithRecCnt = itemLocRepository.findItemLocWithRecCnt(mrvDetail.getCompanyCode(), mrvDetail.getPlantNo(), itemInfo.getItemNo(), itemInfo.getLoc());
+        ItemLocProjection itemLocInfo = itemLocRepository.itemLocInfo(mrvDetail.getCompanyCode(), mrvDetail.getPlantNo(), mrvDetail.getItemNo(), mrvDetail.getLoc());
+        ItemLocProjection itemLocWithRecCnt = itemLocRepository.findItemLocWithRecCnt(mrvDetail.getCompanyCode(), mrvDetail.getPlantNo(), mrvDetail.getItemNo(), itemInfo.getLoc());
 
         BigDecimal uomFactor = BigDecimal.ONE;
         BigDecimal currencyRate = mrvDetail.getMrv().getCurrencyRate();
@@ -311,7 +311,7 @@ public class MRVServiceImpl implements MRVService {
 
         CompanyProjection stockLoc = companyRepository.getStockLoc(mrvDetail.getCompanyCode(), mrvDetail.getPlantNo());
 
-        if(itemLocInfo.getRecCnt() == null) {
+        if(itemLocWithRecCnt.getRecCnt() == null) {
 
             if(stockLoc != null && StringUtils.equals(stockLoc.getStockLoc(), mrvDetail.getLoc())) {
                 ItemLoc itemLoc = new ItemLoc();
@@ -380,7 +380,7 @@ public class MRVServiceImpl implements MRVService {
 
                 itemLocRepository.save(itemLoc);
             }
-        } else if(itemLocInfo != null && itemLocInfo.getRecCnt() > 0) {
+        } else if(itemLocWithRecCnt != null && itemLocWithRecCnt.getRecCnt() > 0) {
             List<ItemLoc> itemLocFound = itemLocRepository.findByCompanyCodeAndPlantNoAndItemNoAndLoc(mrvDetail.getCompanyCode(), mrvDetail.getPlantNo(), mrvDetail.getItemNo(),
                     stockLoc.getStockLoc());
 
@@ -450,7 +450,7 @@ public class MRVServiceImpl implements MRVService {
         BigDecimal vRtnQty = BigDecimal.ZERO;
         BigDecimal vMrvQty = BigDecimal.ZERO;
         Long vNewBatchNo = 1l;
-        Long newBatchNo = identifierGeneratorUtil.getNewBatchNo(maxBatchNo.getMaxBatchNo());
+        Long newBatchNo = identifierGeneratorUtil.getNewBatchNo(maxBatchNo == null ? null : maxBatchNo.getBatchNo());
 
         if(!CollectionUtils.isEmpty(batchLogs)) {
             for (ItemBatcLogProjection batchLog : batchLogs) {
@@ -541,6 +541,7 @@ public class MRVServiceImpl implements MRVService {
         inAudit.setCompanyCode(mrvDetail.getCompanyCode());
         inAudit.setPlantNo(mrvDetail.getPlantNo());
         inAudit.setItemNo(mrvDetail.getItemNo());
+        inAudit.setItemlocId(itemLocInfo.getId());
         inAudit.setLoc(mrvDetail.getLoc());
         inAudit.setTranDate(new Date(zdtNow.toInstant().toEpochMilli()));
         inAudit.setTranTime("" + zdtNow.getHour() + zdtNow.getMinute() + zdtNow.getSecond());

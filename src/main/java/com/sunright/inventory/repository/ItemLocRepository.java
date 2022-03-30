@@ -142,7 +142,7 @@ public interface ItemLocRepository extends JpaRepository<ItemLoc, Long> {
             "from ITEMLOC ib where ib.companyCode = :companyCode and ib.plantNo = :plantNo and ib.itemNo = :itemNo and ib.loc = :loc")
     ItemLocProjection itemLocByItemNo(String companyCode, Integer plantNo, String itemNo, String loc);
 
-    @Query("select coalesce(ib.ytdReceipt,0) as ytdReceipt, coalesce(ib.qoh,0) as qoh, " +
+    @Query("select ib.id as id, coalesce(ib.ytdReceipt,0) as ytdReceipt, coalesce(ib.qoh,0) as qoh, " +
             "coalesce(ib.pickedQty,0) as pickedQty, coalesce(ib.prodnResv,0) as prodnResv, " +
             "coalesce(ib.ytdIssue,0) as ytdIssue, coalesce(ib.ytdProd,0) as ytdProd, coalesce(ib.orderQty,0) as orderQty " +
             "from ITEMLOC ib " +
