@@ -1389,7 +1389,7 @@ public class GrnServiceImpl implements GrnService {
                     GrnDetDTO calStdMat = inpCalStdMaterial(itemQoh, itemStdMat, itemVar, currRate, grnDetail.getRecdQty(),
                             grnDetail.getRecdPrice(), convUom, newStdMat, newCostVar, newQoh);
                     newStdMat = calStdMat.getNewStdMaterial();
-                    newCostVar = calStdMat.getNewCostVar();
+                    newCostVar = calStdMat.getNewCostVar().setScale(4,RoundingMode.HALF_UP);
                     newQoh = calStdMat.getConvQoh();
                     itemYtdReceipt = itemYtdReceipt.add(newQoh);
                     costVar = newCostVar.subtract(finalGrnVar).subtract(itemVar);
@@ -1634,7 +1634,6 @@ public class GrnServiceImpl implements GrnService {
             }
             inAudit.setDoNo(input.getDoNo());
             inAudit.setGrnNo(grnDetail.getGrnNo());
-            inAudit.setSeqNo(grnDetail.getSeqNo());
             inAudit.setCurrencyCode(input.getCurrencyCode());
             inAudit.setCurrencyRate(currRate);
             if (StringUtils.equals(input.getSubType(), "M")) {
@@ -1642,11 +1641,13 @@ public class GrnServiceImpl implements GrnService {
                 inAudit.setOrderQty(newQoh);
                 inAudit.setBalQty(balQoh);
                 inAudit.setActualCost(grnDetail.getRecdPrice() == null ? BigDecimal.ZERO : grnDetail.getRecdPrice());
+                inAudit.setSeqNo(null);
             } else {
                 inAudit.setInQty(convQty);
                 inAudit.setOrderQty(convQty);
                 inAudit.setBalQty(newQoh);
                 inAudit.setActualCost(convCost);
+                inAudit.setSeqNo(grnDetail.getSeqNo());
             }
             inAudit.setNewStdMaterial(newStdMat);
             inAudit.setOriStdMaterial(itemStdMat);
@@ -1817,7 +1818,7 @@ public class GrnServiceImpl implements GrnService {
             newStdMat = stdMaterial.setScale(4, RoundingMode.HALF_UP);
             newCostVar = (itemValue.subtract(newQOH.multiply(stdMaterial)));
         } else {
-            stdMaterial = itemValue.divide(newQOH, 4, RoundingMode.HALF_UP);
+            stdMaterial = itemValue.divide(newQOH,16, RoundingMode.HALF_UP);
             newStdMat = stdMaterial.setScale(4, RoundingMode.HALF_UP);
             newCostVar = (stdMaterial.multiply(newQOH)).subtract(newStdMat.multiply(newQOH).setScale(4, RoundingMode.HALF_UP));
         }
@@ -1882,13 +1883,10 @@ public class GrnServiceImpl implements GrnService {
 
                 for (BombypjProjection bombypjCur : bombypjCurs) {
                     while (true) {
-
-
                         BigDecimal inTransitQty = bombypjCur.getInTransitQty();
                         BigDecimal delvQty = bombypjCur.getDelvQty();
                         BigDecimal pickedQty = bombypjCur.getPickedQty();
                         BigDecimal shortQty = bombypjCur.getShortQty();
-
                         if (detBalQty.compareTo(vRecdQty) < 0) {
                             inTransitQty = inTransitQty.subtract(detBalQty);
                             delvQty = delvQty.add(detBalQty);

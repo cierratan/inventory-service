@@ -52,7 +52,7 @@ public class InAudit extends InvBaseEntity {
     private String grnNo;
     private String poNo;
     private String doNo;
-    private int seqNo;
+    private Integer seqNo;
 
     @Column(name = "IN_QTY", precision = 16, scale = 4)
     private BigDecimal inQty;
