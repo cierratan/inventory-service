@@ -26,4 +26,5 @@ public interface ItemProjection {
     String getCategoryCode();
     BigDecimal getRpcResv();
     BigDecimal getYtdReceipt();
+    BigDecimal getBalbfQty();
 }
