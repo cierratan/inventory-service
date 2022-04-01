@@ -22,7 +22,7 @@ public interface SIVService {
 
     List<SIVDetailDTO> populateSivDetail(String projectNo);
 
-    SIVDTO getDefaultValueSIV(String subType);
+    SIVDTO getDefaultValueSIV(String subType, String sivType);
 
     List<SIVDetailDTO> populateBatchList(String subType, String projectNo, String itemNo, String sivType);
 

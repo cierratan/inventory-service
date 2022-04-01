@@ -23,4 +23,8 @@ public class NLCTL {
 
     @Column(name = "START_YEAR", precision = 4, scale = 0)
     private BigDecimal startYear;
+
+    private String inventoryEnabled;
+    private Integer inventoryMonth;
+    private Long inventoryYear;
 }

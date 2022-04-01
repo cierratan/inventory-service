@@ -58,8 +58,8 @@ public interface PurDetRepository extends JpaRepository<PurDet, PurDetId>, JpaSp
 
     @Modifying
     @Query("UPDATE PURDET p set p.resvQty = :resvQty WHERE p.id.companyCode = :companyCode AND p.id.plantNo = :plantNo " +
-            "AND p.id.poNo = :poNo AND p.itemNo = :itemNo AND p.id.recSeq = :seqNo")
-    void updateResvQty(BigDecimal resvQty, String companyCode, Integer plantNo, String poNo, String itemNo, Integer seqNo);
+            "AND p.id.poNo = :poNo AND p.itemNo = :itemNo AND p.projectNo = :projectNo")
+    void updateResvQty(BigDecimal resvQty, String companyCode, Integer plantNo, String poNo, String itemNo, String projectNo);
 
     @Modifying
     @Query("UPDATE PURDET d set d.rlseDate = :rlseDate, d.recdDate = :recdDate, d.rlseQty = :rlseQty, " +
