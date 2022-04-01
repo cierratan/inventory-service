@@ -17,8 +17,8 @@ public interface DraftPurDetRepository extends JpaRepository<DraftPurDet, DraftP
 
     @Modifying
     @Query("UPDATE DRAFT_PURDET d set d.resvQty = :resvQty WHERE d.id.companyCode = :companyCode " +
-            "AND d.id.plantNo = :plantNo AND d.id.poNo = :poNo AND d.itemNo = :itemNo AND d.id.recSeq = :seqNo")
-    void updateResvQty(BigDecimal resvQty, String companyCode, Integer plantNo, String poNo, String itemNo, Integer seqNo);
+            "AND d.id.plantNo = :plantNo AND d.id.poNo = :poNo AND d.itemNo = :itemNo AND d.projectNo = :projectNo")
+    void updateResvQty(BigDecimal resvQty, String companyCode, Integer plantNo, String poNo, String itemNo, String projectNo);
 
     @Modifying
     @Query("UPDATE DRAFT_PURDET d set d.rlseDate = :rlseDate, d.recdDate = :recdDate, d.rlseQty = :rlseQty, " +

@@ -2,15 +2,19 @@ package com.sunright.inventory.util;
 
 import com.sunright.inventory.entity.nlctl.NLCTLProjection;
 import com.sunright.inventory.exception.NotFoundException;
+import com.sunright.inventory.exception.ServerException;
 import com.sunright.inventory.interceptor.UserProfileContext;
 import com.sunright.inventory.repository.NLCTLRepository;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.time.YearMonth;
 
 @Component
 public class IdentifierGeneratorUtil {
+
     @Autowired
     private NLCTLRepository nlctlRepository;
 
@@ -41,5 +45,22 @@ public class IdentifierGeneratorUtil {
         }
 
         return newBatchNo;
+    }
+
+    public Boolean checkInventoryPeriod(String companyCode, Integer plantNo) {
+
+        NLCTLProjection checkInvPeriod = nlctlRepository.checkInvPeriod(UserProfileContext.getUserProfile().getCompanyCode(),
+                UserProfileContext.getUserProfile().getPlantNo());
+        if (StringUtils.equals(checkInvPeriod.getInventoryEnabled(), "N")) {
+            throw new ServerException("Inventory Operation is Disabled !");
+        } else {
+            YearMonth thisMonth = YearMonth.now();
+            Integer currentMonth = thisMonth.getMonthValue();
+            Long currentYear = Long.valueOf(thisMonth.getYear());
+            if (checkInvPeriod.getInventoryMonth() != currentMonth && checkInvPeriod.getInventoryYear() != currentYear) {
+                throw new ServerException("Inventory Period in NLCTL is not Current Month !");
+            }
+        }
+        return true;
     }
 }

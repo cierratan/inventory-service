@@ -342,32 +342,30 @@ public class SIVServiceImpl implements SIVService {
 
         if (resBombypj.size() != 0) {
             for (BombypjProjection bProj : resBombypj) {
-                while (true) {
-                    BigDecimal resvQty = bProj.getResvQty() == null ? BigDecimal.ZERO : bProj.getResvQty();
-                    BigDecimal issuedQtyBomb = bProj.getIssuedQty() == null ? BigDecimal.ZERO : bProj.getIssuedQty();
-                    BigDecimal pickedQty = bProj.getPickedQty() == null ? BigDecimal.ZERO : bProj.getPickedQty();
-                    if (sivIssue.compareTo(pickedQty) > 0) {
-                        resvQty = resvQty.subtract(pickedQty);
-                        issuedQty = issuedQty.add(pickedQty);
-                        sivIssue = sivIssue.subtract(pickedQty);
-                        pickedQty = BigDecimal.ZERO;
-                    } else {
-                        resvQty = resvQty.subtract(sivIssue);
-                        issuedQty = issuedQty.add(sivIssue);
-                        pickedQty = pickedQty.subtract(sivIssue);
-                        sivIssue = BigDecimal.ZERO;
-                    }
+                BigDecimal resvQty = bProj.getResvQty() == null ? BigDecimal.ZERO : bProj.getResvQty();
+                BigDecimal issuedQtyBomb = bProj.getIssuedQty() == null ? BigDecimal.ZERO : bProj.getIssuedQty();
+                BigDecimal pickedQty = bProj.getPickedQty() == null ? BigDecimal.ZERO : bProj.getPickedQty();
+                if (sivIssue.compareTo(pickedQty) > 0) {
+                    resvQty = resvQty.subtract(pickedQty);
+                    issuedQty = issuedQty.add(pickedQty);
+                    sivIssue = sivIssue.subtract(pickedQty);
+                    pickedQty = BigDecimal.ZERO;
+                } else {
+                    resvQty = resvQty.subtract(sivIssue);
+                    issuedQty = issuedQty.add(sivIssue);
+                    pickedQty = pickedQty.subtract(sivIssue);
+                    sivIssue = BigDecimal.ZERO;
+                }
 
-                    if (resvQty.compareTo(BigDecimal.ZERO) < 0) {
-                        resvQty = BigDecimal.ZERO;
-                    }
+                if (resvQty.compareTo(BigDecimal.ZERO) < 0) {
+                    resvQty = BigDecimal.ZERO;
+                }
 
-                    bombypjRepository.updateResvIssuedPickedQty(resvQty, issuedQty, pickedQty,
-                            userProfile.getCompanyCode(), userProfile.getPlantNo(), projNo, itemNo);
+                bombypjRepository.updateResvIssuedPickedQty(resvQty, issuedQty, pickedQty,
+                        userProfile.getCompanyCode(), userProfile.getPlantNo(), projNo, itemNo);
 
-                    if (sivIssue.compareTo(BigDecimal.ZERO) == 0) {
-                        break;
-                    }
+                if (sivIssue.compareTo(BigDecimal.ZERO) == 0) {
+                    break;
                 }
             }
 
@@ -1428,6 +1426,14 @@ public class SIVServiceImpl implements SIVService {
             if (StringUtils.isBlank(input.getSivNo())) {
                 throw new ServerException("SIV No Can Not be Blank!");
             }
+            if (StringUtils.equals(input.getSivType(), "Consigned")) {
+                if (StringUtils.isBlank(input.getSivNo())) {
+                    throw new ServerException("SIV No Can Not be Blank!");
+                }
+                if (StringUtils.isBlank(input.getSivNo())) {
+                    throw new ServerException("Project No Can Not be Blank!");
+                }
+            }
         }
     }
 
@@ -1734,6 +1740,9 @@ public class SIVServiceImpl implements SIVService {
                     throw new ServerException("At least two Project No are needed !");
                 }
             }
+            if (input.getSivType().equalsIgnoreCase("Consigned")) {
+                checkRecValidProjectNo(input.getProjectNo());
+            }
         } else {
             if (StringUtils.isNotBlank(input.getDocmNo()) || StringUtils.isNotBlank(input.getProjectNo())) {
                 ItemProjection itemProjection;
@@ -1755,7 +1764,8 @@ public class SIVServiceImpl implements SIVService {
         if (StringUtils.isNotBlank(projectNo)) {
             ItemProjection itemProjection = itemRepository.getItemNoByProjectNo(projectNo);
             if (itemProjection == null) {
-                throw new ServerException("Project Type of " + projectNo + " is unknown!");
+                //throw new ServerException(String.format("Project Type of %s is unknown!", projectNo));
+                throw new ServerException("Invalid Project No!");
             }
         } else {
             throw new ServerException("Project No. Can Not be Blank!");
@@ -2818,15 +2828,24 @@ public class SIVServiceImpl implements SIVService {
     }
 
     @Override
-    public SIVDTO getDefaultValueSIV(String subType) {
+    public SIVDTO getDefaultValueSIV(String subType, String sivType) {
+
         UserProfile userProfile = UserProfileContext.getUserProfile();
         String entryTime = FastDateFormat.getInstance("kkmmssss").format(System.currentTimeMillis());
+        String currencyCode = "USD";
+        String statuz = "O";
         // subType (N : for Entry, M : for Manual)
-        return SIVDTO.builder().currencyCode("USD").currencyRate(BigDecimal.ONE)
-                .entryUser(userProfile.getUsername()).subType(subType).statuz("O")
+        if (sivType.equals("Entry") || sivType.equals("Manual")) {
+            currencyCode = "USD";
+            statuz = "O";
+        } else {
+            currencyCode = "SGD";
+            statuz = "O";
+        }
+        return SIVDTO.builder().currencyCode(currencyCode).currencyRate(BigDecimal.valueOf(1.0000))
+                .entryUser(userProfile.getUsername()).subType(subType).statuz(statuz)
                 .entryDate(new Timestamp(System.currentTimeMillis())).entryTime(entryTime).build();
     }
-
 
     @Override
     public List<SIVDetailDTO> populateBatchList(String subType, String projectNo, String itemNo, String sivType) {
@@ -3061,23 +3080,29 @@ public class SIVServiceImpl implements SIVService {
 
         List<SIVDetailDTO> list = new ArrayList<>();
 
+        /** SIV NO **/
         SaleDetailProjection sdetProjection = saleDetailRepository.getProjectType(userProfile.getCompanyCode(), userProfile.getPlantNo(), projectNo);
         String sivType = sdetProjection.getProductType();
         if (StringUtils.isBlank(sivType)) {
-            throw new ServerException("Project Type of " + projectNo + " is unknown!");
+            throw new ServerException(String.format("Project Type of %s is unknown!", projectNo));
         }
 
-        List<BombypjProjection> bombProjections = bombypjRepository.getDataByProjectNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), projectNo);
+        List<BombypjProjection> bombypjs = bombypjRepository.getDataByProjectNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), projectNo);
 
         int countSeqNo = 1;
         int countGrnDetSeqNo = 1;
 
         // bombypj loop
-        for (BombypjProjection bombRec : bombProjections) {
+        /** SIV DETAIL **/
+        for (BombypjProjection bombRec : bombypjs) {
             List<ItemBatchProjection> batchProjection = itemBatcRepository.getBatchNoByItemNo(userProfile.getCompanyCode(), userProfile.getPlantNo(), bombRec.getAlternate());
             BigDecimal projPickQty = bombRec.getPickedQty();
-            BigDecimal projShortQtyL = BigDecimal.ZERO;
-            BigDecimal projShortQtyF = BigDecimal.ZERO;
+
+            /** when there is short qty and QOH available
+             Allocate when local stk if available
+             Else assign to foreign stk if available **/
+            BigDecimal projShortQtyL = BigDecimal.ZERO; // Short Qty for Local assignment
+            BigDecimal projShortQtyF = BigDecimal.ZERO; // Short Qty for foreign assignment
             if (bombRec.getShortQty().compareTo(BigDecimal.ZERO) > 0) {
                 BigDecimal projShortQty = bombRec.getShortQty();
                 BigDecimal itemAvailQty = BigDecimal.ZERO;
@@ -3113,6 +3138,11 @@ public class SIVServiceImpl implements SIVService {
                 }
             }
 
+            /** individaul record will be created for PICK and SHORT qty
+             no mixing of PICK and SHORT qty under one batch
+             one batch can have PICK and SHORT in two separate records
+             SHORT qty record will have null BATCH NO, BATCH LIST and BATCH_LOC
+             when there is short qty, can only offer stk loc if avail and 2nd loc **/
             // batch loop
             for (ItemBatchProjection batRec : batchProjection) {
                 BigDecimal batchQty = batRec.getQoh();
@@ -3131,7 +3161,7 @@ public class SIVServiceImpl implements SIVService {
                         pickQty = batchQty;
                         projPickQty = projPickQty.subtract(batchQty);
                         batchQty = BigDecimal.ZERO;
-                    } else {
+                    } else { // projPickQty <= batRec.qoh
                         pickQty = projPickQty;
                         batchQty = batchQty.subtract(projPickQty);
                         projPickQty = BigDecimal.ZERO;
@@ -3164,7 +3194,7 @@ public class SIVServiceImpl implements SIVService {
                         shortQty = batchQty;
                         projShortQtyL = projShortQtyL.subtract(batchQty);
                         batchQty = BigDecimal.ZERO;
-                    } else {
+                    } else { // projShortQtyL <= batRec.qoh
                         pickQty = projShortQtyL;
                         shortQty = projShortQtyL;
                         batchQty = batchQty.subtract(projShortQtyL);
@@ -3193,13 +3223,13 @@ public class SIVServiceImpl implements SIVService {
                 }
 
                 CompanyProjection companyStockLoc = companyRepository.getStockLoc(userProfile.getCompanyCode(), userProfile.getPlantNo()); // get stock loc company
-                if (projShortQtyF.compareTo(BigDecimal.ZERO) > 0 && batchQty.compareTo(BigDecimal.ZERO) > 0 && !batRec.getLoc().equals(companyStockLoc.getStockLoc())) {
+                if (projShortQtyF.compareTo(BigDecimal.ZERO) > 0 && batchQty.compareTo(BigDecimal.ZERO) > 0 && !StringUtils.equals(batRec.getLoc(), companyStockLoc.getStockLoc())) {
                     if (projShortQtyF.compareTo(batchQty) > 0) {
                         pickQty = batchQty;
                         shortQty = batchQty;
                         projShortQtyF = projShortQtyF.subtract(batchQty);
                         batchQty = BigDecimal.ZERO;
-                    } else {
+                    } else { // projShortQtyF <= batRec.qoh
                         pickQty = projShortQtyF;
                         shortQty = projShortQtyF;
                         batchQty = batchQty.subtract(projShortQtyF);
@@ -3227,12 +3257,16 @@ public class SIVServiceImpl implements SIVService {
                             .build());
                 }
 
-            }
+                if (projPickQty.compareTo(BigDecimal.ZERO) == 0 && projShortQtyL.compareTo(BigDecimal.ZERO) == 0
+                        && projShortQtyF.compareTo(BigDecimal.ZERO) == 0) {
+                    break;
+                }
+            } // end batch loop
 
             if (projPickQty.compareTo(BigDecimal.ZERO) != 0) {
                 throw new ServerException("Error in Batch QOH distribution!");
             }
-        }
+        } // end bombypj loop
 
         return list;
     }

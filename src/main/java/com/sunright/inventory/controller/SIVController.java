@@ -42,8 +42,8 @@ public class SIVController {
     }
 
     @GetMapping("default-value")
-    public ResponseEntity<SIVDTO> defValue(@RequestParam String subType) {
-        return new ResponseEntity<>(sivService.getDefaultValueSIV(subType), HttpStatus.OK);
+    public ResponseEntity<SIVDTO> defValue(@RequestParam String subType, @RequestParam String sivType) {
+        return new ResponseEntity<>(sivService.getDefaultValueSIV(subType, sivType), HttpStatus.OK);
     }
 
     @PostMapping("check-next-item")
@@ -57,7 +57,7 @@ public class SIVController {
     }
 
     @GetMapping("populate-batch-list")
-    public ResponseEntity<List<SIVDetailDTO>> populateBatc(@RequestParam String subType, @RequestParam String projectNo,
+    public ResponseEntity<List<SIVDetailDTO>> populateBatcList(@RequestParam String subType, @RequestParam String projectNo,
                                                            @RequestParam String itemNo, @RequestParam String sivType) {
         return new ResponseEntity<>(sivService.populateBatchList(subType, projectNo, itemNo, sivType), HttpStatus.OK);
     }
@@ -73,7 +73,7 @@ public class SIVController {
     }
 
     @GetMapping("populate-detail-entry")
-    public ResponseEntity<List<SIVDetailDTO>> populateDet(@RequestParam String projectNo) {
+    public ResponseEntity<List<SIVDetailDTO>> populateDetEntry(@RequestParam String projectNo) {
         return new ResponseEntity<>(sivService.populateSivDetail(projectNo), HttpStatus.OK);
     }
 

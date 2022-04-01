@@ -19,4 +19,9 @@ public interface NLCTLRepository extends JpaRepository<NLCTL, BaseIdEntity>, Jpa
             "to_number(to_char(add_months(last_day(start_period), 11), 'YYYY'))," +
             "0, start_year, start_year + 1)) as batchNo from NLCTL where company_code = :companyCode and plant_no = :plantNo", nativeQuery = true)
     NLCTLProjection getBatchYear(String companyCode, Integer plantNo);
+
+    @Query("SELECT n.inventoryEnabled as inventoryEnabled, n.inventoryMonth as inventoryMonth, n.inventoryYear as inventoryYear " +
+            "FROM NLCTL n " +
+            "WHERE n.id.companyCode = :companyCode AND n.id.plantNo = :plantNo")
+    NLCTLProjection checkInvPeriod(String companyCode, Integer plantNo);
 }
