@@ -1371,8 +1371,6 @@ public class GrnServiceImpl implements GrnService {
             BigDecimal newStdMat = BigDecimal.ZERO;
             BigDecimal newCostVar = BigDecimal.ZERO;
             BigDecimal newQoh = BigDecimal.ZERO;
-           /* ZonedDateTime zdtNow = ZonedDateTime.now();
-            Date lastTranDate = new Date(zdtNow.toInstant().toEpochMilli());*/
             Date lastTranDate = new Date(System.currentTimeMillis());
 
             if (itemCur != null) {
@@ -1427,8 +1425,7 @@ public class GrnServiceImpl implements GrnService {
                 itemLocId = itemLocInfo.getId();
             }
 
-            ItemLoc saved1st = new ItemLoc();
-            ItemLoc saved2nd = new ItemLoc();
+            ItemLoc savedItemLoc = new ItemLoc();
             if (itemLocWithRecCnt == null) {
                 if (StringUtils.equals(input.getSubType(), "M")) {
                     costVar = BigDecimal.ZERO;
@@ -1465,44 +1462,43 @@ public class GrnServiceImpl implements GrnService {
                     itemLoc.setUpdatedBy(userProfile.getUsername());
                     itemLoc.setUpdatedAt(ZonedDateTime.now());
                     itemLoc.setItemId(itemInfo.getItemId());
-                    ItemLoc saved = itemLocRepository.save(itemLoc);
-                    itemLoc.setId(saved.getId());
-                    itemLoc.setVersion(saved.getVersion());
+                    itemLocRepository.save(itemLoc);
                 } else {
                     /** INSERT FIRST **/
-                    ItemLoc itemLoc = new ItemLoc();
-                    itemLoc.setCompanyCode(userProfile.getCompanyCode());
-                    itemLoc.setPlantNo(userProfile.getPlantNo());
-                    itemLoc.setItemNo(grnDetail.getItemNo());
-                    itemLoc.setLoc(stkLoc.getStockLoc());
-                    itemLoc.setPartNo(grnDetail.getPartNo());
-                    itemLoc.setDescription(grnDetail.getDescription());
-                    itemLoc.setCategoryCode(itemInfo.getCategoryCode());
-                    if (StringUtils.equals(input.getSubType(), "M")) {
-                        itemLoc.setQoh(BigDecimal.ZERO);
-                        itemLoc.setYtdReceipt(grnQty);
-                        itemLoc.setStdMaterial(grnPrice);
-                        itemLoc.setCostVariance(newCostVar);
-                        itemLoc.setBatchNo(BigDecimal.valueOf(newBatchNo));
-                        itemLoc.setLastTranDate(lastTranDate);
-                    } else {
-                        itemLoc.setQoh(BigDecimal.ZERO);
-                        itemLoc.setBalbfQty(convQty);
-                        itemLoc.setYtdReceipt(convQty);
-                        itemLoc.setStdMaterial(newStdMat);
-                        itemLoc.setCostVariance(newCostVar);
-                        itemLoc.setBatchNo(BigDecimal.valueOf(newBatchNo));
-                        itemLoc.setLastTranDate(lastTranDate);
+                    List<ItemLoc> itemLocs = itemLocRepository.findByCompanyCodeAndPlantNoAndItemNoAndLoc(userProfile.getCompanyCode(), userProfile.getPlantNo(), grnDetail.getItemNo(), stkLoc.getStockLoc());
+                    if (!CollectionUtils.isEmpty(itemLocs) && itemLocs.size() == 1) {
+                        ItemLoc itemLoc = itemLocRepository.getById(itemLocs.get(0).getId());
+                        itemLoc.setCompanyCode(userProfile.getCompanyCode());
+                        itemLoc.setPlantNo(userProfile.getPlantNo());
+                        itemLoc.setItemNo(grnDetail.getItemNo());
+                        itemLoc.setLoc(stkLoc.getStockLoc());
+                        itemLoc.setPartNo(grnDetail.getPartNo());
+                        itemLoc.setDescription(grnDetail.getDescription());
+                        itemLoc.setCategoryCode(itemInfo.getCategoryCode());
+                        if (StringUtils.equals(input.getSubType(), "M")) {
+                            itemLoc.setQoh(BigDecimal.ZERO);
+                            itemLoc.setYtdReceipt(grnQty);
+                            itemLoc.setStdMaterial(grnPrice);
+                            itemLoc.setCostVariance(newCostVar);
+                            itemLoc.setBatchNo(BigDecimal.valueOf(newBatchNo));
+                            itemLoc.setLastTranDate(lastTranDate);
+                        } else {
+                            itemLoc.setQoh(BigDecimal.ZERO);
+                            itemLoc.setBalbfQty(convQty);
+                            itemLoc.setYtdReceipt(convQty);
+                            itemLoc.setStdMaterial(newStdMat);
+                            itemLoc.setCostVariance(newCostVar);
+                            itemLoc.setBatchNo(BigDecimal.valueOf(newBatchNo));
+                            itemLoc.setLastTranDate(lastTranDate);
+                        }
+                        itemLoc.setStatus(Status.ACTIVE);
+                        itemLoc.setCreatedBy(userProfile.getUsername());
+                        itemLoc.setCreatedAt(ZonedDateTime.now());
+                        itemLoc.setUpdatedBy(userProfile.getUsername());
+                        itemLoc.setUpdatedAt(ZonedDateTime.now());
+                        itemLoc.setItemId(itemInfo.getItemId());
+                        itemLocRepository.save(itemLoc);
                     }
-                    itemLoc.setStatus(Status.ACTIVE);
-                    itemLoc.setCreatedBy(userProfile.getUsername());
-                    itemLoc.setCreatedAt(ZonedDateTime.now());
-                    itemLoc.setUpdatedBy(userProfile.getUsername());
-                    itemLoc.setUpdatedAt(ZonedDateTime.now());
-                    itemLoc.setItemId(itemInfo.getItemId());
-                    saved1st = itemLocRepository.save(itemLoc);
-                    itemLoc.setId(saved1st.getId());
-                    itemLoc.setVersion(saved1st.getVersion());
 
                     /** INSERT SECOND **/
                     ItemLoc itemLoc2 = new ItemLoc();
@@ -1535,9 +1531,7 @@ public class GrnServiceImpl implements GrnService {
                     itemLoc2.setUpdatedBy(userProfile.getUsername());
                     itemLoc2.setUpdatedAt(ZonedDateTime.now());
                     itemLoc2.setItemId(itemInfo.getItemId());
-                    saved2nd = itemLocRepository.save(itemLoc2);
-                    itemLoc2.setId(saved2nd.getId());
-                    itemLoc2.setVersion(saved2nd.getVersion());
+                    savedItemLoc = itemLocRepository.save(itemLoc2);
                 }
             } else if (itemLocWithRecCnt.getRecCnt() > 0) {
                 if (StringUtils.equals(input.getSubType(), "M")) {
@@ -1600,9 +1594,7 @@ public class GrnServiceImpl implements GrnService {
                     itemLoc.setUpdatedBy(userProfile.getUsername());
                     itemLoc.setUpdatedAt(ZonedDateTime.now());
                     itemLoc.setItemId(itemCur.getItemId());
-                    ItemLoc saved = itemLocRepository.save(itemLoc);
-                    itemLoc.setId(saved.getId());
-                    itemLoc.setVersion(saved.getVersion());
+                    itemLocRepository.save(itemLoc);
                 } else {
                     if (StringUtils.equals(input.getSubType(), "N")) {
                         qohItemLoc = qohItemLoc.add(convQty);
@@ -1659,7 +1651,7 @@ public class GrnServiceImpl implements GrnService {
             inAudit.setTranDate(lastTranDate);
             String tranTime = FastDateFormat.getInstance("kkmmssss").format(System.currentTimeMillis());
             inAudit.setTranTime(tranTime);
-            inAudit.setItemlocId(itemLocId == null ? saved2nd.getId() : itemLocId);
+            inAudit.setItemlocId(itemLocId == null ? savedItemLoc.getId() : itemLocId);
             if (StringUtils.equals(input.getSubType(), "M")) {
                 inAudit.setTranType("RM");
             } else {
@@ -1703,9 +1695,7 @@ public class GrnServiceImpl implements GrnService {
             inAudit.setCreatedAt(ZonedDateTime.now());
             inAudit.setUpdatedBy(userProfile.getUsername());
             inAudit.setUpdatedAt(ZonedDateTime.now());
-            InAudit saved = inAuditRepository.save(inAudit);
-            inAudit.setId(saved.getId());
-            inAudit.setVersion(saved.getVersion());
+            inAuditRepository.save(inAudit);
 
             /** MSRDET UPDATE  **/
             if (StringUtils.isNotBlank(input.getMsrNo())) {
