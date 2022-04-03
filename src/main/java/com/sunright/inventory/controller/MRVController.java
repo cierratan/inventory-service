@@ -3,7 +3,6 @@ package com.sunright.inventory.controller;
 import com.sunright.inventory.dto.lov.DocmValueDTO;
 import com.sunright.inventory.dto.mrv.MrvDTO;
 import com.sunright.inventory.dto.mrv.MrvDetailDTO;
-import com.sunright.inventory.dto.msr.MsrDTO;
 import com.sunright.inventory.dto.search.SearchRequest;
 import com.sunright.inventory.dto.search.SearchResult;
 import com.sunright.inventory.service.MRVService;
@@ -42,5 +41,10 @@ public class MRVController {
     @PostMapping("search")
     public ResponseEntity<SearchResult<MrvDTO>> search(@RequestBody SearchRequest searchRequest) {
         return new ResponseEntity<>(mrvService.searchBy(searchRequest), HttpStatus.OK);
+    }
+
+    @GetMapping("mrv-no/{mrvNo}")
+    public ResponseEntity<MrvDTO> getByMrvNo(@PathVariable String mrvNo) {
+        return new ResponseEntity<>(mrvService.findBy(mrvNo), HttpStatus.OK);
     }
 }

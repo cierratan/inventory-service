@@ -8,4 +8,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface MRVRepository extends JpaRepository<MRV, Long>, JpaSpecificationExecutor<MRV> {
 
+    MRV findByCompanyCodeAndPlantNoAndAndMrvNo(String companyCode, Integer plantNo, String mrvNo);
 }

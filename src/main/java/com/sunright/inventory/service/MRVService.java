@@ -12,4 +12,5 @@ public interface MRVService {
     MrvDTO createMrv(MrvDTO input);
     SearchResult<MrvDTO> searchBy(SearchRequest searchRequest);
     MrvDTO findBy(Long id);
+    MrvDTO findBy(String mrvNo);
 }

@@ -249,6 +249,19 @@ public class MRVServiceImpl implements MRVService {
         return convertToMrvDTO(checkIfRecordExist(id));
     }
 
+    @Override
+    public MrvDTO findBy(String mrvNo) {
+        MRV found = mrvRepository.findByCompanyCodeAndPlantNoAndAndMrvNo(UserProfileContext.getUserProfile().getCompanyCode(),
+                UserProfileContext.getUserProfile().getPlantNo(),
+                mrvNo);
+
+        if(found == null) {
+            throw new NotFoundException(String.format("MrvNo: %s not found", mrvNo));
+        }
+
+        return convertToMrvDTO(found);
+    }
+
     private void mrvPostSaving(UserProfile userProfile) {
         String type = "MRV";
         String subType = "N";
