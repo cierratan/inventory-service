@@ -57,7 +57,7 @@ public class IdentifierGeneratorUtil {
             YearMonth thisMonth = YearMonth.now();
             Integer currentMonth = thisMonth.getMonthValue();
             Long currentYear = Long.valueOf(thisMonth.getYear());
-            if (checkInvPeriod.getInventoryMonth() != currentMonth && checkInvPeriod.getInventoryYear() != currentYear) {
+            if (!checkInvPeriod.getInventoryMonth().equals(currentMonth) || !checkInvPeriod.getInventoryYear().equals(currentYear)) {
                 throw new ServerException("Inventory Period in NLCTL is not Current Month !");
             }
         }
