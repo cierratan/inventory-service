@@ -251,9 +251,9 @@ public class MRVServiceImpl implements MRVService {
 
     @Override
     public MrvDTO findBy(String mrvNo) {
-        MRV found = mrvRepository.findByCompanyCodeAndPlantNoAndAndMrvNo(UserProfileContext.getUserProfile().getCompanyCode(),
+        MRV found = mrvRepository.findByCompanyCodeAndPlantNoAndAndMrvNoAndStatus(UserProfileContext.getUserProfile().getCompanyCode(),
                 UserProfileContext.getUserProfile().getPlantNo(),
-                mrvNo);
+                mrvNo, Status.ACTIVE);
 
         if(found == null) {
             throw new NotFoundException(String.format("MrvNo: %s not found", mrvNo));

@@ -53,6 +53,11 @@ public class MsrDetailDTO extends InvBaseDTO {
     private BigDecimal recdPrice;
     private String currencyCode;
     private BigDecimal currencyRate;
-    private String mrvNo;
     private String remarks;
+
+    private String mrvNo;
+    private Integer mrvSeqNo;
+    private String mrvProjectNo;
+    private String mrvDocmNo;
+    private String mrvSwap;
 }

@@ -8,17 +8,18 @@ import com.sunright.inventory.dto.msr.MsrDetailDTO;
 import com.sunright.inventory.dto.search.Filter;
 import com.sunright.inventory.dto.search.SearchRequest;
 import com.sunright.inventory.dto.search.SearchResult;
-import com.sunright.inventory.entity.inaudit.InAudit;
-import com.sunright.inventory.entity.itemloc.ItemLoc;
-import com.sunright.inventory.entity.item.ItemProjection;
 import com.sunright.inventory.entity.bombypj.BombypjProjection;
 import com.sunright.inventory.entity.docmno.DocmNoProjection;
 import com.sunright.inventory.entity.enums.Status;
 import com.sunright.inventory.entity.grn.GrnSupplierProjection;
+import com.sunright.inventory.entity.inaudit.InAudit;
+import com.sunright.inventory.entity.item.ItemProjection;
 import com.sunright.inventory.entity.itembatc.ItemBatc;
 import com.sunright.inventory.entity.itembatc.ItemBatcId;
 import com.sunright.inventory.entity.itembatclog.ItemBatcLog;
 import com.sunright.inventory.entity.itembatclog.ItemBatcLogId;
+import com.sunright.inventory.entity.itemloc.ItemLoc;
+import com.sunright.inventory.entity.mrv.MRVDetail;
 import com.sunright.inventory.entity.msr.MSR;
 import com.sunright.inventory.entity.msr.MSRDetail;
 import com.sunright.inventory.exception.NotFoundException;
@@ -51,6 +52,9 @@ public class MSRServiceImpl implements MSRService {
 
     @Autowired
     private MsrDetailRepository msrDetailRepository;
+
+    @Autowired
+    private MRVDetailRepository mrvDetailRepository;
 
     @Autowired
     private DocmNoRepository docmNoRepository;
@@ -198,6 +202,28 @@ public class MSRServiceImpl implements MSRService {
                 .supplierCode(grnSupplier.getSupplierCode())
                 .name(grnSupplier.getName())
                 .msrDetails(new HashSet(msrDetails))
+                .build();
+    }
+
+    @Override
+    public MsrDetailDTO populateMsrDetailByMrv(Long mrvId) {
+        MRVDetail mrvDetail = mrvDetailRepository.findById(mrvId).get();
+
+        return MsrDetailDTO.builder()
+                .itemType(mrvDetail.getItemType())
+                .itemNo(mrvDetail.getItemNo())
+                .partNo(mrvDetail.getPartNo())
+                .loc(mrvDetail.getLoc())
+                .uom(mrvDetail.getUom())
+                .batchNo(String.valueOf(mrvDetail.getBatchNo()))
+                .projectNo(mrvDetail.getProjectNo())
+                .retnQty(mrvDetail.getRecdQty())
+                .retnPrice(mrvDetail.getRecdPrice())
+                .mrvNo(mrvDetail.getMrvNo())
+                .mrvSeqNo(mrvDetail.getSeqNo())
+                .mrvProjectNo(mrvDetail.getProjectNo())
+                .mrvDocmNo(mrvDetail.getDocmNo())
+                .mrvSwap(mrvDetail.getReplace() == null ? "N" : mrvDetail.getReplace())
                 .build();
     }
 
