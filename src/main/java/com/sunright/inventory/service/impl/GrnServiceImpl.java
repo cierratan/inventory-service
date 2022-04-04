@@ -719,9 +719,7 @@ public class GrnServiceImpl implements GrnService {
                                     }
                                 }
                             } else {
-                                if (recdPrice == null) {
-                                    throw new ServerException("Recd Price Can Not be Blank!");
-                                } else {
+                                if (recdPrice != null) {
                                     if (recdPrice.compareTo(BigDecimal.ZERO) < 0) {
                                         checkValidRecdPrice();
                                     }
@@ -1368,9 +1366,9 @@ public class GrnServiceImpl implements GrnService {
                 }
             }
 
-            BigDecimal newStdMat = BigDecimal.ZERO;
-            BigDecimal newCostVar = BigDecimal.ZERO;
-            BigDecimal newQoh = BigDecimal.ZERO;
+            BigDecimal newStdMat = null;
+            BigDecimal newCostVar = null;
+            BigDecimal newQoh = null;
             Date lastTranDate = new Date(System.currentTimeMillis());
 
             if (itemCur != null) {
@@ -1702,10 +1700,10 @@ public class GrnServiceImpl implements GrnService {
                 updateMSR(userProfile, input, grnDetail, newQoh);
             }
 
-            String projectNoMrv = null;
-            BigDecimal itemPickQty = null;
-            BigDecimal itemProdnResv = null;
             if (StringUtils.equals(input.getSubType(), "M")) {
+                String projectNoMrv = null;
+                BigDecimal itemPickQty = BigDecimal.ZERO;
+                BigDecimal itemProdnResv = BigDecimal.ZERO;
                 if (StringUtils.isNotBlank(grnDetail.getProjectNo())) {
                     if (StringUtils.isNotBlank(input.getMsrNo())) {
                         MRVDetailProjection mrvDetCur = mrvDetailRepository.mrvDetCur(userProfile.getCompanyCode(),
